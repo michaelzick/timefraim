@@ -1,0 +1,26 @@
+{
+  "name": "schejewel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.11.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "corepack pnpm --parallel --filter @schejewel/server dev --filter @schejewel/web dev",
+    "dev:web": "corepack pnpm --filter @schejewel/web dev",
+    "dev:server": "corepack pnpm --filter @schejewel/server dev",
+    "build": "corepack pnpm --filter @schejewel/shared build && corepack pnpm --filter @schejewel/server build && corepack pnpm --filter @schejewel/web build",
+    "test": "corepack pnpm --filter @schejewel/server test && corepack pnpm --filter @schejewel/shared test",
+    "check": "corepack pnpm build && corepack pnpm test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.4.0",
+    "tsup": "^8.4.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

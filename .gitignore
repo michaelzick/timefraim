@@ -137,3 +137,11 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Local Supabase state
+supabase/.temp/
+supabase/.branches/
+.supabase/
+
+# OS files
+.DS_Store
