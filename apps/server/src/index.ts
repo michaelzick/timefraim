@@ -91,4 +91,4 @@ const address = await app.listen({
   host: "127.0.0.1",
 });
 
-app.log.info(`Schejewel server listening on ${address}`);
+app.log.info(`TimeFraim server listening on ${address}`);

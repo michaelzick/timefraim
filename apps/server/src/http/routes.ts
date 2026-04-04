@@ -9,7 +9,7 @@ import {
   timerStartSchema,
   timerStopSchema,
   togglConnectSchema,
-} from "@schejewel/shared";
+} from "@timefraim/shared";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuthenticatedUser } from "./auth.js";

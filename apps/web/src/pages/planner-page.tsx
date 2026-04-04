@@ -1,6 +1,6 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import { DndContext, type DragEndEvent } from "@dnd-kit/core";
-import type { DayPlan, Task } from "@schejewel/shared";
+import type { DayPlan, Task } from "@timefraim/shared";
 import { useDeferredValue, useMemo, useState, startTransition } from "react";
 import { useForm } from "react-hook-form";
 import { BellRing, CalendarClock, Hourglass, LoaderCircle, Play, RefreshCcw, Sparkles, Square } from "lucide-react";

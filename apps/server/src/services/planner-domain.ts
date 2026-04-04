@@ -4,7 +4,7 @@ import type {
   Task,
   TimerSession,
   TaskStatus,
-} from "@schejewel/shared";
+} from "@timefraim/shared";
 
 export type Conflict = {
   id: string;
@@ -67,7 +67,7 @@ export function buildGoogleEventPayload(task: Task, block: ScheduleBlock) {
     end: { dateTime: block.endAt },
     extendedProperties: {
       private: {
-        origin: "schejewel",
+        origin: "timefraim",
         taskId: task.id,
         scheduleBlockId: block.id,
       },

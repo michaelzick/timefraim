@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CalendarEventView, ScheduleBlock, Task, TimerSession } from "@schejewel/shared";
+import type { CalendarEventView, ScheduleBlock, Task, TimerSession } from "@timefraim/shared";
 import {
   buildGoogleEventPayload,
   detectScheduleConflicts,

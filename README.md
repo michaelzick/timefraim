@@ -1,4 +1,4 @@
-# Schejewel
+# TimeFraim
 
 Single-user scheduling app scaffolded as a local-first Sunsama-style planner with:
 

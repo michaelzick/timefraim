@@ -13,7 +13,7 @@ import {
   type ScheduleBlockSource,
   type ScheduleBlockState,
   type TaskStatus,
-} from "@schejewel/shared";
+} from "@timefraim/shared";
 import { randomUUID } from "node:crypto";
 import type { PoolClient, QueryResultRow } from "pg";
 import type { Queryable } from "../db/pool.js";

@@ -32,7 +32,7 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.18.1
         version: 1.29.0(zod@4.3.6)
-      '@schejewel/shared':
+      '@timefraim/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       dotenv:
@@ -77,7 +77,7 @@ importers:
       '@radix-ui/react-tabs':
         specifier: ^1.1.13
         version: 1.1.13(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@schejewel/shared':
+      '@timefraim/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@supabase/supabase-js':

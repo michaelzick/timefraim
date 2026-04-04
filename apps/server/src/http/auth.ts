@@ -44,7 +44,7 @@ export async function requireAuthenticatedUser(authorizationHeader: string | und
   const parsed = payloadSchema.parse(payload);
 
   if (parsed.email.toLowerCase() !== env.ALLOWED_EMAIL.toLowerCase()) {
-    throw new Error("This account is not allowed to access Schejewel");
+    throw new Error("This account is not allowed to access TimeFraim");
   }
 
   return {

@@ -1,4 +1,4 @@
-import type { ScheduleBlockSource, Task } from "@schejewel/shared";
+import type { ScheduleBlockSource, Task } from "@timefraim/shared";
 
 export type TogglConnection = {
   apiToken: string;
@@ -40,7 +40,7 @@ export async function startTogglTimer(params: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        created_with: "Schejewel",
+        created_with: "TimeFraim",
         description: params.task.title,
         duration: -1,
         start: new Date().toISOString(),
@@ -51,7 +51,7 @@ export async function startTogglTimer(params: {
           : params.connection.defaultProjectId
             ? Number(params.connection.defaultProjectId)
             : undefined,
-        tags: ["schejewel", params.source],
+        tags: ["timefraim", params.source],
       }),
     },
   );

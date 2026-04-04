@@ -1,5 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
-import type { CalendarEventView, ScheduleBlock, Task } from "@schejewel/shared";
+import type { CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatTime } from "@/lib/utils";
 

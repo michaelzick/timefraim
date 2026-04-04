@@ -1,4 +1,4 @@
-import type { CalendarEventView, ScheduleBlock, Task } from "@schejewel/shared";
+import type { CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
 import { google } from "googleapis";
 import { env } from "../config/env.js";
 import { buildGoogleEventPayload } from "../services/planner-domain.js";
@@ -69,7 +69,7 @@ export async function syncGoogleCalendarWindow(
       title: event.summary ?? "Busy",
       startAt: event.start!.dateTime!,
       endAt: event.end!.dateTime!,
-      isAppManaged: event.extendedProperties?.private?.origin === "schejewel",
+      isAppManaged: event.extendedProperties?.private?.origin === "timefraim",
       rawPayload: event as unknown as Record<string, unknown>,
       scheduleBlockId: event.extendedProperties?.private?.scheduleBlockId ?? null,
     }));

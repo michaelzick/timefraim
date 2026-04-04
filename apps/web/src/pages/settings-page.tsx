@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import type { AuthSession } from "@schejewel/shared";
+import type { AuthSession } from "@timefraim/shared";
 import { Bot, Cable, LockKeyhole, Orbit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

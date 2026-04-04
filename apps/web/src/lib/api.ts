@@ -4,7 +4,7 @@ import {
   integrationStatusSchema,
   syncDraftSchema,
   taskSchema,
-} from "@schejewel/shared";
+} from "@timefraim/shared";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 

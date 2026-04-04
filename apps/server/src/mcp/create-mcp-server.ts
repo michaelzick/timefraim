@@ -5,7 +5,7 @@ import {
   scheduleBlockUpdateSchema,
   taskInputSchema,
   timerStartSchema,
-} from "@schejewel/shared";
+} from "@timefraim/shared";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { PlannerService } from "../services/planner-service.js";
@@ -14,7 +14,7 @@ import { todayIsoDate } from "../utils/date.js";
 export function createMcpServer(plannerService: PlannerService, profile: "read-only" | "full-access") {
   const server = new McpServer(
     {
-      name: `schejewel-${profile}`,
+      name: `timefraim-${profile}`,
       version: "0.1.0",
     },
     {

@@ -47,7 +47,7 @@ function LoginView() {
         <Badge>Single-user planner</Badge>
         <h1 className="mt-5 text-4xl font-semibold text-white">Sculpt your day before it gets stolen.</h1>
         <p className="mt-4 text-base leading-7 text-[var(--muted-strong)]">
-          Schejewel reads your primary Google Calendar, creates app-managed focus blocks, syncs Toggl timers,
+          TimeFraim reads your primary Google Calendar, creates app-managed focus blocks, syncs Toggl timers,
           and exposes a guarded MCP endpoint for Claude and ChatGPT.
         </p>
         <Button
@@ -218,7 +218,7 @@ function AppShell() {
           <div>
             <Badge>Allowlisted for {authQuery.data.user.email}</Badge>
             <div className="mt-3 flex items-center gap-3">
-              <h1 className="text-2xl font-semibold text-white">Schejewel</h1>
+              <h1 className="text-2xl font-semibold text-white">TimeFraim</h1>
               <span className="text-sm text-[var(--muted-strong)]">Calendar-aware daily planning with guarded AI writes</span>
             </div>
           </div>

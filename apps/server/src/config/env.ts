@@ -4,9 +4,16 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(currentDir, "../../../");
+const repoRoot = resolve(currentDir, "../../../../");
 
-dotenv.config({ path: resolve(repoRoot, ".env") });
+const envCandidates = [
+  resolve(process.cwd(), ".env"),
+  resolve(repoRoot, ".env"),
+];
+
+for (const path of new Set(envCandidates)) {
+  dotenv.config({ path, override: false });
+}
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),

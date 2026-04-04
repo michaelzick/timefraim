@@ -1,5 +1,5 @@
 {
-  "name": "@schejewel/web",
+  "name": "@timefraim/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -18,7 +18,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@supabase/supabase-js": "^2.56.0",
     "@tanstack/react-query": "^5.87.4",
-    "@schejewel/shared": "workspace:*",
+    "@timefraim/shared": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.542.0",

@@ -7,7 +7,7 @@ import {
   type ScheduleBlockUpdate,
   type TaskInput,
   type TaskUpdate,
-} from "@schejewel/shared";
+} from "@timefraim/shared";
 import { env } from "../config/env.js";
 import { pool, withTransaction } from "../db/pool.js";
 import {
@@ -535,7 +535,7 @@ export class PlannerService {
               isAppManaged: true,
               scheduleBlockId: block.id,
               rawPayload: {
-                source: "schejewel",
+                source: "timefraim",
                 pendingSync: !googleEventId,
               },
             },
