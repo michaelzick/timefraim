@@ -18,7 +18,9 @@ for (const path of new Set(envCandidates)) {
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
-  APP_ORIGIN: z.string().url(),
+  APP_ORIGIN: z
+    .string()
+    .transform((s) => s.split(",").map((o) => o.trim()).filter(Boolean)),
   API_BASE_URL: z.string().url(),
   DATABASE_URL: z.string().min(1),
   SUPABASE_URL: z.string().url(),

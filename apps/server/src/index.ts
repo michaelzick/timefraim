@@ -22,7 +22,7 @@ const mcpSessions = new Map<
 >();
 
 await app.register(cors, {
-  origin: [env.APP_ORIGIN],
+  origin: env.APP_ORIGIN,
   credentials: true,
   exposedHeaders: ["Mcp-Session-Id"],
 });

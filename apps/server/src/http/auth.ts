@@ -1,4 +1,4 @@
-import { jwtVerify } from "jose";
+import { jwtVerify, createRemoteJWKSet } from "jose";
 import { z } from "zod";
 import { env } from "../config/env.js";
 
@@ -17,6 +17,8 @@ export type AuthenticatedUser = {
   displayName: string | null;
   avatarUrl: string | null;
 };
+
+const JWKS = createRemoteJWKSet(new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
 
 function getBearerToken(header: string | undefined) {
   if (!header) {
@@ -37,10 +39,7 @@ export async function requireAuthenticatedUser(authorizationHeader: string | und
     throw new Error("Missing bearer token");
   }
 
-  const secret = new TextEncoder().encode(env.SUPABASE_JWT_SECRET);
-  const { payload } = await jwtVerify(token, secret, {
-    algorithms: ["HS256"],
-  });
+  const { payload } = await jwtVerify(token, JWKS);
   const parsed = payloadSchema.parse(payload);
 
   if (parsed.email.toLowerCase() !== env.ALLOWED_EMAIL.toLowerCase()) {
