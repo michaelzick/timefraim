@@ -21,7 +21,6 @@ import { PlannerRepository } from "../repositories/planner-repository.js";
 import {
   detectScheduleConflicts,
   finalizeTimerSession,
-  resolveDismissedExternalUpdatedAt,
   resolveIdleTaskStatus,
 } from "./planner-domain.js";
 import { endOfDay, startOfDay, todayIsoDate } from "../utils/date.js";
@@ -164,7 +163,6 @@ export class PlannerService {
     const records = await syncGoogleCalendarWindow(connection, range);
 
     for (const record of records) {
-      const existingRecord = await this.repository.getCalendarEventByExternalEventId(record.externalEventId, pool);
       await this.repository.upsertCalendarEvent(
         {
           externalEventId: record.externalEventId,
@@ -175,11 +173,7 @@ export class PlannerService {
           scheduleBlockId: record.scheduleBlockId,
           rawPayload: record.rawPayload,
           externalUpdatedAt: record.externalUpdatedAt,
-          dismissedExternalUpdatedAt: resolveDismissedExternalUpdatedAt({
-            previousExternalUpdatedAt: existingRecord?.externalUpdatedAt ?? null,
-            previousDismissedExternalUpdatedAt: existingRecord?.dismissedExternalUpdatedAt ?? null,
-            nextExternalUpdatedAt: record.externalUpdatedAt,
-          }),
+          dismissedExternalUpdatedAt: null,
         },
         pool,
       );

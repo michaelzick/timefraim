@@ -161,6 +161,11 @@ function AppShell() {
     onSuccess: invalidatePlannerData,
   });
 
+  const deleteScheduleBlockMutation = useMutation({
+    mutationFn: (scheduleBlockId: string) => api.deleteScheduleBlock(token, scheduleBlockId),
+    onSuccess: invalidatePlannerData,
+  });
+
   const dismissCalendarEventMutation = useMutation({
     mutationFn: (calendarEventId: string) => api.dismissCalendarEvent(token, calendarEventId),
     onSuccess: invalidatePlannerData,
@@ -202,6 +207,7 @@ function AppShell() {
     updateTaskMutation.isPending ||
     deleteTaskMutation.isPending ||
     createScheduleBlockMutation.isPending ||
+    deleteScheduleBlockMutation.isPending ||
     dismissCalendarEventMutation.isPending ||
     confirmDraftMutation.isPending ||
     rejectDraftMutation.isPending ||
@@ -302,6 +308,7 @@ function AppShell() {
                 onUpdateTask={(taskId, values) => updateTaskMutation.mutateAsync({ taskId, values })}
                 onDeleteTask={(taskId) => deleteTaskMutation.mutateAsync(taskId)}
                 onCreateScheduleBlock={(values) => createScheduleBlockMutation.mutateAsync(values)}
+                onDeleteScheduleBlock={(scheduleBlockId) => deleteScheduleBlockMutation.mutateAsync(scheduleBlockId)}
                 onDismissCalendarEvent={(calendarEventId) => dismissCalendarEventMutation.mutateAsync(calendarEventId)}
                 onConfirmDraft={(draftId) => confirmDraftMutation.mutateAsync(draftId)}
                 onRejectDraft={(draftId) => rejectDraftMutation.mutateAsync(draftId)}

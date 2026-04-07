@@ -1,7 +1,7 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import type { DayPlan, Task } from "@timefraim/shared";
-import { useDeferredValue, useMemo, useState, startTransition } from "react";
+import { useDeferredValue, useMemo, useRef, useState, startTransition } from "react";
 import { useForm } from "react-hook-form";
 import { BellRing, CalendarClock, Hourglass, LoaderCircle, Play, RefreshCcw, Sparkles, Square, Trash2 } from "lucide-react";
 import { TaskPill } from "@/components/task-pill";
@@ -45,6 +45,7 @@ export function PlannerPage({
   onUpdateTask,
   onDeleteTask,
   onCreateScheduleBlock,
+  onDeleteScheduleBlock,
   onDismissCalendarEvent,
   onConfirmDraft,
   onRejectDraft,
@@ -61,6 +62,7 @@ export function PlannerPage({
   onUpdateTask: (taskId: string, values: Partial<TaskFormValues>) => Promise<void>;
   onDeleteTask: (taskId: string) => Promise<void>;
   onCreateScheduleBlock: (values: { taskId: string; startAt: string; endAt: string; source: "manual" }) => Promise<void>;
+  onDeleteScheduleBlock: (scheduleBlockId: string) => Promise<void>;
   onDismissCalendarEvent: (calendarEventId: string) => Promise<void>;
   onConfirmDraft: (draftId: string) => Promise<void>;
   onRejectDraft: (draftId: string) => Promise<void>;
@@ -72,6 +74,7 @@ export function PlannerPage({
 }) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(dayPlan.tasks[0]?.id ?? null);
   const [search, setSearch] = useState("");
+  const detailPanelRef = useRef<HTMLDivElement>(null);
   const deferredSearch = useDeferredValue(search);
 
   const createTaskForm = useForm<CreateTaskValues>({
@@ -180,6 +183,13 @@ export function PlannerPage({
     await onDismissCalendarEvent(calendarEventId);
   }
 
+  async function handleDeleteScheduleBlock(scheduleBlockId: string, title: string) {
+    if (!window.confirm(`Remove "${title}" from the timeline? The task will return to the queue.`)) {
+      return;
+    }
+    await onDeleteScheduleBlock(scheduleBlockId);
+  }
+
   return (
     <DndContext onDragEnd={(event) => void handleDragEnd(event)}>
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
@@ -247,7 +257,10 @@ export function PlannerPage({
                   key={task.id}
                   task={task}
                   active={selectedTask?.id === task.id}
-                  onSelect={() => setSelectedTaskId(task.id)}
+                  onSelect={() => {
+                    setSelectedTaskId(task.id);
+                    detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  }}
                 />
               ))}
             </div>
@@ -283,11 +296,13 @@ export function PlannerPage({
             scheduleBlocks={dayPlan.scheduleBlocks}
             calendarEvents={dayPlan.calendarEvents}
             onDismissCalendarEvent={(calendarEventId, title) => void handleDismissCalendarEvent(calendarEventId, title)}
+            onSelectTask={(taskId) => setSelectedTaskId(taskId)}
+            onDeleteScheduleBlock={(blockId, title) => void handleDeleteScheduleBlock(blockId, title)}
           />
         </div>
 
         <div className="space-y-6">
-          <Card>
+          <Card ref={detailPanelRef}>
           <div className="mb-4 flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Focus</p>

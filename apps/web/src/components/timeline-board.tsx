@@ -45,12 +45,16 @@ export function TimelineBoard({
   scheduleBlocks,
   calendarEvents,
   onDismissCalendarEvent,
+  onSelectTask,
+  onDeleteScheduleBlock,
 }: {
   date: string;
   tasks: Task[];
   scheduleBlocks: ScheduleBlock[];
   calendarEvents: CalendarEventView[];
   onDismissCalendarEvent: (calendarEventId: string, title: string) => void;
+  onSelectTask: (taskId: string) => void;
+  onDeleteScheduleBlock: (scheduleBlockId: string, title: string) => void;
 }) {
   const containerHeight = getTimelineContainerHeight();
   const slots = buildTimelineSlots(date);
@@ -119,8 +123,9 @@ export function TimelineBoard({
           return (
             <div
               key={block.id}
-              className="absolute left-8 right-8 rounded-[24px] border border-[rgba(255,111,59,0.48)] bg-[linear-gradient(180deg,rgba(255,111,59,0.24),rgba(255,155,112,0.1))] p-4 shadow-[0_20px_50px_rgba(255,111,59,0.18)]"
+              className="absolute left-8 right-8 cursor-pointer rounded-[24px] border border-[rgba(255,111,59,0.48)] bg-[linear-gradient(180deg,rgba(255,111,59,0.24),rgba(255,155,112,0.1))] p-4 shadow-[0_20px_50px_rgba(255,111,59,0.18)]"
               style={{ top: placement.top, height: placement.height }}
+              onClick={() => onSelectTask(block.taskId)}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -129,7 +134,21 @@ export function TimelineBoard({
                     {formatTime(block.startAt)} to {formatTime(block.endAt)}
                   </p>
                 </div>
-                <Badge>{block.state.replace("_", " ")}</Badge>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Badge>{block.state.replace("_", " ")}</Badge>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-[var(--muted-strong)] hover:bg-white/10 hover:text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteScheduleBlock(block.id, task?.title ?? "Scheduled task");
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           );
