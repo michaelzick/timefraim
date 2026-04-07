@@ -117,10 +117,10 @@ export class PlannerService {
     return this.getIntegrationStatus();
   }
 
-  async getDayPlan(date = todayIsoDate()) {
+  async getDayPlan(date = todayIsoDate(), tzOffsetMinutes = 0) {
     const range = {
-      startAt: startOfDay(date).toISOString(),
-      endAt: endOfDay(date).toISOString(),
+      startAt: startOfDay(date, tzOffsetMinutes).toISOString(),
+      endAt: endOfDay(date, tzOffsetMinutes).toISOString(),
     };
 
     const [tasks, scheduleBlocks, calendarEvents, drafts, auditLogs, activeTimer, integrationStatus] =
@@ -146,11 +146,11 @@ export class PlannerService {
     });
   }
 
-  async syncGoogleCalendar(date = todayIsoDate()) {
+  async syncGoogleCalendar(date = todayIsoDate(), tzOffsetMinutes = 0) {
     const connection = await this.getGoogleConnection();
     const range = {
-      timeMin: startOfDay(date).toISOString(),
-      timeMax: endOfDay(date).toISOString(),
+      timeMin: startOfDay(date, tzOffsetMinutes).toISOString(),
+      timeMax: endOfDay(date, tzOffsetMinutes).toISOString(),
     };
 
     const records = await syncGoogleCalendarWindow(connection, range);

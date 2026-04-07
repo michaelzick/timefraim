@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getTodayDate } from "@/lib/utils";
+import { getTodayDate, getTimezoneOffsetForDate } from "@/lib/utils";
 
 const queryClient = new QueryClient();
 
@@ -103,7 +103,7 @@ function AppShell() {
   const dayPlanQuery = useQuery({
     queryKey: ["day-plan", token, date],
     enabled: Boolean(token),
-    queryFn: () => api.getDayPlan(token, date),
+    queryFn: () => api.getDayPlan(token, date, getTimezoneOffsetForDate(date)),
   });
 
   const invalidatePlannerData = useEffectEvent(async () => {
@@ -175,7 +175,7 @@ function AppShell() {
   });
 
   const syncCalendarMutation = useMutation({
-    mutationFn: () => api.syncCalendar(token, date),
+    mutationFn: () => api.syncCalendar(token, date, getTimezoneOffsetForDate(date)),
     onSuccess: invalidatePlannerData,
   });
 

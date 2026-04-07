@@ -54,14 +54,14 @@ export function TimelineBoard({
   scheduleBlocks: ScheduleBlock[];
   calendarEvents: CalendarEventView[];
 }) {
-  const dayStart = `${date}T${String(START_HOUR).padStart(2, "0")}:00:00.000Z`;
+  const dayStart = `${date}T${String(START_HOUR).padStart(2, "0")}:00:00.000`;
   const totalSlots = (END_HOUR - START_HOUR) * 2;
   const containerHeight = totalSlots * SLOT_HEIGHT;
 
   const slots = Array.from({ length: totalSlots }, (_, index) => {
     const hour = START_HOUR + Math.floor(index / 2);
     const minute = index % 2 === 0 ? "00" : "30";
-    const iso = `${date}T${String(hour).padStart(2, "0")}:${minute}:00.000Z`;
+    const iso = `${date}T${String(hour).padStart(2, "0")}:${minute}:00.000`;
     const label = `${((hour + 11) % 12) + 1}:${minute}`;
     return {
       id: `slot-${iso}`,

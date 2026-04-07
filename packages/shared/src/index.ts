@@ -175,6 +175,7 @@ export const timerStopSchema = z.object({
 
 export const dayQuerySchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  tz: z.coerce.number().int().optional(),
 });
 
 export const authUserSchema = z.object({

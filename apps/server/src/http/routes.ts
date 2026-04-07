@@ -94,7 +94,8 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
 
     const query = dayQuerySchema.safeParse(request.query);
     const date = query.success ? query.data.date : todayIsoDate();
-    return plannerService.getDayPlan(date);
+    const tz = query.success ? (query.data.tz ?? 0) : 0;
+    return plannerService.getDayPlan(date, tz);
   });
 
   app.post("/api/calendar/sync", async (request, reply) => {
@@ -105,9 +106,10 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
 
     const query = dayQuerySchema.safeParse(request.query);
     const date = query.success ? query.data.date : todayIsoDate();
+    const tz = query.success ? (query.data.tz ?? 0) : 0;
     return {
       date,
-      events: await plannerService.syncGoogleCalendar(date),
+      events: await plannerService.syncGoogleCalendar(date, tz),
     };
   });
 

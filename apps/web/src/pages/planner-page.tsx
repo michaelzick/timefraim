@@ -184,7 +184,7 @@ export function PlannerPage({
                 ))}
               </select>
             </div>
-            <Button className="w-full" disabled={isMutating}>
+            <Button type="submit" className="w-full" disabled={isMutating}>
               {isMutating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               Add task
             </Button>

@@ -13,5 +13,10 @@ export function formatTime(isoString: string) {
 }
 
 export function getTodayDate() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function getTimezoneOffsetForDate(date: string) {
+  return new Date(`${date}T12:00:00`).getTimezoneOffset();
 }

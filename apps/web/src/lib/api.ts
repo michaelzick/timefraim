@@ -40,8 +40,8 @@ async function request<T>(
 
 export const api = {
   getAuthSession: (token: string) => request("/api/auth/me", token, { schema: authSessionSchema }),
-  getDayPlan: (token: string, date: string) =>
-    request(`/api/day-plan?date=${date}`, token, { schema: dayPlanSchema }),
+  getDayPlan: (token: string, date: string, tz: number) =>
+    request(`/api/day-plan?date=${date}&tz=${tz}`, token, { schema: dayPlanSchema }),
   getTasks: (token: string) => request("/api/tasks", token, { schema: taskSchema.array() }),
   createTask: (token: string, body: unknown) => request("/api/tasks", token, { method: "POST", body }),
   updateTask: (token: string, taskId: string, body: unknown) =>
@@ -57,8 +57,8 @@ export const api = {
     request(`/api/drafts/${draftId}/confirm`, token, { method: "POST" }),
   rejectDraft: (token: string, draftId: string) =>
     request(`/api/drafts/${draftId}/reject`, token, { method: "POST" }),
-  syncCalendar: (token: string, date: string) =>
-    request(`/api/calendar/sync?date=${date}`, token, { method: "POST" }),
+  syncCalendar: (token: string, date: string, tz: number) =>
+    request(`/api/calendar/sync?date=${date}&tz=${tz}`, token, { method: "POST" }),
   startTimer: (token: string, body: unknown) =>
     request("/api/timers/start", token, { method: "POST", body }),
   stopTimer: (token: string) => request("/api/timers/stop", token, { method: "POST", body: { source: "manual" } }),
