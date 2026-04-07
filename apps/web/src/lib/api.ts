@@ -17,13 +17,14 @@ async function request<T>(
     schema?: { parse: (value: unknown) => T };
   } = {},
 ): Promise<T> {
+  const hasBody = typeof options.body !== "undefined";
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: options.method ?? "GET",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
+      ...(hasBody ? { "Content-Type": "application/json" } : {}),
     },
-    body: typeof options.body === "undefined" ? undefined : JSON.stringify(options.body),
+    body: hasBody ? JSON.stringify(options.body) : undefined,
   });
 
   if (!response.ok) {
