@@ -215,6 +215,108 @@ describe("planner-service", () => {
     );
   });
 
+  it("writes an app-managed mirror row when scheduling with Google sync enabled", async () => {
+    const repository = createRepositoryMock();
+    const unscheduledTask = {
+      ...baseTask,
+      status: "planned" as const,
+      scheduledBlockId: null,
+    };
+    const draftPayload = {
+      taskId: unscheduledTask.id,
+      startAt: "2026-04-06T18:00:00.000Z",
+      endAt: "2026-04-06T18:45:00.000Z",
+      source: "manual",
+    };
+    const createdBlock = {
+      ...baseBlock,
+      taskId: unscheduledTask.id,
+      startAt: draftPayload.startAt,
+      endAt: draftPayload.endAt,
+      state: "sync_pending" as const,
+      googleEventId: null,
+    };
+
+    repository.getIntegrationToken.mockImplementation(async (provider: string) =>
+      provider === "google"
+        ? {
+            provider: "google",
+            access_token: "google-token",
+            refresh_token: null,
+            expires_at: null,
+            metadata: {
+              calendarId: "primary",
+              email: "allowed@example.com",
+            },
+          }
+        : null,
+    );
+    repository.getDraft.mockResolvedValue(createDraft("schedule_block.create", draftPayload));
+    repository.getTask.mockResolvedValue(unscheduledTask);
+    repository.getScheduleBlockByTaskId.mockResolvedValue(null);
+    repository.listScheduleBlocksForRange.mockResolvedValue([]);
+    repository.listCalendarEventsForRange.mockResolvedValue([]);
+    repository.createScheduleBlock.mockResolvedValue(createdBlock);
+    repository.updateTask.mockResolvedValue({
+      ...unscheduledTask,
+      scheduledBlockId: createdBlock.id,
+      status: "scheduled",
+    });
+    repository.updateScheduleBlock.mockResolvedValue({
+      ...createdBlock,
+      googleEventId: "google-event-123",
+      state: "synced",
+    });
+    repository.getScheduleBlock.mockResolvedValue(createdBlock);
+    repository.upsertCalendarEvent.mockResolvedValue({
+      id: "event-row-1",
+      externalEventId: "google-event-123",
+      title: unscheduledTask.title,
+      startAt: createdBlock.startAt,
+      endAt: createdBlock.endAt,
+      isAppManaged: true,
+      scheduleBlockId: createdBlock.id,
+      rawPayload: { source: "timefraim", pendingSync: false },
+      externalUpdatedAt: null,
+      dismissedExternalUpdatedAt: null,
+      createdAt: "2026-04-06T08:00:00.000Z",
+      updatedAt: "2026-04-06T08:00:00.000Z",
+    });
+    repository.updateDraftStatus.mockResolvedValue({
+      ...createDraft("schedule_block.create", draftPayload),
+      status: "applied",
+      appliedAt: "2026-04-06T09:10:00.000Z",
+    });
+    upsertGoogleScheduleBlock.mockResolvedValue("google-event-123");
+
+    const service = new PlannerService(repository as never);
+
+    await service.confirmDraft("draft-1", "user");
+
+    expect(upsertGoogleScheduleBlock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connection: expect.objectContaining({ accessToken: "google-token", calendarId: "primary" }),
+        task: unscheduledTask,
+        block: createdBlock,
+      }),
+    );
+    expect(repository.upsertCalendarEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        externalEventId: "google-event-123",
+        title: unscheduledTask.title,
+        startAt: createdBlock.startAt,
+        endAt: createdBlock.endAt,
+        isAppManaged: true,
+        scheduleBlockId: createdBlock.id,
+        rawPayload: {
+          source: "timefraim",
+          pendingSync: false,
+        },
+      }),
+      fakeDb,
+    );
+  });
+
   it("preserves dismissals for unchanged Google events and clears them when the event changes", async () => {
     const repository = createRepositoryMock();
     repository.getIntegrationToken.mockResolvedValue({

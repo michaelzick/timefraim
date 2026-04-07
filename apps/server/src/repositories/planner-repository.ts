@@ -323,6 +323,7 @@ export class PlannerRepository {
       `select *
        from public.calendar_events
        where start_at < $2 and end_at > $1
+         and is_app_managed = false
          and (
            dismissed_external_updated_at is null
            or dismissed_external_updated_at is distinct from external_updated_at
