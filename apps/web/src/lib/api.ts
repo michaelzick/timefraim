@@ -46,12 +46,15 @@ export const api = {
   createTask: (token: string, body: unknown) => request("/api/tasks", token, { method: "POST", body }),
   updateTask: (token: string, taskId: string, body: unknown) =>
     request(`/api/tasks/${taskId}`, token, { method: "PATCH", body }),
+  deleteTask: (token: string, taskId: string) => request(`/api/tasks/${taskId}`, token, { method: "DELETE" }),
   createScheduleBlock: (token: string, body: unknown) =>
     request("/api/schedule-blocks", token, { method: "POST", body }),
   updateScheduleBlock: (token: string, scheduleBlockId: string, body: unknown) =>
     request(`/api/schedule-blocks/${scheduleBlockId}`, token, { method: "PATCH", body }),
   deleteScheduleBlock: (token: string, scheduleBlockId: string) =>
     request(`/api/schedule-blocks/${scheduleBlockId}`, token, { method: "DELETE" }),
+  dismissCalendarEvent: (token: string, calendarEventId: string) =>
+    request(`/api/calendar-events/${calendarEventId}/dismiss`, token, { method: "POST" }),
   getDrafts: (token: string) => request("/api/drafts", token, { schema: syncDraftSchema.array() }),
   confirmDraft: (token: string, draftId: string) =>
     request(`/api/drafts/${draftId}/confirm`, token, { method: "POST" }),

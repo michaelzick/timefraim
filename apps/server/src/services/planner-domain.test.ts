@@ -4,6 +4,8 @@ import {
   buildGoogleEventPayload,
   detectScheduleConflicts,
   finalizeTimerSession,
+  isCalendarEventDismissed,
+  resolveDismissedExternalUpdatedAt,
   resolveIdleTaskStatus,
 } from "./planner-domain.js";
 
@@ -16,6 +18,7 @@ describe("planner-domain", () => {
       calendarEvents: [
         {
           id: "standup",
+          externalEventId: "standup",
           title: "Standup",
           startAt: "2026-04-04T10:30:00.000Z",
           endAt: "2026-04-04T11:00:00.000Z",
@@ -84,5 +87,22 @@ describe("planner-domain", () => {
         updatedAt: "2026-04-04T08:00:00.000Z",
       }),
     ).toBe("planned");
+  });
+
+  it("treats dismissed external events as hidden until Google updates them", () => {
+    expect(
+      isCalendarEventDismissed({
+        externalUpdatedAt: "2026-04-04T08:00:00.000Z",
+        dismissedExternalUpdatedAt: "2026-04-04T08:00:00.000Z",
+      }),
+    ).toBe(true);
+
+    expect(
+      resolveDismissedExternalUpdatedAt({
+        previousExternalUpdatedAt: "2026-04-04T08:00:00.000Z",
+        previousDismissedExternalUpdatedAt: "2026-04-04T08:00:00.000Z",
+        nextExternalUpdatedAt: "2026-04-04T09:15:00.000Z",
+      }),
+    ).toBeNull();
   });
 });

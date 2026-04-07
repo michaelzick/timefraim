@@ -13,13 +13,17 @@ import { pool, withTransaction } from "../db/pool.js";
 import {
   deleteGoogleScheduleBlock,
   syncGoogleCalendarWindow,
-  toCalendarEventView,
   upsertGoogleScheduleBlock,
   type GoogleConnection,
 } from "../integration/google-calendar.js";
 import { startTogglTimer, stopTogglTimer, type TogglConnection } from "../integration/toggl-track.js";
 import { PlannerRepository } from "../repositories/planner-repository.js";
-import { detectScheduleConflicts, finalizeTimerSession, resolveIdleTaskStatus } from "./planner-domain.js";
+import {
+  detectScheduleConflicts,
+  finalizeTimerSession,
+  resolveDismissedExternalUpdatedAt,
+  resolveIdleTaskStatus,
+} from "./planner-domain.js";
 import { endOfDay, startOfDay, todayIsoDate } from "../utils/date.js";
 
 type SideEffect =
@@ -27,6 +31,10 @@ type SideEffect =
   | { type: "google.delete"; googleEventId: string | null; scheduleBlockId: string }
   | { type: "toggl.start"; taskId: string; timerSessionId: string; source: "manual" | "ai" | "sync" }
   | { type: "toggl.stop"; togglEntryId: string | null | undefined };
+
+function isUniqueViolation(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
+}
 
 export class PlannerService {
   constructor(private readonly repository = new PlannerRepository()) {}
@@ -156,6 +164,7 @@ export class PlannerService {
     const records = await syncGoogleCalendarWindow(connection, range);
 
     for (const record of records) {
+      const existingRecord = await this.repository.getCalendarEventByExternalEventId(record.externalEventId, pool);
       await this.repository.upsertCalendarEvent(
         {
           externalEventId: record.externalEventId,
@@ -165,12 +174,24 @@ export class PlannerService {
           isAppManaged: record.isAppManaged,
           scheduleBlockId: record.scheduleBlockId,
           rawPayload: record.rawPayload,
+          externalUpdatedAt: record.externalUpdatedAt,
+          dismissedExternalUpdatedAt: resolveDismissedExternalUpdatedAt({
+            previousExternalUpdatedAt: existingRecord?.externalUpdatedAt ?? null,
+            previousDismissedExternalUpdatedAt: existingRecord?.dismissedExternalUpdatedAt ?? null,
+            nextExternalUpdatedAt: record.externalUpdatedAt,
+          }),
         },
         pool,
       );
     }
 
-    return records.map(toCalendarEventView);
+    return this.repository.listCalendarEventsForRange(
+      {
+        startAt: range.timeMin,
+        endAt: range.timeMax,
+      },
+      pool,
+    );
   }
 
   async createDraft(kind: DraftKind, payload: Record<string, unknown>, actorRole: ActorRole) {
@@ -275,12 +296,63 @@ export class PlannerService {
           return this.repository.updateDraftStatus(draftId, "applied", client);
         }
 
+        case "task.delete": {
+          const payload = draft.payload as { taskId: string };
+          const task = await this.repository.getTask(payload.taskId, client);
+          if (!task) {
+            throw new Error(`Task ${payload.taskId} not found`);
+          }
+
+          const scheduledBlock = task.scheduledBlockId
+            ? await this.repository.getScheduleBlock(task.scheduledBlockId, client)
+            : null;
+          const existingBlock = scheduledBlock ?? await this.repository.getScheduleBlockByTaskId(task.id, client);
+          const activeTimer = await this.repository.getActiveTimer(client);
+
+          if (activeTimer?.taskId === task.id) {
+            sideEffects.push({ type: "toggl.stop", togglEntryId: activeTimer.togglEntryId });
+          }
+
+          if (existingBlock) {
+            await this.repository.deleteCalendarEventByScheduleBlockId(existingBlock.id, client);
+            await this.repository.deleteScheduleBlock(existingBlock.id, client);
+            sideEffects.push({
+              type: "google.delete",
+              googleEventId: existingBlock.googleEventId,
+              scheduleBlockId: existingBlock.id,
+            });
+          }
+
+          await this.repository.deleteTask(task.id, client);
+          await this.repository.createAuditLog(
+            {
+              actorRole,
+              action: draft.kind,
+              entityType: "task",
+              entityId: task.id,
+              diffSummary: draft.diffSummary,
+              payload: draft.payload,
+            },
+            client,
+          );
+          return this.repository.updateDraftStatus(draftId, "applied", client);
+        }
+
         case "schedule_block.create": {
           const payload = draft.payload as unknown as ScheduleBlockCreate;
           const task = await this.repository.getTask(payload.taskId, client);
           if (!task) {
             throw new Error(`Task ${payload.taskId} not found`);
           }
+
+          const scheduledBlock = task.scheduledBlockId
+            ? await this.repository.getScheduleBlock(task.scheduledBlockId, client)
+            : null;
+          const existingBlock = scheduledBlock ?? await this.repository.getScheduleBlockByTaskId(task.id, client);
+          if (existingBlock) {
+            throw new Error("Task is already scheduled");
+          }
+
           const range = {
             startAt: startOfDay(payload.startAt.slice(0, 10)).toISOString(),
             endAt: endOfDay(payload.startAt.slice(0, 10)).toISOString(),
@@ -298,16 +370,26 @@ export class PlannerService {
           if (conflicts.length > 0) {
             throw new Error(`Schedule conflict with ${conflicts[0].title}`);
           }
-          const block = await this.repository.createScheduleBlock(
-            {
-              taskId: payload.taskId,
-              startAt: payload.startAt,
-              endAt: payload.endAt,
-              source: payload.source,
-              state: googleConnection ? "sync_pending" : "confirmed",
-            },
-            client,
-          );
+
+          let block;
+          try {
+            block = await this.repository.createScheduleBlock(
+              {
+                taskId: payload.taskId,
+                startAt: payload.startAt,
+                endAt: payload.endAt,
+                source: payload.source,
+                state: googleConnection ? "sync_pending" : "confirmed",
+              },
+              client,
+            );
+          } catch (error) {
+            if (isUniqueViolation(error)) {
+              throw new Error("Task is already scheduled");
+            }
+            throw error;
+          }
+
           await this.repository.updateTask(
             task.id,
             {
@@ -418,6 +500,31 @@ export class PlannerService {
             googleEventId: existingBlock.googleEventId,
             scheduleBlockId: existingBlock.id,
           });
+          return this.repository.updateDraftStatus(draftId, "applied", client);
+        }
+
+        case "calendar_event.dismiss": {
+          const payload = draft.payload as { calendarEventId: string };
+          const calendarEvent = await this.repository.getCalendarEvent(payload.calendarEventId, client);
+          if (!calendarEvent) {
+            throw new Error(`Calendar event ${payload.calendarEventId} not found`);
+          }
+          if (calendarEvent.isAppManaged) {
+            throw new Error("App-managed calendar events cannot be hidden");
+          }
+
+          await this.repository.dismissCalendarEvent(calendarEvent.id, client);
+          await this.repository.createAuditLog(
+            {
+              actorRole,
+              action: draft.kind,
+              entityType: "calendar_event",
+              entityId: calendarEvent.id,
+              diffSummary: draft.diffSummary,
+              payload: draft.payload,
+            },
+            client,
+          );
           return this.repository.updateDraftStatus(draftId, "applied", client);
         }
 
@@ -538,6 +645,8 @@ export class PlannerService {
                 source: "timefraim",
                 pendingSync: !googleEventId,
               },
+              externalUpdatedAt: null,
+              dismissedExternalUpdatedAt: null,
             },
             pool,
           );

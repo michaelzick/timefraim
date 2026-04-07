@@ -1,4 +1,4 @@
-import type { CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
+import type { ScheduleBlock, Task } from "@timefraim/shared";
 import { google } from "googleapis";
 import { env } from "../config/env.js";
 import { buildGoogleEventPayload } from "../services/planner-domain.js";
@@ -11,7 +11,7 @@ export type GoogleConnection = {
   email: string;
 };
 
-type GoogleEventRecord = {
+export type GoogleEventRecord = {
   externalEventId: string;
   title: string;
   startAt: string;
@@ -19,6 +19,7 @@ type GoogleEventRecord = {
   isAppManaged: boolean;
   rawPayload: Record<string, unknown>;
   scheduleBlockId: string | null;
+  externalUpdatedAt: string | null;
 };
 
 function getOAuthClient(connection: GoogleConnection) {
@@ -72,6 +73,7 @@ export async function syncGoogleCalendarWindow(
       isAppManaged: event.extendedProperties?.private?.origin === "timefraim",
       rawPayload: event as unknown as Record<string, unknown>,
       scheduleBlockId: event.extendedProperties?.private?.scheduleBlockId ?? null,
+      externalUpdatedAt: event.updated ?? null,
     }));
 }
 
@@ -127,14 +129,4 @@ export async function deleteGoogleScheduleBlock(
     calendarId: connection.calendarId,
     eventId: googleEventId,
   });
-}
-
-export function toCalendarEventView(record: GoogleEventRecord): CalendarEventView {
-  return {
-    id: record.externalEventId,
-    title: record.title,
-    startAt: record.startAt,
-    endAt: record.endAt,
-    isAppManaged: record.isAppManaged,
-  };
 }

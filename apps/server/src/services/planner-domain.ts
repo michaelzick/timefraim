@@ -14,6 +14,14 @@ export type Conflict = {
   endAt: string;
 };
 
+function sameInstant(left: string | null, right: string | null) {
+  if (left === null || right === null) {
+    return left === right;
+  }
+
+  return new Date(left).getTime() === new Date(right).getTime();
+}
+
 export function rangesOverlap(
   leftStartAt: string,
   leftEndAt: string,
@@ -73,6 +81,28 @@ export function buildGoogleEventPayload(task: Task, block: ScheduleBlock) {
       },
     },
   };
+}
+
+export function isCalendarEventDismissed(params: {
+  externalUpdatedAt: string | null;
+  dismissedExternalUpdatedAt: string | null;
+}) {
+  return params.dismissedExternalUpdatedAt !== null
+    && sameInstant(params.externalUpdatedAt, params.dismissedExternalUpdatedAt);
+}
+
+export function resolveDismissedExternalUpdatedAt(params: {
+  previousExternalUpdatedAt: string | null;
+  previousDismissedExternalUpdatedAt: string | null;
+  nextExternalUpdatedAt: string | null;
+}) {
+  if (params.previousDismissedExternalUpdatedAt === null) {
+    return null;
+  }
+
+  return sameInstant(params.previousExternalUpdatedAt, params.nextExternalUpdatedAt)
+    ? params.previousDismissedExternalUpdatedAt
+    : null;
 }
 
 export function finalizeTimerSession(activeTimer: TimerSession, endedAt: string): TimerSession {

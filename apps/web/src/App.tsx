@@ -98,12 +98,14 @@ function AppShell() {
     queryKey: ["auth-session", token],
     enabled: Boolean(token),
     queryFn: () => api.getAuthSession(token),
+    retry: false,
   });
 
   const dayPlanQuery = useQuery({
     queryKey: ["day-plan", token, date],
     enabled: Boolean(token),
     queryFn: () => api.getDayPlan(token, date, getTimezoneOffsetForDate(date)),
+    retry: false,
   });
 
   const invalidatePlannerData = useEffectEvent(async () => {
@@ -149,8 +151,18 @@ function AppShell() {
     onSuccess: invalidatePlannerData,
   });
 
+  const deleteTaskMutation = useMutation({
+    mutationFn: (taskId: string) => api.deleteTask(token, taskId),
+    onSuccess: invalidatePlannerData,
+  });
+
   const createScheduleBlockMutation = useMutation({
     mutationFn: (values: Record<string, unknown>) => api.createScheduleBlock(token, values),
+    onSuccess: invalidatePlannerData,
+  });
+
+  const dismissCalendarEventMutation = useMutation({
+    mutationFn: (calendarEventId: string) => api.dismissCalendarEvent(token, calendarEventId),
     onSuccess: invalidatePlannerData,
   });
 
@@ -188,7 +200,9 @@ function AppShell() {
   const isMutating =
     createTaskMutation.isPending ||
     updateTaskMutation.isPending ||
+    deleteTaskMutation.isPending ||
     createScheduleBlockMutation.isPending ||
+    dismissCalendarEventMutation.isPending ||
     confirmDraftMutation.isPending ||
     rejectDraftMutation.isPending ||
     startTimerMutation.isPending ||
@@ -198,12 +212,39 @@ function AppShell() {
     () => authQuery.isLoading || dayPlanQuery.isLoading,
     [authQuery.isLoading, dayPlanQuery.isLoading],
   );
+  const queryError = authQuery.error ?? dayPlanQuery.error;
+  const queryErrorMessage = queryError instanceof Error ? queryError.message : "Unable to load planner data.";
 
   if (!session) {
     return <LoginView />;
   }
 
   if (loading || !authQuery.data || !dayPlanQuery.data) {
+    if (queryError) {
+      return (
+        <div className="mx-auto flex min-h-screen max-w-[640px] items-center px-6">
+          <Card className="w-full p-8">
+            <Badge>Planner load failed</Badge>
+            <h1 className="mt-5 text-3xl font-semibold text-white">TimeFraim could not finish loading.</h1>
+            <p className="mt-4 text-base leading-7 text-[var(--muted-strong)]">{queryErrorMessage}</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button
+                onClick={() => {
+                  void authQuery.refetch();
+                  void dayPlanQuery.refetch();
+                }}
+              >
+                Retry
+              </Button>
+              <Button variant="secondary" onClick={() => void supabase.auth.signOut()}>
+                Sign out
+              </Button>
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-screen items-center justify-center">
         <LoaderCircle className="h-8 w-8 animate-spin text-[var(--accent)]" />
@@ -259,7 +300,9 @@ function AppShell() {
                 onDateChange={setDate}
                 onCreateTask={(values) => createTaskMutation.mutateAsync(values)}
                 onUpdateTask={(taskId, values) => updateTaskMutation.mutateAsync({ taskId, values })}
+                onDeleteTask={(taskId) => deleteTaskMutation.mutateAsync(taskId)}
                 onCreateScheduleBlock={(values) => createScheduleBlockMutation.mutateAsync(values)}
+                onDismissCalendarEvent={(calendarEventId) => dismissCalendarEventMutation.mutateAsync(calendarEventId)}
                 onConfirmDraft={(draftId) => confirmDraftMutation.mutateAsync(draftId)}
                 onRejectDraft={(draftId) => rejectDraftMutation.mutateAsync(draftId)}
                 onStartTimer={(taskId) => startTimerMutation.mutateAsync(taskId)}

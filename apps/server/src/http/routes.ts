@@ -160,6 +160,16 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
     );
   });
 
+  app.delete("/api/tasks/:taskId", async (request, reply) => {
+    const user = await resolveUser(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const params = z.object({ taskId: z.string().uuid() }).parse(request.params);
+    return plannerService.createAndApplyDraft("task.delete", { taskId: params.taskId }, "user");
+  });
+
   app.post("/api/schedule-blocks", async (request, reply) => {
     const user = await resolveUser(request, reply);
     if (!user) {
@@ -204,6 +214,20 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
     return plannerService.createAndApplyDraft(
       "schedule_block.delete",
       { scheduleBlockId: params.scheduleBlockId },
+      "user",
+    );
+  });
+
+  app.post("/api/calendar-events/:calendarEventId/dismiss", async (request, reply) => {
+    const user = await resolveUser(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const params = z.object({ calendarEventId: z.string().uuid() }).parse(request.params);
+    return plannerService.createAndApplyDraft(
+      "calendar_event.dismiss",
+      { calendarEventId: params.calendarEventId },
       "user",
     );
   });

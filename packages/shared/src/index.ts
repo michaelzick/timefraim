@@ -23,9 +23,11 @@ export const draftStatusSchema = z.enum(["pending", "applied", "rejected", "expi
 export const draftKindSchema = z.enum([
   "task.create",
   "task.update",
+  "task.delete",
   "schedule_block.create",
   "schedule_block.update",
   "schedule_block.delete",
+  "calendar_event.dismiss",
   "timer.start",
   "timer.stop",
 ]);
@@ -88,6 +90,7 @@ export const scheduleBlockDeleteSchema = z.object({
 
 export const calendarEventViewSchema = z.object({
   id: z.string(),
+  externalEventId: z.string(),
   title: z.string(),
   startAt: z.string().datetime(),
   endAt: z.string().datetime(),
@@ -219,12 +222,16 @@ export function formatDraftSummary(kind: DraftKind, payload: Record<string, unkn
       return `Create task "${String(payload.title ?? "Untitled task")}"`;
     case "task.update":
       return `Update task ${String(payload.taskId ?? "")}`.trim();
+    case "task.delete":
+      return `Delete task ${String(payload.taskId ?? "")}`.trim();
     case "schedule_block.create":
       return `Schedule task ${String(payload.taskId ?? "")} from ${String(payload.startAt ?? "")} to ${String(payload.endAt ?? "")}`;
     case "schedule_block.update":
       return `Move schedule block ${String(payload.scheduleBlockId ?? "")}`;
     case "schedule_block.delete":
       return `Remove schedule block ${String(payload.scheduleBlockId ?? "")}`;
+    case "calendar_event.dismiss":
+      return `Hide calendar event ${String(payload.calendarEventId ?? "")}`.trim();
     case "timer.start":
       return `Start timer for task ${String(payload.taskId ?? "")}`;
     case "timer.stop":

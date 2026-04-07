@@ -27,6 +27,21 @@ type IntegrationTokenRow = {
   metadata: Record<string, unknown>;
 };
 
+export type CalendarEventRecord = {
+  id: string;
+  externalEventId: string;
+  title: string;
+  startAt: string;
+  endAt: string;
+  isAppManaged: boolean;
+  scheduleBlockId: string | null;
+  rawPayload: Record<string, unknown>;
+  externalUpdatedAt: string | null;
+  dismissedExternalUpdatedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 function mapTask(row: QueryResultRow) {
   return taskSchema.parse({
     id: row.id,
@@ -55,14 +70,32 @@ function mapScheduleBlock(row: QueryResultRow) {
   });
 }
 
-function mapCalendarEvent(row: QueryResultRow) {
+function mapCalendarEventView(row: QueryResultRow) {
   return calendarEventViewSchema.parse({
-    id: row.external_event_id,
+    id: row.id,
+    externalEventId: row.external_event_id,
     title: row.title,
     startAt: asIso(row.start_at),
     endAt: asIso(row.end_at),
     isAppManaged: row.is_app_managed,
   });
+}
+
+function mapCalendarEventRecord(row: QueryResultRow): CalendarEventRecord {
+  return {
+    id: row.id,
+    externalEventId: row.external_event_id,
+    title: row.title,
+    startAt: asIso(row.start_at)!,
+    endAt: asIso(row.end_at)!,
+    isAppManaged: row.is_app_managed,
+    scheduleBlockId: row.schedule_block_id,
+    rawPayload: (row.raw_payload ?? {}) as Record<string, unknown>,
+    externalUpdatedAt: asIso(row.external_updated_at),
+    dismissedExternalUpdatedAt: asIso(row.dismissed_external_updated_at),
+    createdAt: asIso(row.created_at)!,
+    updatedAt: asIso(row.updated_at)!,
+  };
 }
 
 function mapDraft(row: QueryResultRow) {
@@ -195,6 +228,11 @@ export class PlannerRepository {
     return mapTask(result.rows[0]);
   }
 
+  async deleteTask(taskId: string, db: Queryable) {
+    const result = await db.query(`delete from public.tasks where id = $1 returning *`, [taskId]);
+    return result.rows[0] ? mapTask(result.rows[0]) : null;
+  }
+
   async listScheduleBlocksForRange(range: { startAt: string; endAt: string }, db: Queryable) {
     const result = await db.query(
       `select *
@@ -210,6 +248,11 @@ export class PlannerRepository {
     const result = await db.query(`select * from public.schedule_blocks where id = $1 limit 1`, [
       scheduleBlockId,
     ]);
+    return result.rows[0] ? mapScheduleBlock(result.rows[0]) : null;
+  }
+
+  async getScheduleBlockByTaskId(taskId: string, db: Queryable) {
+    const result = await db.query(`select * from public.schedule_blocks where task_id = $1 limit 1`, [taskId]);
     return result.rows[0] ? mapScheduleBlock(result.rows[0]) : null;
   }
 
@@ -280,10 +323,32 @@ export class PlannerRepository {
       `select *
        from public.calendar_events
        where start_at < $2 and end_at > $1
+         and (
+           dismissed_external_updated_at is null
+           or dismissed_external_updated_at is distinct from external_updated_at
+         )
        order by start_at asc`,
       [range.startAt, range.endAt],
     );
-    return result.rows.map(mapCalendarEvent);
+    return result.rows.map(mapCalendarEventView);
+  }
+
+  async getCalendarEvent(calendarEventId: string, db: Queryable) {
+    const result = await db.query(`select * from public.calendar_events where id = $1 limit 1`, [
+      calendarEventId,
+    ]);
+    return result.rows[0] ? mapCalendarEventRecord(result.rows[0]) : null;
+  }
+
+  async getCalendarEventByExternalEventId(externalEventId: string, db: Queryable) {
+    const result = await db.query(
+      `select *
+       from public.calendar_events
+       where provider = 'google' and external_event_id = $1
+       limit 1`,
+      [externalEventId],
+    );
+    return result.rows[0] ? mapCalendarEventRecord(result.rows[0]) : null;
   }
 
   async upsertCalendarEvent(
@@ -295,12 +360,25 @@ export class PlannerRepository {
       isAppManaged: boolean;
       scheduleBlockId: string | null;
       rawPayload: Record<string, unknown>;
+      externalUpdatedAt: string | null;
+      dismissedExternalUpdatedAt: string | null;
     },
     db: Queryable,
   ) {
-    await db.query(
-      `insert into public.calendar_events (provider, external_event_id, title, start_at, end_at, is_app_managed, schedule_block_id, raw_payload)
-       values ('google', $1, $2, $3, $4, $5, $6, $7)
+    const result = await db.query(
+      `insert into public.calendar_events (
+         provider,
+         external_event_id,
+         title,
+         start_at,
+         end_at,
+         is_app_managed,
+         schedule_block_id,
+         raw_payload,
+         external_updated_at,
+         dismissed_external_updated_at
+       )
+       values ('google', $1, $2, $3, $4, $5, $6, $7, $8, $9)
        on conflict (provider, external_event_id)
        do update
          set title = excluded.title,
@@ -308,7 +386,10 @@ export class PlannerRepository {
              end_at = excluded.end_at,
              is_app_managed = excluded.is_app_managed,
              schedule_block_id = excluded.schedule_block_id,
-             raw_payload = excluded.raw_payload`,
+             raw_payload = excluded.raw_payload,
+             external_updated_at = excluded.external_updated_at,
+             dismissed_external_updated_at = excluded.dismissed_external_updated_at
+       returning *`,
       [
         input.externalEventId,
         input.title,
@@ -317,12 +398,26 @@ export class PlannerRepository {
         input.isAppManaged,
         input.scheduleBlockId,
         input.rawPayload,
+        input.externalUpdatedAt,
+        input.dismissedExternalUpdatedAt,
       ],
     );
+    return mapCalendarEventRecord(result.rows[0]);
   }
 
   async deleteCalendarEventByScheduleBlockId(scheduleBlockId: string, db: Queryable) {
     await db.query(`delete from public.calendar_events where schedule_block_id = $1`, [scheduleBlockId]);
+  }
+
+  async dismissCalendarEvent(calendarEventId: string, db: Queryable) {
+    const result = await db.query(
+      `update public.calendar_events
+       set dismissed_external_updated_at = external_updated_at
+       where id = $1
+       returning *`,
+      [calendarEventId],
+    );
+    return result.rows[0] ? mapCalendarEventRecord(result.rows[0]) : null;
   }
 
   async upsertIntegrationToken(

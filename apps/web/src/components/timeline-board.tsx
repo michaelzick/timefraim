@@ -1,19 +1,15 @@
 import { useDroppable } from "@dnd-kit/core";
 import type { CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
+import { X } from "lucide-react";
+import {
+  buildTimelineSlots,
+  getTimelineContainerHeight,
+  getTimelinePlacement,
+  SLOT_HEIGHT,
+} from "@/components/timeline-geometry";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn, formatTime } from "@/lib/utils";
-
-const START_HOUR = 8;
-const END_HOUR = 20;
-const SLOT_HEIGHT = 56;
-
-function minutesBetween(startAt: string, endAt: string) {
-  return Math.max(0, (new Date(endAt).getTime() - new Date(startAt).getTime()) / 60000);
-}
-
-function yOffset(dayStart: string, isoString: string) {
-  return (minutesBetween(dayStart, isoString) / 30) * SLOT_HEIGHT;
-}
 
 function TimelineSlot({
   slot,
@@ -48,28 +44,16 @@ export function TimelineBoard({
   tasks,
   scheduleBlocks,
   calendarEvents,
+  onDismissCalendarEvent,
 }: {
   date: string;
   tasks: Task[];
   scheduleBlocks: ScheduleBlock[];
   calendarEvents: CalendarEventView[];
+  onDismissCalendarEvent: (calendarEventId: string, title: string) => void;
 }) {
-  const dayStart = `${date}T${String(START_HOUR).padStart(2, "0")}:00:00.000`;
-  const totalSlots = (END_HOUR - START_HOUR) * 2;
-  const containerHeight = totalSlots * SLOT_HEIGHT;
-
-  const slots = Array.from({ length: totalSlots }, (_, index) => {
-    const hour = START_HOUR + Math.floor(index / 2);
-    const minute = index % 2 === 0 ? "00" : "30";
-    const iso = `${date}T${String(hour).padStart(2, "0")}:${minute}:00.000`;
-    const label = `${((hour + 11) % 12) + 1}:${minute}`;
-    return {
-      id: `slot-${iso}`,
-      iso,
-      label,
-      top: index * SLOT_HEIGHT,
-    };
-  });
+  const containerHeight = getTimelineContainerHeight();
+  const slots = buildTimelineSlots(date);
 
   return (
     <div className="relative rounded-[28px] border border-white/10 bg-[rgba(255,255,255,0.02)] pl-20 pr-4">
@@ -82,8 +66,11 @@ export function TimelineBoard({
         ))}
 
         {calendarEvents.map((event) => {
-          const top = yOffset(dayStart, event.startAt);
-          const height = Math.max(44, (minutesBetween(event.startAt, event.endAt) / 30) * SLOT_HEIGHT);
+          const placement = getTimelinePlacement(date, event.startAt, event.endAt);
+          if (!placement) {
+            return null;
+          }
+
           return (
             <div
               key={event.id}
@@ -93,18 +80,30 @@ export function TimelineBoard({
                   ? "border-[rgba(255,111,59,0.25)] bg-[rgba(255,111,59,0.14)] text-white"
                   : "border-[rgba(99,116,173,0.35)] bg-[rgba(55,68,109,0.42)] text-[var(--muted-strong)]",
               )}
-              style={{ top, height }}
+              style={{ top: placement.top, height: placement.height }}
             >
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate font-medium">{event.title}</p>
                   <p className="mt-1 text-xs opacity-80">
                     {formatTime(event.startAt)} to {formatTime(event.endAt)}
                   </p>
                 </div>
-                <Badge className="shrink-0">
-                  {event.isAppManaged ? "App" : "Blocker"}
-                </Badge>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Badge>{event.isAppManaged ? "App" : "Blocker"}</Badge>
+                  {!event.isAppManaged ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-[var(--muted-strong)] hover:bg-white/10 hover:text-white"
+                      onClick={() => onDismissCalendarEvent(event.id, event.title)}
+                    >
+                      <X className="h-4 w-4" />
+                      Hide
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </div>
           );
@@ -112,13 +111,16 @@ export function TimelineBoard({
 
         {scheduleBlocks.map((block) => {
           const task = tasks.find((item) => item.id === block.taskId);
-          const top = yOffset(dayStart, block.startAt);
-          const height = Math.max(44, (minutesBetween(block.startAt, block.endAt) / 30) * SLOT_HEIGHT);
+          const placement = getTimelinePlacement(date, block.startAt, block.endAt);
+          if (!placement) {
+            return null;
+          }
+
           return (
             <div
               key={block.id}
               className="absolute left-8 right-8 rounded-[24px] border border-[rgba(255,111,59,0.48)] bg-[linear-gradient(180deg,rgba(255,111,59,0.24),rgba(255,155,112,0.1))] p-4 shadow-[0_20px_50px_rgba(255,111,59,0.18)]"
-              style={{ top, height }}
+              style={{ top: placement.top, height: placement.height }}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

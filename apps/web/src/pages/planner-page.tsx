@@ -3,7 +3,7 @@ import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import type { DayPlan, Task } from "@timefraim/shared";
 import { useDeferredValue, useMemo, useState, startTransition } from "react";
 import { useForm } from "react-hook-form";
-import { BellRing, CalendarClock, Hourglass, LoaderCircle, Play, RefreshCcw, Sparkles, Square } from "lucide-react";
+import { BellRing, CalendarClock, Hourglass, LoaderCircle, Play, RefreshCcw, Sparkles, Square, Trash2 } from "lucide-react";
 import { TaskPill } from "@/components/task-pill";
 import { TimelineBoard } from "@/components/timeline-board";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +43,9 @@ export function PlannerPage({
   onDateChange,
   onCreateTask,
   onUpdateTask,
+  onDeleteTask,
   onCreateScheduleBlock,
+  onDismissCalendarEvent,
   onConfirmDraft,
   onRejectDraft,
   onStartTimer,
@@ -57,7 +59,9 @@ export function PlannerPage({
   onDateChange: (nextDate: string) => void;
   onCreateTask: (values: { title: string; notes?: string; estimatedMinutes: number; status: Task["status"] }) => Promise<void>;
   onUpdateTask: (taskId: string, values: Partial<TaskFormValues>) => Promise<void>;
+  onDeleteTask: (taskId: string) => Promise<void>;
   onCreateScheduleBlock: (values: { taskId: string; startAt: string; endAt: string; source: "manual" }) => Promise<void>;
+  onDismissCalendarEvent: (calendarEventId: string) => Promise<void>;
   onConfirmDraft: (draftId: string) => Promise<void>;
   onRejectDraft: (draftId: string) => Promise<void>;
   onStartTimer: (taskId: string) => Promise<void>;
@@ -100,15 +104,23 @@ export function PlannerPage({
         },
   });
 
-  const filteredTasks = useMemo(() => {
+  const queueTasks = useMemo(
+    () =>
+      dayPlan.tasks.filter(
+        (task) => task.scheduledBlockId === null && task.status !== "done" && task.status !== "archived",
+      ),
+    [dayPlan.tasks],
+  );
+
+  const filteredQueueTasks = useMemo(() => {
     const needle = deferredSearch.trim().toLowerCase();
-    return dayPlan.tasks.filter((task) => {
+    return queueTasks.filter((task) => {
       if (!needle) {
         return true;
       }
       return [task.title, task.notes ?? ""].join(" ").toLowerCase().includes(needle);
     });
-  }, [dayPlan.tasks, deferredSearch]);
+  }, [deferredSearch, queueTasks]);
 
   async function handleCreateTask(values: CreateTaskValues) {
     await onCreateTask({
@@ -145,16 +157,40 @@ export function PlannerPage({
     });
   }
 
+  async function handleDeleteTask() {
+    if (!selectedTask || !window.confirm(`Delete "${selectedTask.title}" and remove any scheduled block?`)) {
+      return;
+    }
+
+    const selectedIndex = dayPlan.tasks.findIndex((task) => task.id === selectedTask.id);
+    const remainingTasks = dayPlan.tasks.filter((task) => task.id !== selectedTask.id);
+    const nextTask = remainingTasks[selectedIndex] ?? remainingTasks[selectedIndex - 1] ?? null;
+
+    startTransition(() => {
+      setSelectedTaskId(nextTask?.id ?? null);
+    });
+    await onDeleteTask(selectedTask.id);
+  }
+
+  async function handleDismissCalendarEvent(calendarEventId: string, title: string) {
+    if (!window.confirm(`Hide "${title}" from the planner timeline until it changes in Google Calendar?`)) {
+      return;
+    }
+
+    await onDismissCalendarEvent(calendarEventId);
+  }
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
-      <div className="space-y-6">
+    <DndContext onDragEnd={(event) => void handleDragEnd(event)}>
+      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
+        <div className="space-y-6">
         <Card className="overflow-hidden">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Capture</p>
               <h2 className="mt-1 text-xl font-semibold text-white">Task inbox</h2>
             </div>
-            <Badge>{filteredTasks.length} visible</Badge>
+            <Badge>{dayPlan.tasks.length} total</Badge>
           </div>
           <form
             className="space-y-3"
@@ -206,7 +242,7 @@ export function PlannerPage({
           </div>
           <ScrollArea className="h-[420px] pr-2">
             <div className="space-y-3">
-              {filteredTasks.map((task) => (
+              {filteredQueueTasks.map((task) => (
                 <TaskPill
                   key={task.id}
                   task={task}
@@ -216,11 +252,11 @@ export function PlannerPage({
               ))}
             </div>
           </ScrollArea>
-        </Card>
-      </div>
+          </Card>
+        </div>
 
-      <div className="space-y-6">
-        <Card>
+        <div className="space-y-6">
+          <Card>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Daily planner</p>
@@ -239,20 +275,19 @@ export function PlannerPage({
             <Badge>{dayPlan.integrationStatus.togglConnected ? "Toggl live" : "Toggl not connected"}</Badge>
             <Badge>{dayPlan.integrationStatus.tunnelBaseUrl ? "Tunnel ready" : "Tunnel pending"}</Badge>
           </div>
-        </Card>
+          </Card>
 
-        <DndContext onDragEnd={(event) => void handleDragEnd(event)}>
           <TimelineBoard
             date={date}
             tasks={dayPlan.tasks}
             scheduleBlocks={dayPlan.scheduleBlocks}
             calendarEvents={dayPlan.calendarEvents}
+            onDismissCalendarEvent={(calendarEventId, title) => void handleDismissCalendarEvent(calendarEventId, title)}
           />
-        </DndContext>
-      </div>
+        </div>
 
-      <div className="space-y-6">
-        <Card>
+        <div className="space-y-6">
+          <Card>
           <div className="mb-4 flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Focus</p>
@@ -303,14 +338,24 @@ export function PlannerPage({
                   </Button>
                 )}
               </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full border-[rgba(255,111,59,0.28)] text-[var(--accent)] hover:bg-[rgba(255,111,59,0.12)]"
+                onClick={() => void handleDeleteTask()}
+                disabled={isMutating}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete task
+              </Button>
             </form>
           ) : (
             <p className="text-sm text-[var(--muted)]">Select a task to refine notes, status, and timers.</p>
           )}
-        </Card>
+          </Card>
 
-        <Card>
-          <Tabs.Root defaultValue="drafts">
+          <Card>
+            <Tabs.Root defaultValue="drafts">
             <Tabs.List className="mb-5 grid grid-cols-3 rounded-full border border-white/10 bg-white/5 p-1">
               <Tabs.Trigger className="rounded-full px-3 py-2 text-sm text-[var(--muted)] data-[state=active]:bg-[var(--accent)] data-[state=active]:text-[var(--surface)]" value="drafts">
                 Drafts
@@ -378,9 +423,10 @@ export function PlannerPage({
                 <p className="text-sm text-[var(--muted)]">No timer is running. Start one from the selected task.</p>
               )}
             </Tabs.Content>
-          </Tabs.Root>
-        </Card>
+            </Tabs.Root>
+          </Card>
+        </div>
       </div>
-    </div>
+    </DndContext>
   );
 }
