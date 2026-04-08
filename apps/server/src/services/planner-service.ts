@@ -3,13 +3,14 @@ import {
   formatDraftSummary,
   type ActorRole,
   type DraftKind,
+  type DraftStatus,
   type ScheduleBlockCreate,
   type ScheduleBlockUpdate,
   type TaskInput,
   type TaskUpdate,
 } from "@timefraim/shared";
 import { env } from "../config/env.js";
-import { pool, withTransaction } from "../db/pool.js";
+import { pool, withTransaction, type Queryable } from "../db/pool.js";
 import {
   deleteGoogleScheduleBlock,
   syncGoogleCalendarWindow,
@@ -21,6 +22,7 @@ import { PlannerRepository } from "../repositories/planner-repository.js";
 import {
   detectScheduleConflicts,
   finalizeTimerSession,
+  resolveDismissedExternalUpdatedAt,
   resolveIdleTaskStatus,
 } from "./planner-domain.js";
 import { endOfDay, startOfDay, todayIsoDate } from "../utils/date.js";
@@ -30,6 +32,14 @@ type SideEffect =
   | { type: "google.delete"; googleEventId: string | null; scheduleBlockId: string }
   | { type: "toggl.start"; taskId: string; timerSessionId: string; source: "manual" | "ai" | "sync" }
   | { type: "toggl.stop"; togglEntryId: string | null | undefined };
+
+type DraftToApply = {
+  id: string | null;
+  kind: DraftKind;
+  payload: Record<string, unknown>;
+  diffSummary: string;
+  status: DraftStatus;
+};
 
 function isUniqueViolation(error: unknown) {
   return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
@@ -163,6 +173,10 @@ export class PlannerService {
     const records = await syncGoogleCalendarWindow(connection, range);
 
     for (const record of records) {
+      const existingRecord = await this.repository.getCalendarEventByExternalEventId(
+        record.externalEventId,
+        pool,
+      );
       await this.repository.upsertCalendarEvent(
         {
           externalEventId: record.externalEventId,
@@ -173,7 +187,11 @@ export class PlannerService {
           scheduleBlockId: record.scheduleBlockId,
           rawPayload: record.rawPayload,
           externalUpdatedAt: record.externalUpdatedAt,
-          dismissedExternalUpdatedAt: null,
+          dismissedExternalUpdatedAt: resolveDismissedExternalUpdatedAt({
+            previousExternalUpdatedAt: existingRecord?.externalUpdatedAt ?? null,
+            previousDismissedExternalUpdatedAt: existingRecord?.dismissedExternalUpdatedAt ?? null,
+            nextExternalUpdatedAt: record.externalUpdatedAt,
+          }),
         },
         pool,
       );
@@ -206,6 +224,37 @@ export class PlannerService {
     return this.confirmDraft(draft.id, actorRole);
   }
 
+  async applyChange(kind: DraftKind, payload: Record<string, unknown>, actorRole: ActorRole) {
+    const googleConnection = await this.getGoogleConnection();
+    const togglConnection = await this.getTogglConnection();
+    const sideEffects: SideEffect[] = [];
+    const diffSummary = formatDraftSummary(kind, payload);
+
+    await withTransaction((client) =>
+      this.applyDraft(
+        {
+          id: null,
+          kind,
+          payload,
+          diffSummary,
+          status: "pending",
+        },
+        actorRole,
+        client,
+        sideEffects,
+        Boolean(googleConnection),
+        false,
+      ),
+    );
+
+    await this.runSideEffects(sideEffects, googleConnection, togglConnection);
+    return {
+      status: "applied" as const,
+      kind,
+      diffSummary,
+    };
+  }
+
   async rejectDraft(draftId: string, actorRole: ActorRole) {
     const draft = await this.repository.updateDraftStatus(draftId, "rejected", pool);
     await this.repository.createAuditLog(
@@ -236,366 +285,380 @@ export class PlannerService {
         return draft;
       }
 
-      switch (draft.kind) {
-        case "task.create": {
-          const payload = draft.payload as unknown as TaskInput;
-          const task = await this.repository.createTask(
-            {
-              title: payload.title,
-              notes: payload.notes ?? null,
-              estimatedMinutes: payload.estimatedMinutes ?? 30,
-              status: payload.status ?? "inbox",
-              togglProjectId: payload.togglProjectId ?? null,
-            },
-            client,
-          );
-          await this.repository.createAuditLog(
-            {
-              actorRole,
-              action: draft.kind,
-              entityType: "task",
-              entityId: task.id,
-              diffSummary: draft.diffSummary,
-              payload: draft.payload,
-            },
-            client,
-          );
-          return this.repository.updateDraftStatus(draftId, "applied", client);
+      return this.applyDraft(draft, actorRole, client, sideEffects, Boolean(googleConnection), true);
+    });
+
+    await this.runSideEffects(sideEffects, googleConnection, togglConnection);
+    return draft;
+  }
+
+  private async applyDraft(
+    draft: DraftToApply,
+    actorRole: ActorRole,
+    client: Queryable,
+    sideEffects: SideEffect[],
+    googleConnected: boolean,
+    persistDraftStatus: boolean,
+  ) {
+    const markApplied = () =>
+      persistDraftStatus && draft.id ? this.repository.updateDraftStatus(draft.id, "applied", client) : null;
+
+    switch (draft.kind) {
+      case "task.create": {
+        const payload = draft.payload as unknown as TaskInput;
+        const task = await this.repository.createTask(
+          {
+            title: payload.title,
+            notes: payload.notes ?? null,
+            estimatedMinutes: payload.estimatedMinutes ?? 30,
+            status: payload.status ?? "inbox",
+            togglProjectId: payload.togglProjectId ?? null,
+          },
+          client,
+        );
+        await this.repository.createAuditLog(
+          {
+            actorRole,
+            action: draft.kind,
+            entityType: "task",
+            entityId: task.id,
+            diffSummary: draft.diffSummary,
+            payload: draft.payload,
+          },
+          client,
+        );
+        return markApplied();
+      }
+
+      case "task.update": {
+        const payload = draft.payload as unknown as TaskUpdate;
+        const task = await this.repository.updateTask(
+          payload.taskId,
+          {
+            title: payload.title,
+            notes: payload.notes,
+            estimatedMinutes: payload.estimatedMinutes,
+            status: payload.status,
+            togglProjectId: payload.togglProjectId,
+          },
+          client,
+        );
+        await this.repository.createAuditLog(
+          {
+            actorRole,
+            action: draft.kind,
+            entityType: "task",
+            entityId: task.id,
+            diffSummary: draft.diffSummary,
+            payload: draft.payload,
+          },
+          client,
+        );
+        return markApplied();
+      }
+
+      case "task.delete": {
+        const payload = draft.payload as { taskId: string };
+        const task = await this.repository.getTask(payload.taskId, client);
+        if (!task) {
+          throw new Error(`Task ${payload.taskId} not found`);
         }
 
-        case "task.update": {
-          const payload = draft.payload as unknown as TaskUpdate;
-          const task = await this.repository.updateTask(
-            payload.taskId,
-            {
-              title: payload.title,
-              notes: payload.notes,
-              estimatedMinutes: payload.estimatedMinutes,
-              status: payload.status,
-              togglProjectId: payload.togglProjectId,
-            },
-            client,
-          );
-          await this.repository.createAuditLog(
-            {
-              actorRole,
-              action: draft.kind,
-              entityType: "task",
-              entityId: task.id,
-              diffSummary: draft.diffSummary,
-              payload: draft.payload,
-            },
-            client,
-          );
-          return this.repository.updateDraftStatus(draftId, "applied", client);
+        const scheduledBlock = task.scheduledBlockId
+          ? await this.repository.getScheduleBlock(task.scheduledBlockId, client)
+          : null;
+        const existingBlock = scheduledBlock ?? await this.repository.getScheduleBlockByTaskId(task.id, client);
+        const activeTimer = await this.repository.getActiveTimer(client);
+
+        if (activeTimer?.taskId === task.id) {
+          sideEffects.push({ type: "toggl.stop", togglEntryId: activeTimer.togglEntryId });
         }
 
-        case "task.delete": {
-          const payload = draft.payload as { taskId: string };
-          const task = await this.repository.getTask(payload.taskId, client);
-          if (!task) {
-            throw new Error(`Task ${payload.taskId} not found`);
-          }
-
-          const scheduledBlock = task.scheduledBlockId
-            ? await this.repository.getScheduleBlock(task.scheduledBlockId, client)
-            : null;
-          const existingBlock = scheduledBlock ?? await this.repository.getScheduleBlockByTaskId(task.id, client);
-          const activeTimer = await this.repository.getActiveTimer(client);
-
-          if (activeTimer?.taskId === task.id) {
-            sideEffects.push({ type: "toggl.stop", togglEntryId: activeTimer.togglEntryId });
-          }
-
-          if (existingBlock) {
-            await this.repository.deleteCalendarEventByScheduleBlockId(existingBlock.id, client);
-            await this.repository.deleteScheduleBlock(existingBlock.id, client);
-            sideEffects.push({
-              type: "google.delete",
-              googleEventId: existingBlock.googleEventId,
-              scheduleBlockId: existingBlock.id,
-            });
-          }
-
-          await this.repository.deleteTask(task.id, client);
-          await this.repository.createAuditLog(
-            {
-              actorRole,
-              action: draft.kind,
-              entityType: "task",
-              entityId: task.id,
-              diffSummary: draft.diffSummary,
-              payload: draft.payload,
-            },
-            client,
-          );
-          return this.repository.updateDraftStatus(draftId, "applied", client);
-        }
-
-        case "schedule_block.create": {
-          const payload = draft.payload as unknown as ScheduleBlockCreate;
-          const task = await this.repository.getTask(payload.taskId, client);
-          if (!task) {
-            throw new Error(`Task ${payload.taskId} not found`);
-          }
-
-          const scheduledBlock = task.scheduledBlockId
-            ? await this.repository.getScheduleBlock(task.scheduledBlockId, client)
-            : null;
-          const existingBlock = scheduledBlock ?? await this.repository.getScheduleBlockByTaskId(task.id, client);
-          if (existingBlock) {
-            throw new Error("Task is already scheduled");
-          }
-
-          const range = {
-            startAt: startOfDay(payload.startAt.slice(0, 10)).toISOString(),
-            endAt: endOfDay(payload.startAt.slice(0, 10)).toISOString(),
-          };
-          const [blocks, events] = await Promise.all([
-            this.repository.listScheduleBlocksForRange(range, client),
-            this.repository.listCalendarEventsForRange(range, client),
-          ]);
-          const conflicts = detectScheduleConflicts({
-            candidateStartAt: payload.startAt,
-            candidateEndAt: payload.endAt,
-            scheduleBlocks: blocks,
-            calendarEvents: events,
-          });
-          if (conflicts.length > 0) {
-            throw new Error(`Schedule conflict with ${conflicts[0].title}`);
-          }
-
-          let block;
-          try {
-            block = await this.repository.createScheduleBlock(
-              {
-                taskId: payload.taskId,
-                startAt: payload.startAt,
-                endAt: payload.endAt,
-                source: payload.source,
-                state: googleConnection ? "sync_pending" : "confirmed",
-              },
-              client,
-            );
-          } catch (error) {
-            if (isUniqueViolation(error)) {
-              throw new Error("Task is already scheduled");
-            }
-            throw error;
-          }
-
-          await this.repository.updateTask(
-            task.id,
-            {
-              scheduledBlockId: block.id,
-              status: "scheduled",
-            },
-            client,
-          );
-          await this.repository.createAuditLog(
-            {
-              actorRole,
-              action: draft.kind,
-              entityType: "schedule_block",
-              entityId: block.id,
-              diffSummary: draft.diffSummary,
-              payload: draft.payload,
-            },
-            client,
-          );
-          sideEffects.push({ type: "google.upsert", taskId: task.id, scheduleBlockId: block.id });
-          return this.repository.updateDraftStatus(draftId, "applied", client);
-        }
-
-        case "schedule_block.update": {
-          const payload = draft.payload as unknown as ScheduleBlockUpdate;
-          const existingBlock = await this.repository.getScheduleBlock(payload.scheduleBlockId, client);
-          if (!existingBlock) {
-            throw new Error(`Schedule block ${payload.scheduleBlockId} not found`);
-          }
-
-          const nextStartAt = payload.startAt ?? existingBlock.startAt;
-          const nextEndAt = payload.endAt ?? existingBlock.endAt;
-          const range = {
-            startAt: startOfDay(nextStartAt.slice(0, 10)).toISOString(),
-            endAt: endOfDay(nextStartAt.slice(0, 10)).toISOString(),
-          };
-          const [blocks, events] = await Promise.all([
-            this.repository.listScheduleBlocksForRange(range, client),
-            this.repository.listCalendarEventsForRange(range, client),
-          ]);
-          const conflicts = detectScheduleConflicts({
-            candidateStartAt: nextStartAt,
-            candidateEndAt: nextEndAt,
-            scheduleBlocks: blocks,
-            calendarEvents: events,
-            ignoreScheduleBlockId: existingBlock.id,
-          });
-          if (conflicts.length > 0) {
-            throw new Error(`Schedule conflict with ${conflicts[0].title}`);
-          }
-          const block = await this.repository.updateScheduleBlock(
-            existingBlock.id,
-            {
-              startAt: payload.startAt,
-              endAt: payload.endAt,
-              source: payload.source,
-              state: googleConnection ? "sync_pending" : "confirmed",
-            },
-            client,
-          );
-          await this.repository.createAuditLog(
-            {
-              actorRole,
-              action: draft.kind,
-              entityType: "schedule_block",
-              entityId: block.id,
-              diffSummary: draft.diffSummary,
-              payload: draft.payload,
-            },
-            client,
-          );
-          sideEffects.push({ type: "google.upsert", taskId: block.taskId, scheduleBlockId: block.id });
-          return this.repository.updateDraftStatus(draftId, "applied", client);
-        }
-
-        case "schedule_block.delete": {
-          const payload = draft.payload as { scheduleBlockId: string };
-          const existingBlock = await this.repository.getScheduleBlock(payload.scheduleBlockId, client);
-          if (!existingBlock) {
-            throw new Error(`Schedule block ${payload.scheduleBlockId} not found`);
-          }
-          const task = await this.repository.getTask(existingBlock.taskId, client);
+        if (existingBlock) {
           await this.repository.deleteCalendarEventByScheduleBlockId(existingBlock.id, client);
           await this.repository.deleteScheduleBlock(existingBlock.id, client);
-          if (task?.scheduledBlockId === existingBlock.id) {
-            await this.repository.updateTask(
-              task.id,
-              {
-                scheduledBlockId: null,
-                status: task.status === "done" ? "done" : "planned",
-              },
-              client,
-            );
-          }
-          await this.repository.createAuditLog(
-            {
-              actorRole,
-              action: draft.kind,
-              entityType: "schedule_block",
-              entityId: existingBlock.id,
-              diffSummary: draft.diffSummary,
-              payload: draft.payload,
-            },
-            client,
-          );
           sideEffects.push({
             type: "google.delete",
             googleEventId: existingBlock.googleEventId,
             scheduleBlockId: existingBlock.id,
           });
-          return this.repository.updateDraftStatus(draftId, "applied", client);
         }
 
-        case "calendar_event.dismiss": {
-          const payload = draft.payload as { calendarEventId: string };
-          const calendarEvent = await this.repository.getCalendarEvent(payload.calendarEventId, client);
-          if (!calendarEvent) {
-            throw new Error(`Calendar event ${payload.calendarEventId} not found`);
-          }
-          if (calendarEvent.isAppManaged) {
-            throw new Error("App-managed calendar events cannot be hidden");
-          }
+        await this.repository.deleteTask(task.id, client);
+        await this.repository.createAuditLog(
+          {
+            actorRole,
+            action: draft.kind,
+            entityType: "task",
+            entityId: task.id,
+            diffSummary: draft.diffSummary,
+            payload: draft.payload,
+          },
+          client,
+        );
+        return markApplied();
+      }
 
-          await this.repository.dismissCalendarEvent(calendarEvent.id, client);
-          await this.repository.createAuditLog(
-            {
-              actorRole,
-              action: draft.kind,
-              entityType: "calendar_event",
-              entityId: calendarEvent.id,
-              diffSummary: draft.diffSummary,
-              payload: draft.payload,
-            },
-            client,
-          );
-          return this.repository.updateDraftStatus(draftId, "applied", client);
+      case "schedule_block.create": {
+        const payload = draft.payload as unknown as ScheduleBlockCreate;
+        const task = await this.repository.getTask(payload.taskId, client);
+        if (!task) {
+          throw new Error(`Task ${payload.taskId} not found`);
         }
 
-        case "timer.start": {
-          const payload = draft.payload as { taskId: string; source: "manual" | "ai" | "sync" };
-          const task = await this.repository.getTask(payload.taskId, client);
-          if (!task) {
-            throw new Error(`Task ${payload.taskId} not found`);
-          }
-          const active = await this.repository.getActiveTimer(client);
-          if (active) {
-            const previousTask = await this.repository.getTask(active.taskId, client);
-            const stopped = finalizeTimerSession(active, new Date().toISOString());
-            await this.repository.stopTimer(active.id, stopped.endedAt!, stopped.durationSeconds!, client);
-            if (previousTask) {
-              await this.repository.updateTask(
-                previousTask.id,
-                { status: resolveIdleTaskStatus(previousTask) },
-                client,
-              );
-            }
-            sideEffects.push({ type: "toggl.stop", togglEntryId: active.togglEntryId });
-          }
+        const scheduledBlock = task.scheduledBlockId
+          ? await this.repository.getScheduleBlock(task.scheduledBlockId, client)
+          : null;
+        const existingBlock = scheduledBlock ?? await this.repository.getScheduleBlockByTaskId(task.id, client);
+        if (existingBlock) {
+          throw new Error("Task is already scheduled");
+        }
 
-          const timer = await this.repository.createTimerSession(
+        const range = {
+          startAt: startOfDay(payload.startAt.slice(0, 10)).toISOString(),
+          endAt: endOfDay(payload.startAt.slice(0, 10)).toISOString(),
+        };
+        const [blocks, events] = await Promise.all([
+          this.repository.listScheduleBlocksForRange(range, client),
+          this.repository.listCalendarEventsForRange(range, client),
+        ]);
+        const conflicts = detectScheduleConflicts({
+          candidateStartAt: payload.startAt,
+          candidateEndAt: payload.endAt,
+          scheduleBlocks: blocks,
+          calendarEvents: events,
+        });
+        if (conflicts.length > 0) {
+          throw new Error(`Schedule conflict with ${conflicts[0].title}`);
+        }
+
+        let block;
+        try {
+          block = await this.repository.createScheduleBlock(
             {
-              taskId: task.id,
-              startedAt: new Date().toISOString(),
+              taskId: payload.taskId,
+              startAt: payload.startAt,
+              endAt: payload.endAt,
               source: payload.source,
+              state: googleConnected ? "sync_pending" : "confirmed",
             },
             client,
           );
-          await this.repository.updateTask(task.id, { status: "in_progress" }, client);
+        } catch (error) {
+          if (isUniqueViolation(error)) {
+            throw new Error("Task is already scheduled");
+          }
+          throw error;
+        }
+
+        await this.repository.updateTask(
+          task.id,
+          {
+            scheduledBlockId: block.id,
+            status: "scheduled",
+          },
+          client,
+        );
+        await this.repository.createAuditLog(
+          {
+            actorRole,
+            action: draft.kind,
+            entityType: "schedule_block",
+            entityId: block.id,
+            diffSummary: draft.diffSummary,
+            payload: draft.payload,
+          },
+          client,
+        );
+        sideEffects.push({ type: "google.upsert", taskId: task.id, scheduleBlockId: block.id });
+        return markApplied();
+      }
+
+      case "schedule_block.update": {
+        const payload = draft.payload as unknown as ScheduleBlockUpdate;
+        const existingBlock = await this.repository.getScheduleBlock(payload.scheduleBlockId, client);
+        if (!existingBlock) {
+          throw new Error(`Schedule block ${payload.scheduleBlockId} not found`);
+        }
+
+        const nextStartAt = payload.startAt ?? existingBlock.startAt;
+        const nextEndAt = payload.endAt ?? existingBlock.endAt;
+        const range = {
+          startAt: startOfDay(nextStartAt.slice(0, 10)).toISOString(),
+          endAt: endOfDay(nextStartAt.slice(0, 10)).toISOString(),
+        };
+        const [blocks, events] = await Promise.all([
+          this.repository.listScheduleBlocksForRange(range, client),
+          this.repository.listCalendarEventsForRange(range, client),
+        ]);
+        const conflicts = detectScheduleConflicts({
+          candidateStartAt: nextStartAt,
+          candidateEndAt: nextEndAt,
+          scheduleBlocks: blocks,
+          calendarEvents: events,
+          ignoreScheduleBlockId: existingBlock.id,
+        });
+        if (conflicts.length > 0) {
+          throw new Error(`Schedule conflict with ${conflicts[0].title}`);
+        }
+        const block = await this.repository.updateScheduleBlock(
+          existingBlock.id,
+          {
+            startAt: payload.startAt,
+            endAt: payload.endAt,
+            source: payload.source,
+            state: googleConnected ? "sync_pending" : "confirmed",
+          },
+          client,
+        );
+        await this.repository.createAuditLog(
+          {
+            actorRole,
+            action: draft.kind,
+            entityType: "schedule_block",
+            entityId: block.id,
+            diffSummary: draft.diffSummary,
+            payload: draft.payload,
+          },
+          client,
+        );
+        sideEffects.push({ type: "google.upsert", taskId: block.taskId, scheduleBlockId: block.id });
+        return markApplied();
+      }
+
+      case "schedule_block.delete": {
+        const payload = draft.payload as { scheduleBlockId: string };
+        const existingBlock = await this.repository.getScheduleBlock(payload.scheduleBlockId, client);
+        if (!existingBlock) {
+          throw new Error(`Schedule block ${payload.scheduleBlockId} not found`);
+        }
+        const task = await this.repository.getTask(existingBlock.taskId, client);
+        await this.repository.deleteCalendarEventByScheduleBlockId(existingBlock.id, client);
+        await this.repository.deleteScheduleBlock(existingBlock.id, client);
+        if (task?.scheduledBlockId === existingBlock.id) {
+          await this.repository.updateTask(
+            task.id,
+            {
+              scheduledBlockId: null,
+              status: task.status === "done" ? "done" : "planned",
+            },
+            client,
+          );
+        }
+        await this.repository.createAuditLog(
+          {
+            actorRole,
+            action: draft.kind,
+            entityType: "schedule_block",
+            entityId: existingBlock.id,
+            diffSummary: draft.diffSummary,
+            payload: draft.payload,
+          },
+          client,
+        );
+        sideEffects.push({
+          type: "google.delete",
+          googleEventId: existingBlock.googleEventId,
+          scheduleBlockId: existingBlock.id,
+        });
+        return markApplied();
+      }
+
+      case "calendar_event.dismiss": {
+        const payload = draft.payload as { calendarEventId: string };
+        const calendarEvent = await this.repository.getCalendarEvent(payload.calendarEventId, client);
+        if (!calendarEvent) {
+          throw new Error(`Calendar event ${payload.calendarEventId} not found`);
+        }
+        if (calendarEvent.isAppManaged) {
+          throw new Error("App-managed calendar events cannot be hidden");
+        }
+
+        await this.repository.dismissCalendarEvent(calendarEvent.id, client);
+        await this.repository.createAuditLog(
+          {
+            actorRole,
+            action: draft.kind,
+            entityType: "calendar_event",
+            entityId: calendarEvent.id,
+            diffSummary: draft.diffSummary,
+            payload: draft.payload,
+          },
+          client,
+        );
+        return markApplied();
+      }
+
+      case "timer.start": {
+        const payload = draft.payload as { taskId: string; source: "manual" | "ai" | "sync" };
+        const task = await this.repository.getTask(payload.taskId, client);
+        if (!task) {
+          throw new Error(`Task ${payload.taskId} not found`);
+        }
+        const active = await this.repository.getActiveTimer(client);
+        if (active) {
+          const previousTask = await this.repository.getTask(active.taskId, client);
+          const stopped = finalizeTimerSession(active, new Date().toISOString());
+          await this.repository.stopTimer(active.id, stopped.endedAt!, stopped.durationSeconds!, client);
+          if (previousTask) {
+            await this.repository.updateTask(
+              previousTask.id,
+              { status: resolveIdleTaskStatus(previousTask) },
+              client,
+            );
+          }
+          sideEffects.push({ type: "toggl.stop", togglEntryId: active.togglEntryId });
+        }
+
+        const timer = await this.repository.createTimerSession(
+          {
+            taskId: task.id,
+            startedAt: new Date().toISOString(),
+            source: payload.source,
+          },
+          client,
+        );
+        await this.repository.updateTask(task.id, { status: "in_progress" }, client);
+        await this.repository.createAuditLog(
+          {
+            actorRole,
+            action: draft.kind,
+            entityType: "timer_session",
+            entityId: timer.id,
+            diffSummary: draft.diffSummary,
+            payload: draft.payload,
+          },
+          client,
+        );
+        sideEffects.push({ type: "toggl.start", taskId: task.id, timerSessionId: timer.id, source: payload.source });
+        return markApplied();
+      }
+
+      case "timer.stop": {
+        const active = await this.repository.getActiveTimer(client);
+        if (active) {
+          const task = await this.repository.getTask(active.taskId, client);
+          const stopped = finalizeTimerSession(active, new Date().toISOString());
+          await this.repository.stopTimer(active.id, stopped.endedAt!, stopped.durationSeconds!, client);
+          if (task) {
+            await this.repository.updateTask(task.id, { status: resolveIdleTaskStatus(task) }, client);
+          }
+          sideEffects.push({ type: "toggl.stop", togglEntryId: active.togglEntryId });
           await this.repository.createAuditLog(
             {
               actorRole,
               action: draft.kind,
               entityType: "timer_session",
-              entityId: timer.id,
+              entityId: active.id,
               diffSummary: draft.diffSummary,
               payload: draft.payload,
             },
             client,
           );
-          sideEffects.push({ type: "toggl.start", taskId: task.id, timerSessionId: timer.id, source: payload.source });
-          return this.repository.updateDraftStatus(draftId, "applied", client);
         }
-
-        case "timer.stop": {
-          const active = await this.repository.getActiveTimer(client);
-          if (active) {
-            const task = await this.repository.getTask(active.taskId, client);
-            const stopped = finalizeTimerSession(active, new Date().toISOString());
-            await this.repository.stopTimer(active.id, stopped.endedAt!, stopped.durationSeconds!, client);
-            if (task) {
-              await this.repository.updateTask(task.id, { status: resolveIdleTaskStatus(task) }, client);
-            }
-            sideEffects.push({ type: "toggl.stop", togglEntryId: active.togglEntryId });
-            await this.repository.createAuditLog(
-              {
-                actorRole,
-                action: draft.kind,
-                entityType: "timer_session",
-                entityId: active.id,
-                diffSummary: draft.diffSummary,
-                payload: draft.payload,
-              },
-              client,
-            );
-          }
-          return this.repository.updateDraftStatus(draftId, "applied", client);
-        }
+        return markApplied();
       }
-    });
-
-    await this.runSideEffects(sideEffects, googleConnection, togglConnection);
-    return draft;
+    }
   }
 
   private async runSideEffects(

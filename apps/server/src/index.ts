@@ -14,6 +14,31 @@ const app = Fastify({
 });
 
 const plannerService = new PlannerService();
+const configuredOrigins = new Set(env.APP_ORIGIN);
+
+function isAllowedOrigin(origin: string | undefined) {
+  if (!origin) {
+    return true;
+  }
+
+  if (configuredOrigins.has(origin)) {
+    return true;
+  }
+
+  if (env.NODE_ENV !== "production") {
+    try {
+      const url = new URL(origin);
+      if (url.protocol === "http:" && (url.hostname === "127.0.0.1" || url.hostname === "localhost")) {
+        return true;
+      }
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
 const mcpSessions = new Map<
   string,
   {
@@ -22,7 +47,11 @@ const mcpSessions = new Map<
 >();
 
 await app.register(cors, {
-  origin: env.APP_ORIGIN,
+  origin(origin, callback) {
+    callback(null, isAllowedOrigin(origin));
+  },
+  methods: ["GET", "HEAD", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Authorization", "Content-Type", "Mcp-Session-Id"],
   credentials: true,
   exposedHeaders: ["Mcp-Session-Id"],
 });

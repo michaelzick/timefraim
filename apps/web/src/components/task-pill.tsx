@@ -22,7 +22,7 @@ export function TaskPill({
   });
 
   return (
-    <button
+    <div
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform) }}
       className={cn(
@@ -31,7 +31,12 @@ export function TaskPill({
         isDragging && "opacity-65",
       )}
       onClick={onSelect}
-      type="button"
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
       {...listeners}
       {...attributes}
     >
@@ -61,6 +66,6 @@ export function TaskPill({
           <span>{task.estimatedMinutes} min</span>
         </div>
       </div>
-    </button>
+    </div>
   );
 }

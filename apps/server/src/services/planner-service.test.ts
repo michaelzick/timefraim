@@ -178,6 +178,42 @@ describe("planner-service", () => {
     );
   });
 
+  it("applies direct user deletes without persisting a draft row", async () => {
+    const repository = createRepositoryMock();
+    repository.getIntegrationToken.mockImplementation(async (provider: string) =>
+      provider === "google"
+        ? {
+            provider: "google",
+            access_token: "google-token",
+            refresh_token: null,
+            expires_at: null,
+            metadata: {
+              calendarId: "primary",
+              email: "allowed@example.com",
+            },
+          }
+        : null,
+    );
+    repository.getTask.mockResolvedValue(baseTask);
+    repository.getScheduleBlock.mockResolvedValue(baseBlock);
+    repository.getActiveTimer.mockResolvedValue(null);
+    repository.deleteScheduleBlock.mockResolvedValue(baseBlock);
+    repository.deleteTask.mockResolvedValue(baseTask);
+
+    const service = new PlannerService(repository as never);
+
+    await service.applyChange("task.delete", { taskId: baseTask.id }, "user");
+
+    expect(repository.createDraft).not.toHaveBeenCalled();
+    expect(repository.updateDraftStatus).not.toHaveBeenCalled();
+    expect(repository.deleteScheduleBlock).toHaveBeenCalledWith(baseBlock.id, fakeDb);
+    expect(repository.deleteTask).toHaveBeenCalledWith(baseTask.id, fakeDb);
+    expect(deleteGoogleScheduleBlock).toHaveBeenCalledWith(
+      expect.objectContaining({ accessToken: "google-token", calendarId: "primary" }),
+      baseBlock.googleEventId,
+    );
+  });
+
   it("dismisses synced external calendar events locally", async () => {
     const repository = createRepositoryMock();
     repository.getIntegrationToken.mockResolvedValue(null);

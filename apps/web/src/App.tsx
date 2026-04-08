@@ -62,6 +62,10 @@ function LoginView() {
                 redirectTo: window.location.origin,
                 scopes:
                   "openid email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
+                queryParams: {
+                  access_type: "offline",
+                  prompt: "consent",
+                },
               },
             });
           }}
@@ -79,7 +83,7 @@ function AppShell() {
   const token = session?.access_token ?? "";
   const [date, setDate] = useState(getTodayDate());
   const queryClient = useQueryClient();
-  const syncedProviderToken = useRef<string | null>(null);
+  const syncedGoogleSessionSignature = useRef<string | null>(null);
 
   const ensureAllowedEmail = useEffectEvent(async () => {
     const email = session?.user.email?.toLowerCase();
@@ -116,18 +120,21 @@ function AppShell() {
   });
 
   useEffect(() => {
-    const providerToken = (session as Session & { provider_token?: string; provider_refresh_token?: string })?.provider_token;
-    if (!providerToken || providerToken === syncedProviderToken.current || !token) {
+    const oauthSession = session as (Session & { provider_token?: string; provider_refresh_token?: string }) | null;
+    const providerToken = oauthSession?.provider_token;
+    const providerRefreshToken = oauthSession?.provider_refresh_token ?? null;
+    const expiresAt = session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : null;
+    const sessionSignature = providerToken ? [providerToken, providerRefreshToken ?? "", expiresAt ?? ""].join("|") : null;
+
+    if (!providerToken || sessionSignature === syncedGoogleSessionSignature.current || !token) {
       return;
     }
 
-    const expiresAt = session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : null;
-    syncedProviderToken.current = providerToken;
+    syncedGoogleSessionSignature.current = sessionSignature;
     void api
       .saveGoogleSession(token, {
         accessToken: providerToken,
-        refreshToken:
-          (session as Session & { provider_refresh_token?: string }).provider_refresh_token ?? null,
+        refreshToken: providerRefreshToken,
         expiresAt,
         email: session?.user.email,
         calendarId: "primary",
@@ -135,7 +142,7 @@ function AppShell() {
       .then(() => invalidatePlannerData())
       .catch((error) => {
         console.error(error);
-        syncedProviderToken.current = null;
+        syncedGoogleSessionSignature.current = null;
       });
   }, [invalidatePlannerData, session, token]);
 

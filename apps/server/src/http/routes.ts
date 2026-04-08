@@ -130,7 +130,7 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
     }
 
     const payload = taskInputSchema.parse(request.body);
-    return plannerService.createAndApplyDraft("task.create", payload, "user");
+    return plannerService.applyChange("task.create", payload, "user");
   });
 
   app.patch("/api/tasks/:taskId", async (request, reply) => {
@@ -150,7 +150,7 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
       })
       .parse(request.body);
 
-    return plannerService.createAndApplyDraft(
+    return plannerService.applyChange(
       "task.update",
       taskUpdateSchema.parse({
         taskId: params.taskId,
@@ -167,7 +167,7 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
     }
 
     const params = z.object({ taskId: z.string().uuid() }).parse(request.params);
-    return plannerService.createAndApplyDraft("task.delete", { taskId: params.taskId }, "user");
+    return plannerService.applyChange("task.delete", { taskId: params.taskId }, "user");
   });
 
   app.post("/api/schedule-blocks", async (request, reply) => {
@@ -177,7 +177,7 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
     }
 
     const payload = scheduleBlockCreateSchema.parse(request.body);
-    return plannerService.createAndApplyDraft("schedule_block.create", payload, "user");
+    return plannerService.applyChange("schedule_block.create", payload, "user");
   });
 
   app.patch("/api/schedule-blocks/:scheduleBlockId", async (request, reply) => {
@@ -194,7 +194,7 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
         source: z.enum(["manual", "ai", "sync"]).optional(),
       })
       .parse(request.body);
-    return plannerService.createAndApplyDraft(
+    return plannerService.applyChange(
       "schedule_block.update",
       scheduleBlockUpdateSchema.parse({
         scheduleBlockId: params.scheduleBlockId,
@@ -211,7 +211,7 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
     }
 
     const params = z.object({ scheduleBlockId: z.string().uuid() }).parse(request.params);
-    return plannerService.createAndApplyDraft(
+    return plannerService.applyChange(
       "schedule_block.delete",
       { scheduleBlockId: params.scheduleBlockId },
       "user",
@@ -225,7 +225,7 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
     }
 
     const params = z.object({ calendarEventId: z.string().uuid() }).parse(request.params);
-    return plannerService.createAndApplyDraft(
+    return plannerService.applyChange(
       "calendar_event.dismiss",
       { calendarEventId: params.calendarEventId },
       "user",
@@ -268,7 +268,7 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
     }
 
     const payload = timerStartSchema.parse(request.body);
-    return plannerService.createAndApplyDraft("timer.start", payload, "user");
+    return plannerService.applyChange("timer.start", payload, "user");
   });
 
   app.post("/api/timers/stop", async (request, reply) => {
@@ -278,6 +278,6 @@ export async function registerHttpRoutes(app: FastifyInstance, plannerService: P
     }
 
     const payload = timerStopSchema.parse(request.body ?? {});
-    return plannerService.createAndApplyDraft("timer.stop", payload, "user");
+    return plannerService.applyChange("timer.stop", payload, "user");
   });
 }
