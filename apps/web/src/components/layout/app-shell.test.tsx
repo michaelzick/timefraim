@@ -39,6 +39,7 @@ describe("AppShell", () => {
             onStartTimer: noopAsync,
             onStopTimer: noopAsync,
             onSyncCalendar: noopAsync,
+            onUpdateScheduleBlock: noopAsync,
             onUpdateTask: noopAsync,
           }}
         />

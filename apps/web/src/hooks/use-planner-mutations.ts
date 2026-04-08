@@ -28,6 +28,13 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
     mutationFn: api.createScheduleBlock.bind(api, token),
     onSuccess,
   });
+  const updateScheduleBlockMutation = useMutation({
+    mutationFn: ({ scheduleBlockId, values }: {
+      scheduleBlockId: string;
+      values: Parameters<typeof api.updateScheduleBlock>[2];
+    }) => api.updateScheduleBlock(token, scheduleBlockId, values),
+    onSuccess,
+  });
   const deleteScheduleBlockMutation = useMutation({
     mutationFn: (scheduleBlockId: string) => api.deleteScheduleBlock(token, scheduleBlockId),
     onSuccess,
@@ -67,6 +74,7 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
       updateTaskMutation,
       deleteTaskMutation,
       createScheduleBlockMutation,
+      updateScheduleBlockMutation,
       deleteScheduleBlockMutation,
       dismissCalendarEventMutation,
       confirmDraftMutation,
@@ -83,6 +91,8 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
       deleteTask: (taskId: string) => deleteTaskMutation.mutateAsync(taskId),
       createScheduleBlock: (values: Parameters<typeof api.createScheduleBlock>[1]) =>
         createScheduleBlockMutation.mutateAsync(values),
+      updateScheduleBlock: (scheduleBlockId: string, values: Parameters<typeof api.updateScheduleBlock>[2]) =>
+        updateScheduleBlockMutation.mutateAsync({ scheduleBlockId, values }),
       deleteScheduleBlock: (scheduleBlockId: string) => deleteScheduleBlockMutation.mutateAsync(scheduleBlockId),
       dismissCalendarEvent: (calendarEventId: string) => dismissCalendarEventMutation.mutateAsync(calendarEventId),
       confirmDraft: (draftId: string) => confirmDraftMutation.mutateAsync(draftId),

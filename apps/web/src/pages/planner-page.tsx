@@ -1,11 +1,12 @@
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import type { Task } from "@timefraim/shared";
+import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import type { ScheduleBlock, Task } from "@timefraim/shared";
 import { useDeferredValue, useMemo, useRef, useState, startTransition } from "react";
 import { useForm } from "react-hook-form";
 import { PlannerActivityCard } from "@/features/planner/planner-activity-card";
 import { CreateTaskCard } from "@/features/planner/create-task-card";
 import { PlannerSummaryCard } from "@/features/planner/planner-summary-card";
 import { TaskDetailCard } from "@/features/planner/task-detail-card";
+import { getTaskLifecycleValue, resolveActiveTaskStatus } from "@/features/planner/task-presentation";
 import { TaskQueueCard } from "@/features/planner/task-queue-card";
 import { type CreateTaskValues, type PlannerPageProps, type TaskFormValues } from "@/features/planner/types";
 import { TimelineBoard } from "@/components/timeline-board";
@@ -33,6 +34,7 @@ export function PlannerPage({
   onUpdateTask,
   onDeleteTask,
   onCreateScheduleBlock,
+  onUpdateScheduleBlock,
   onDeleteScheduleBlock,
   onDismissCalendarEvent,
   onConfirmDraft,
@@ -50,7 +52,7 @@ export function PlannerPage({
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   const createTaskForm = useForm<CreateTaskValues>({
-    defaultValues: { title: "", notes: "", estimatedMinutes: 30, status: "inbox" },
+    defaultValues: { title: "", notes: "", estimatedMinutes: 30, priority: "low" },
   });
   const selectedTask = useMemo(
     () => dayPlan.tasks.find((task) => task.id === selectedTaskId) ?? dayPlan.tasks[0] ?? null,
@@ -62,9 +64,10 @@ export function PlannerPage({
           title: selectedTask.title,
           notes: selectedTask.notes ?? "",
           estimatedMinutes: selectedTask.estimatedMinutes,
-          status: selectedTask.status,
+          priority: selectedTask.priority,
+          lifecycle: getTaskLifecycleValue(selectedTask),
         }
-      : { title: "", notes: "", estimatedMinutes: 30, status: "inbox" },
+      : { title: "", notes: "", estimatedMinutes: 30, priority: "low", lifecycle: "active" },
   });
 
   const filteredQueueTasks = useMemo(() => {
@@ -82,21 +85,53 @@ export function PlannerPage({
       title: values.title,
       notes: values.notes || undefined,
       estimatedMinutes: Number(values.estimatedMinutes),
-      status: values.status,
+      priority: values.priority,
+      status: "planned",
     });
-    createTaskForm.reset({ title: "", notes: "", estimatedMinutes: 30, status: "inbox" });
+    createTaskForm.reset({ title: "", notes: "", estimatedMinutes: 30, priority: "low" });
   }
 
   async function handleDragEnd(event: DragEndEvent) {
     const slotIso = event.over?.data.current?.slotIso as string | undefined;
-    const draggedTask = event.active.data.current?.task as Task | undefined;
-    if (!slotIso || !draggedTask) {
+    const dragType = event.active.data.current?.dragType as "queue-task" | "schedule-block" | undefined;
+
+    if (!slotIso || !dragType) {
       return;
     }
 
-    const endAt = new Date(new Date(slotIso).getTime() + draggedTask.estimatedMinutes * 60000).toISOString();
-    startTransition(() => setSelectedTaskId(draggedTask.id));
-    await onCreateScheduleBlock({ taskId: draggedTask.id, startAt: slotIso, endAt, source: "manual" });
+    if (dragType === "queue-task") {
+      const draggedTask = event.active.data.current?.task as Task | undefined;
+      if (!draggedTask) {
+        return;
+      }
+
+      const endAt = new Date(new Date(slotIso).getTime() + draggedTask.estimatedMinutes * 60000).toISOString();
+
+      try {
+        startTransition(() => setSelectedTaskId(draggedTask.id));
+        await onCreateScheduleBlock({ taskId: draggedTask.id, startAt: slotIso, endAt, source: "manual" });
+      } catch (error) {
+        showActionError("Failed to schedule the task. Please try again.", error);
+      }
+      return;
+    }
+
+    const draggedBlock = event.active.data.current?.scheduleBlock as ScheduleBlock | undefined;
+    if (!draggedBlock) {
+      return;
+    }
+
+    const durationMs = new Date(draggedBlock.endAt).getTime() - new Date(draggedBlock.startAt).getTime();
+    const endAt = new Date(new Date(slotIso).getTime() + durationMs).toISOString();
+    if (slotIso === draggedBlock.startAt && endAt === draggedBlock.endAt) {
+      return;
+    }
+
+    try {
+      await onUpdateScheduleBlock(draggedBlock.id, { startAt: slotIso, endAt });
+    } catch (error) {
+      showActionError("Failed to move the scheduled task. Please try again.", error);
+    }
   }
 
   async function handleDeleteSelectedTask() {
@@ -122,7 +157,7 @@ export function PlannerPage({
   }
 
   return (
-    <DndContext sensors={sensors} onDragEnd={(event) => void handleDragEnd(event)}>
+    <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={(event) => void handleDragEnd(event)}>
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
         <div className="space-y-6">
           <CreateTaskCard
@@ -192,7 +227,16 @@ export function PlannerPage({
                 return;
               }
               try {
-                await onUpdateTask(selectedTask.id, values);
+                await onUpdateTask(selectedTask.id, {
+                  title: values.title,
+                  notes: values.notes,
+                  estimatedMinutes: values.estimatedMinutes,
+                  priority: values.priority,
+                  status:
+                    values.lifecycle === "active"
+                      ? resolveActiveTaskStatus(selectedTask, dayPlan.activeTimer?.taskId ?? null)
+                      : values.lifecycle,
+                });
               } catch (error) {
                 showActionError("Failed to save the task. Please try again.", error);
               }

@@ -1,13 +1,16 @@
 import type { DayPlan, Task } from "@timefraim/shared";
 
+export type TaskLifecycleValue = "active" | "done" | "archived";
+
 export type TaskFormValues = {
   title: string;
   notes: string;
   estimatedMinutes: number;
-  status: Task["status"];
+  priority: Task["priority"];
+  lifecycle: TaskLifecycleValue;
 };
 
-export type CreateTaskValues = TaskFormValues;
+export type CreateTaskValues = Omit<TaskFormValues, "lifecycle">;
 
 export type PlannerPageProps = {
   date: string;
@@ -17,15 +20,23 @@ export type PlannerPageProps = {
     title: string;
     notes?: string;
     estimatedMinutes: number;
+    priority: Task["priority"];
     status: Task["status"];
   }) => Promise<unknown>;
-  onUpdateTask: (taskId: string, values: Partial<TaskFormValues>) => Promise<unknown>;
+  onUpdateTask: (
+    taskId: string,
+    values: Partial<Omit<TaskFormValues, "lifecycle"> & { status: Task["status"] }>,
+  ) => Promise<unknown>;
   onDeleteTask: (taskId: string) => Promise<unknown>;
   onCreateScheduleBlock: (values: {
     taskId: string;
     startAt: string;
     endAt: string;
     source: "manual";
+  }) => Promise<unknown>;
+  onUpdateScheduleBlock: (scheduleBlockId: string, values: {
+    startAt?: string;
+    endAt?: string;
   }) => Promise<unknown>;
   onDeleteScheduleBlock: (scheduleBlockId: string) => Promise<unknown>;
   onDismissCalendarEvent: (calendarEventId: string) => Promise<unknown>;
@@ -37,12 +48,3 @@ export type PlannerPageProps = {
   isSyncing: boolean;
   isMutating: boolean;
 };
-
-export const STATUS_OPTIONS: Task["status"][] = [
-  "inbox",
-  "planned",
-  "scheduled",
-  "in_progress",
-  "done",
-  "archived",
-];

@@ -86,6 +86,7 @@ function AppContent() {
         onStartTimer: plannerMutations.actions.startTimer,
         onStopTimer: plannerMutations.actions.stopTimer,
         onSyncCalendar: plannerMutations.actions.syncCalendar,
+        onUpdateScheduleBlock: plannerMutations.actions.updateScheduleBlock,
         onUpdateTask: plannerMutations.actions.updateTask,
       }}
     />

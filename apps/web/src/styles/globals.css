@@ -10,6 +10,26 @@
   --text: #f8f8f7;
   --muted: #99a8ca;
   --muted-strong: #c8d1eb;
+  --priority-low-border: rgba(153, 168, 202, 0.28);
+  --priority-low-soft: rgba(153, 168, 202, 0.14);
+  --priority-low-card: rgba(152, 166, 201, 0.1);
+  --priority-low-block: rgba(152, 166, 201, 0.16);
+  --priority-low-text: #d9e1f3;
+  --priority-medium-border: rgba(116, 142, 255, 0.34);
+  --priority-medium-soft: rgba(116, 142, 255, 0.16);
+  --priority-medium-card: rgba(98, 117, 212, 0.12);
+  --priority-medium-block: rgba(98, 117, 212, 0.2);
+  --priority-medium-text: #dfe4ff;
+  --priority-high-border: rgba(255, 111, 59, 0.4);
+  --priority-high-soft: rgba(255, 111, 59, 0.16);
+  --priority-high-card: rgba(255, 111, 59, 0.12);
+  --priority-high-block: rgba(255, 111, 59, 0.22);
+  --priority-high-text: #fff0ea;
+  --priority-urgent-border: rgba(255, 90, 64, 0.48);
+  --priority-urgent-soft: rgba(255, 90, 64, 0.18);
+  --priority-urgent-card: rgba(255, 90, 64, 0.14);
+  --priority-urgent-block: rgba(255, 90, 64, 0.24);
+  --priority-urgent-text: #fff1ec;
   font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
   color: var(--text);
   background: radial-gradient(circle at top left, rgba(255, 111, 59, 0.18), transparent 28%),

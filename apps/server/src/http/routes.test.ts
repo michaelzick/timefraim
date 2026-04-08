@@ -140,6 +140,7 @@ describe("HTTP routes", () => {
         title: "Deep work",
         notes: "Protect focus time",
         estimatedMinutes: 60,
+        priority: "high",
         status: "planned",
       },
     });
@@ -152,6 +153,7 @@ describe("HTTP routes", () => {
         title: "Deep work",
         notes: "Protect focus time",
         estimatedMinutes: 60,
+        priority: "high",
         status: "planned",
       },
       "user",

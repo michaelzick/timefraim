@@ -5,14 +5,14 @@ describe("timeline geometry", () => {
   it("clamps events that begin before the visible window", () => {
     expect(getTimelinePlacement("2026-04-06", "2026-04-06T04:30:00", "2026-04-06T05:30:00")).toEqual({
       top: 0,
-      height: SLOT_HEIGHT,
+      height: 2 * SLOT_HEIGHT,
     });
   });
 
   it("clamps events that extend past midnight", () => {
     expect(getTimelinePlacement("2026-04-06", "2026-04-06T23:00:00", "2026-04-07T01:00:00")).toEqual({
-      top: 36 * SLOT_HEIGHT,
-      height: 2 * SLOT_HEIGHT,
+      top: 72 * SLOT_HEIGHT,
+      height: 4 * SLOT_HEIGHT,
     });
   });
 
@@ -22,8 +22,15 @@ describe("timeline geometry", () => {
 
   it("returns placement for normal in-range events", () => {
     expect(getTimelinePlacement("2026-04-06", "2026-04-06T09:00:00", "2026-04-06T10:30:00")).toEqual({
-      top: 8 * SLOT_HEIGHT,
-      height: 3 * SLOT_HEIGHT,
+      top: 16 * SLOT_HEIGHT,
+      height: 6 * SLOT_HEIGHT,
+    });
+  });
+
+  it("supports quarter-hour placement increments", () => {
+    expect(getTimelinePlacement("2026-04-06", "2026-04-06T09:15:00", "2026-04-06T09:30:00")).toEqual({
+      top: 17 * SLOT_HEIGHT,
+      height: SLOT_HEIGHT,
     });
   });
 });

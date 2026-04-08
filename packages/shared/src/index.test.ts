@@ -10,6 +10,7 @@ describe("shared barrel exports", () => {
         notes: null,
         estimatedMinutes: 45,
         status: "planned",
+        priority: "medium",
         scheduledBlockId: null,
         togglProjectId: null,
         createdAt: "2026-04-06T08:00:00.000Z",

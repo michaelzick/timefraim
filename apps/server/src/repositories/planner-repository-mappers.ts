@@ -17,6 +17,7 @@ export function mapTask(row: QueryResultRow) {
     notes: row.notes,
     estimatedMinutes: row.estimated_minutes,
     status: row.status,
+    priority: row.priority,
     scheduledBlockId: row.scheduled_block_id,
     togglProjectId: row.toggl_project_id,
     createdAt: asIso(row.created_at),

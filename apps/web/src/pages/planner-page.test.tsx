@@ -26,6 +26,7 @@ describe("PlannerPage", () => {
         onUpdateTask={noopAsync}
         onDeleteTask={noopAsync}
         onCreateScheduleBlock={noopAsync}
+        onUpdateScheduleBlock={noopAsync}
         onDeleteScheduleBlock={noopAsync}
         onDismissCalendarEvent={noopAsync}
         onConfirmDraft={noopAsync}
@@ -40,7 +41,7 @@ describe("PlannerPage", () => {
     await user.type(screen.getByLabelText("Task notes"), "Protect a quiet block.");
     await user.clear(screen.getByLabelText("Estimated minutes"));
     await user.type(screen.getByLabelText("Estimated minutes"), "60");
-    await user.selectOptions(screen.getByLabelText("Task status"), "planned");
+    await user.selectOptions(screen.getByLabelText("Task priority"), "high");
     await user.click(screen.getByRole("button", { name: /add task/i }));
 
     await waitFor(() => {
@@ -48,6 +49,7 @@ describe("PlannerPage", () => {
         title: "Deep work",
         notes: "Protect a quiet block.",
         estimatedMinutes: 60,
+        priority: "high",
         status: "planned",
       });
     });
@@ -72,6 +74,7 @@ describe("PlannerPage", () => {
         onUpdateTask={onUpdateTask}
         onDeleteTask={noopAsync}
         onCreateScheduleBlock={noopAsync}
+        onUpdateScheduleBlock={noopAsync}
         onDeleteScheduleBlock={noopAsync}
         onDismissCalendarEvent={noopAsync}
         onConfirmDraft={noopAsync}
@@ -84,11 +87,15 @@ describe("PlannerPage", () => {
 
     await user.clear(screen.getByLabelText("Detail title"));
     await user.type(screen.getByLabelText("Detail title"), "Refined task");
-    await user.click(screen.getByRole("button", { name: /save detail/i }));
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
     await waitFor(() => {
       expect(onUpdateTask).toHaveBeenCalledWith(
         dayPlan.tasks[0].id,
-        expect.objectContaining({ title: "Refined task" }),
+        expect.objectContaining({
+          title: "Refined task",
+          priority: dayPlan.tasks[0].priority,
+          status: "planned",
+        }),
       );
     });
 
@@ -112,6 +119,7 @@ describe("PlannerPage", () => {
         onUpdateTask={noopAsync}
         onDeleteTask={onDeleteTask}
         onCreateScheduleBlock={noopAsync}
+        onUpdateScheduleBlock={noopAsync}
         onDeleteScheduleBlock={noopAsync}
         onDismissCalendarEvent={noopAsync}
         onConfirmDraft={noopAsync}
@@ -146,6 +154,7 @@ describe("PlannerPage", () => {
         onUpdateTask={onUpdateTask}
         onDeleteTask={noopAsync}
         onCreateScheduleBlock={noopAsync}
+        onUpdateScheduleBlock={noopAsync}
         onDeleteScheduleBlock={noopAsync}
         onDismissCalendarEvent={noopAsync}
         onConfirmDraft={noopAsync}
@@ -156,7 +165,7 @@ describe("PlannerPage", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /save detail/i }));
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
       expect(alertSpy).toHaveBeenCalledWith(

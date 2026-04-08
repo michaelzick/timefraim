@@ -21,9 +21,16 @@ export class PlannerRepositoryTaskStore {
            when 'in_progress' then 0
            when 'scheduled' then 1
            when 'planned' then 2
-           when 'inbox' then 3
+           when 'inbox' then 2
            when 'done' then 4
            else 5
+         end,
+         case priority
+           when 'urgent' then 0
+           when 'high' then 1
+           when 'medium' then 2
+           when 'low' then 3
+           else 4
          end,
          updated_at desc`,
     );
@@ -37,10 +44,10 @@ export class PlannerRepositoryTaskStore {
 
   async createTask(input: CreateTaskInput, db: Queryable) {
     const result = await db.query(
-      `insert into public.tasks (title, notes, estimated_minutes, status, toggl_project_id)
-       values ($1, $2, $3, $4, $5)
+      `insert into public.tasks (title, notes, estimated_minutes, status, priority, toggl_project_id)
+       values ($1, $2, $3, $4, $5, $6)
        returning *`,
-      [input.title, input.notes, input.estimatedMinutes, input.status, input.togglProjectId],
+      [input.title, input.notes, input.estimatedMinutes, input.status, input.priority, input.togglProjectId],
     );
     return mapTask(result.rows[0]);
   }
@@ -57,6 +64,7 @@ export class PlannerRepositoryTaskStore {
     if (typeof patch.notes !== "undefined") assign("notes", patch.notes);
     if (typeof patch.estimatedMinutes !== "undefined") assign("estimated_minutes", patch.estimatedMinutes);
     if (typeof patch.status !== "undefined") assign("status", patch.status);
+    if (typeof patch.priority !== "undefined") assign("priority", patch.priority);
     if (typeof patch.togglProjectId !== "undefined") assign("toggl_project_id", patch.togglProjectId);
     if (typeof patch.scheduledBlockId !== "undefined") assign("scheduled_block_id", patch.scheduledBlockId);
 

@@ -3,6 +3,11 @@ import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@timefraim/shared";
 import { Clock3, GripVertical, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  formatTaskPriority,
+  getTaskPriorityBadgeClass,
+  getTaskPriorityCardClass,
+} from "@/features/planner/task-presentation";
 import { cn } from "@/lib/utils";
 
 export function TaskPill({
@@ -18,7 +23,7 @@ export function TaskPill({
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
-    data: { task },
+    data: { dragType: "queue-task", task },
   });
 
   return (
@@ -26,8 +31,9 @@ export function TaskPill({
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform) }}
       className={cn(
-        "group w-full rounded-[24px] border border-white/10 bg-[rgba(255,255,255,0.04)] p-4 text-left transition hover:border-white/20 hover:bg-white/6",
-        active && "border-[var(--accent)] bg-[rgba(255,111,59,0.12)]",
+        "group w-full rounded-[24px] border p-4 text-left transition hover:border-white/30",
+        getTaskPriorityCardClass(task.priority),
+        active && "ring-2 ring-[rgba(255,111,59,0.28)]",
         isDragging && "opacity-65",
       )}
       onClick={onSelect}
@@ -41,7 +47,7 @@ export function TaskPill({
       {...attributes}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
-        <Badge>{task.status.replace("_", " ")}</Badge>
+        <Badge className={getTaskPriorityBadgeClass(task.priority)}>{formatTaskPriority(task.priority)}</Badge>
         <div className="flex items-center gap-1">
           {onDelete ? (
             <button
