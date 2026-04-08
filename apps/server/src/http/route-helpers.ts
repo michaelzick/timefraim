@@ -16,8 +16,7 @@ export function withAuthenticatedRoute(handler: AuthenticatedHandler): RouteHand
     try {
       user = await requireAuthenticatedUser(request.headers.authorization);
     } catch (error) {
-      reply.status(401).send({ message: (error as Error).message });
-      return null;
+      return reply.status(401).send({ message: (error as Error).message });
     }
 
     return handler(request, reply, user);
@@ -35,7 +34,7 @@ export function parseDayQuery(query: unknown) {
 export function parseWithReply<T>(reply: FastifyReply, schema: ZodType<T>, value: unknown) {
   const result = schema.safeParse(value);
   if (!result.success) {
-    reply.status(400).send({ message: result.error.issues[0]?.message ?? "Invalid request" });
+    void reply.status(400).send({ message: result.error.issues[0]?.message ?? "Invalid request" });
     return null;
   }
 

@@ -17,8 +17,7 @@ export function registerIntegrationRoutes(app: FastifyInstance, plannerService: 
         return null;
       }
       if (payload.email.toLowerCase() !== user.email.toLowerCase()) {
-        reply.status(403).send({ message: "Google session must belong to the signed-in account" });
-        return null;
+        return reply.status(403).send({ message: "Google session must belong to the signed-in account" });
       }
 
       return plannerService.saveGoogleSession({
