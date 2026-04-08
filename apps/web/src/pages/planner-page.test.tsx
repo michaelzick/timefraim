@@ -128,4 +128,42 @@ describe("PlannerPage", () => {
       expect(onDeleteTask).toHaveBeenCalledWith("task-1f8f9660-0000-4000-8000-000000000001");
     });
   });
+
+  it("shows an error when saving task details fails", async () => {
+    const user = userEvent.setup();
+    const onUpdateTask = vi.fn().mockRejectedValue(new Error("Schedule conflict with Standup"));
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => undefined);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    render(
+      <PlannerPage
+        date="2026-04-06"
+        dayPlan={buildDayPlan()}
+        isMutating={false}
+        isSyncing={false}
+        onDateChange={vi.fn()}
+        onCreateTask={noopAsync}
+        onUpdateTask={onUpdateTask}
+        onDeleteTask={noopAsync}
+        onCreateScheduleBlock={noopAsync}
+        onDeleteScheduleBlock={noopAsync}
+        onDismissCalendarEvent={noopAsync}
+        onConfirmDraft={noopAsync}
+        onRejectDraft={noopAsync}
+        onStartTimer={noopAsync}
+        onStopTimer={noopAsync}
+        onSyncCalendar={noopAsync}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /save detail/i }));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith("Failed to save the task. Please try again.");
+    });
+    expect(errorSpy).toHaveBeenCalledWith(
+      "Failed to save the task. Please try again.",
+      expect.any(Error),
+    );
+  });
 });

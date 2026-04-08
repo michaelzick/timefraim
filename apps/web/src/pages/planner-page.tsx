@@ -177,11 +177,15 @@ export function PlannerPage({
             activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
             isMutating={isMutating}
             onDeleteTask={() => void handleDeleteSelectedTask()}
-            onSaveTask={(values) => {
+            onSaveTask={async (values) => {
               if (!selectedTask) {
-                return Promise.resolve();
+                return;
               }
-              return onUpdateTask(selectedTask.id, values);
+              try {
+                await onUpdateTask(selectedTask.id, values);
+              } catch (error) {
+                showActionError("Failed to save the task. Please try again.", error);
+              }
             }}
             onStartTimer={(taskId) => void onStartTimer(taskId)}
             onStopTimer={() => void onStopTimer()}
