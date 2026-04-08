@@ -8,7 +8,7 @@ import {
 } from "@timefraim/shared";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { PlannerService } from "../services/planner-service.js";
+import type { PlannerService } from "../services/planner-service.js";
 import { todayIsoDate } from "../utils/date.js";
 
 export function createMcpServer(plannerService: PlannerService, profile: "read-only" | "full-access") {
@@ -35,7 +35,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
       const dayPlan = await plannerService.getDayPlan(todayIsoDate());
       return {
         content: [{ type: "text", text: JSON.stringify(dayPlan.tasks, null, 2) }],
-        structuredContent: dayPlan.tasks,
+        structuredContent: { tasks: dayPlan.tasks },
       };
     },
   );
@@ -53,7 +53,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
       const dayPlan = await plannerService.getDayPlan(date ?? todayIsoDate());
       return {
         content: [{ type: "text", text: JSON.stringify(dayPlan.calendarEvents, null, 2) }],
-        structuredContent: dayPlan.calendarEvents,
+        structuredContent: { calendarEvents: dayPlan.calendarEvents },
       };
     },
   );
@@ -71,7 +71,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
       const dayPlan = await plannerService.getDayPlan(date ?? todayIsoDate());
       return {
         content: [{ type: "text", text: JSON.stringify(dayPlan, null, 2) }],
-        structuredContent: dayPlan,
+        structuredContent: { dayPlan },
       };
     },
   );
@@ -88,7 +88,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
         const draft = await plannerService.createDraft("task.create", input, "assistant");
         return {
           content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
-          structuredContent: draft,
+          structuredContent: { draft },
         };
       },
     );
@@ -104,7 +104,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
         const draft = await plannerService.createDraft("schedule_block.create", input, "assistant");
         return {
           content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
-          structuredContent: draft,
+          structuredContent: { draft },
         };
       },
     );
@@ -120,7 +120,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
         const draft = await plannerService.createDraft("schedule_block.update", input, "assistant");
         return {
           content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
-          structuredContent: draft,
+          structuredContent: { draft },
         };
       },
     );
@@ -136,7 +136,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
         const draft = await plannerService.createDraft("schedule_block.delete", input, "assistant");
         return {
           content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
-          structuredContent: draft,
+          structuredContent: { draft },
         };
       },
     );
@@ -154,7 +154,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
         const draft = await plannerService.confirmDraft(draftId, "assistant");
         return {
           content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
-          structuredContent: draft,
+          structuredContent: { draft },
         };
       },
     );
@@ -170,7 +170,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
         const draft = await plannerService.createDraft("timer.start", input, "assistant");
         return {
           content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
-          structuredContent: draft,
+          structuredContent: { draft },
         };
       },
     );
@@ -186,7 +186,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
         const draft = await plannerService.createDraft("timer.stop", { source: "ai" }, "assistant");
         return {
           content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
-          structuredContent: draft,
+          structuredContent: { draft },
         };
       },
     );

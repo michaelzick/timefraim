@@ -41,8 +41,9 @@ export async function requireAuthenticatedUser(authorizationHeader: string | und
   }
 
   const header = decodeProtectedHeader(token);
-  const verifier = header.alg?.startsWith("HS") ? JWT_SECRET : JWKS;
-  const { payload } = await jwtVerify(token, verifier);
+  const { payload } = header.alg?.startsWith("HS")
+    ? await jwtVerify(token, JWT_SECRET)
+    : await jwtVerify(token, JWKS);
   const parsed = payloadSchema.parse(payload);
 
   if (parsed.email.toLowerCase() !== env.ALLOWED_EMAIL.toLowerCase()) {
