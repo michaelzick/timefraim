@@ -1,0 +1,83 @@
+import { deleteGoogleScheduleBlock, upsertGoogleScheduleBlock, type GoogleConnection } from "../integration/google-calendar.js";
+import { startTogglTimer, stopTogglTimer, type TogglConnection } from "../integration/toggl-track.js";
+import { pool } from "../db/pool.js";
+import type { PlannerRepository } from "../repositories/planner-repository.js";
+import type { SideEffect } from "./planner-service-types.js";
+
+export async function runPlannerSideEffects(
+  repository: PlannerRepository,
+  sideEffects: SideEffect[],
+  googleConnection: GoogleConnection | null,
+  togglConnection: TogglConnection | null,
+) {
+  for (const effect of sideEffects) {
+    if (effect.type === "google.upsert") {
+      const [task, block] = await Promise.all([
+        repository.getTask(effect.taskId, pool),
+        repository.getScheduleBlock(effect.scheduleBlockId, pool),
+      ]);
+      if (!task || !block) {
+        continue;
+      }
+
+      try {
+        const googleEventId = await upsertGoogleScheduleBlock({ connection: googleConnection, task, block });
+        await repository.updateScheduleBlock(
+          block.id,
+          { googleEventId, state: googleEventId ? "synced" : "confirmed" },
+          pool,
+        );
+        await repository.upsertCalendarEvent(
+          {
+            externalEventId: googleEventId ?? `local-${block.id}`,
+            title: task.title,
+            startAt: block.startAt,
+            endAt: block.endAt,
+            isAppManaged: true,
+            scheduleBlockId: block.id,
+            rawPayload: { source: "timefraim", pendingSync: !googleEventId },
+            externalUpdatedAt: null,
+            dismissedExternalUpdatedAt: null,
+          },
+          pool,
+        );
+      } catch (error) {
+        await repository.updateScheduleBlock(block.id, { state: "failed" }, pool);
+        console.error("Google schedule upsert failed", error);
+      }
+      continue;
+    }
+
+    if (effect.type === "google.delete") {
+      try {
+        await deleteGoogleScheduleBlock(googleConnection, effect.googleEventId);
+      } catch (error) {
+        console.error("Google schedule delete failed", error);
+      }
+      continue;
+    }
+
+    if (effect.type === "toggl.start") {
+      const task = await repository.getTask(effect.taskId, pool);
+      if (!task) {
+        continue;
+      }
+
+      try {
+        const result = await startTogglTimer({ connection: togglConnection, task, source: effect.source });
+        if (result.togglEntryId) {
+          await repository.attachTogglEntry(effect.timerSessionId, result.togglEntryId, pool);
+        }
+      } catch (error) {
+        console.error("Toggl start failed", error);
+      }
+      continue;
+    }
+
+    try {
+      await stopTogglTimer(togglConnection, effect.togglEntryId);
+    } catch (error) {
+      console.error("Toggl stop failed", error);
+    }
+  }
+}

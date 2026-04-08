@@ -18,7 +18,7 @@ export function SettingsPage({
   isSaving,
 }: {
   authSession: AuthSession;
-  onSaveToggl: (values: TogglFormValues) => Promise<void>;
+  onSaveToggl: (values: TogglFormValues) => Promise<unknown>;
   isSaving: boolean;
 }) {
   const togglForm = useForm<TogglFormValues>({

@@ -1,0 +1,107 @@
+import {
+  auditLogSchema,
+  calendarEventViewSchema,
+  scheduleBlockSchema,
+  syncDraftSchema,
+  taskSchema,
+  timerSessionSchema,
+} from "@timefraim/shared";
+import type { QueryResultRow } from "pg";
+import { asIso } from "../utils/date.js";
+import type { CalendarEventRecord } from "./planner-repository-types.js";
+
+export function mapTask(row: QueryResultRow) {
+  return taskSchema.parse({
+    id: row.id,
+    title: row.title,
+    notes: row.notes,
+    estimatedMinutes: row.estimated_minutes,
+    status: row.status,
+    scheduledBlockId: row.scheduled_block_id,
+    togglProjectId: row.toggl_project_id,
+    createdAt: asIso(row.created_at),
+    updatedAt: asIso(row.updated_at),
+  });
+}
+
+export function mapScheduleBlock(row: QueryResultRow) {
+  return scheduleBlockSchema.parse({
+    id: row.id,
+    taskId: row.task_id,
+    startAt: asIso(row.start_at),
+    endAt: asIso(row.end_at),
+    source: row.source,
+    state: row.state,
+    googleEventId: row.google_event_id,
+    createdAt: asIso(row.created_at),
+    updatedAt: asIso(row.updated_at),
+  });
+}
+
+export function mapCalendarEventView(row: QueryResultRow) {
+  return calendarEventViewSchema.parse({
+    id: row.id,
+    externalEventId: row.external_event_id,
+    title: row.title,
+    startAt: asIso(row.start_at),
+    endAt: asIso(row.end_at),
+    isAppManaged: row.is_app_managed,
+  });
+}
+
+export function mapCalendarEventRecord(row: QueryResultRow): CalendarEventRecord {
+  return {
+    id: row.id,
+    externalEventId: row.external_event_id,
+    title: row.title,
+    startAt: asIso(row.start_at)!,
+    endAt: asIso(row.end_at)!,
+    isAppManaged: row.is_app_managed,
+    scheduleBlockId: row.schedule_block_id,
+    rawPayload: (row.raw_payload ?? {}) as Record<string, unknown>,
+    externalUpdatedAt: asIso(row.external_updated_at),
+    dismissedExternalUpdatedAt: asIso(row.dismissed_external_updated_at),
+    createdAt: asIso(row.created_at)!,
+    updatedAt: asIso(row.updated_at)!,
+  };
+}
+
+export function mapDraft(row: QueryResultRow) {
+  return syncDraftSchema.parse({
+    id: row.id,
+    kind: row.kind,
+    payload: row.payload,
+    diffSummary: row.diff_summary,
+    status: row.status,
+    actorRole: row.actor_role,
+    expiresAt: asIso(row.expires_at),
+    createdAt: asIso(row.created_at),
+    appliedAt: asIso(row.applied_at),
+    rejectedAt: asIso(row.rejected_at),
+  });
+}
+
+export function mapTimer(row: QueryResultRow) {
+  return timerSessionSchema.parse({
+    id: row.id,
+    taskId: row.task_id,
+    togglEntryId: row.toggl_entry_id,
+    startedAt: asIso(row.started_at),
+    endedAt: asIso(row.ended_at),
+    durationSeconds: row.duration_seconds,
+    source: row.source,
+  });
+}
+
+export function mapAuditLog(row: QueryResultRow) {
+  return auditLogSchema.parse({
+    id: row.id,
+    actorRole: row.actor_role,
+    action: row.action,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    diffSummary: row.diff_summary,
+    payload: row.payload,
+    createdAt: asIso(row.created_at),
+  });
+}

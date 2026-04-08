@@ -1,0 +1,31 @@
+import type { ActorRole, DraftKind, DraftStatus, SyncDraft } from "@timefraim/shared";
+import type { Queryable } from "../db/pool.js";
+import type { PlannerRepository } from "../repositories/planner-repository.js";
+
+export type SideEffect =
+  | { type: "google.upsert"; taskId: string; scheduleBlockId: string }
+  | { type: "google.delete"; googleEventId: string | null; scheduleBlockId: string }
+  | { type: "toggl.start"; taskId: string; timerSessionId: string; source: "manual" | "ai" | "sync" }
+  | { type: "toggl.stop"; togglEntryId: string | null | undefined };
+
+export type DraftToApply = {
+  id: string | null;
+  kind: DraftKind;
+  payload: Record<string, unknown>;
+  diffSummary: string;
+  status: DraftStatus;
+};
+
+export type DraftHandlerContext = {
+  actorRole: ActorRole;
+  client: Queryable;
+  draft: DraftToApply;
+  googleConnected: boolean;
+  markApplied: () => Promise<SyncDraft | null>;
+  repository: PlannerRepository;
+  sideEffects: SideEffect[];
+};
+
+export function isUniqueViolation(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
+}

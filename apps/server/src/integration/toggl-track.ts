@@ -22,6 +22,24 @@ async function parseJsonResponse(response: Response): Promise<Record<string, unk
   return (await response.json()) as Record<string, unknown>;
 }
 
+function getEntryId(payload: Record<string, unknown> | null) {
+  if (!payload) {
+    return null;
+  }
+
+  if (typeof payload.id === "string" || typeof payload.id === "number") {
+    return `${payload.id}`;
+  }
+
+  const nestedPayload = payload.data;
+  if (typeof nestedPayload === "object" && nestedPayload !== null && "id" in nestedPayload) {
+    const id = nestedPayload.id;
+    return typeof id === "string" || typeof id === "number" ? `${id}` : null;
+  }
+
+  return null;
+}
+
 export async function startTogglTimer(params: {
   connection: TogglConnection | null;
   task: Task;
@@ -62,8 +80,7 @@ export async function startTogglTimer(params: {
 
   const payload = await parseJsonResponse(response);
   return {
-    togglEntryId:
-      payload && typeof payload.id !== "undefined" ? String(payload.id) : payload?.data ? String((payload.data as { id?: string | number }).id ?? "") : null,
+    togglEntryId: getEntryId(payload),
   };
 }
 

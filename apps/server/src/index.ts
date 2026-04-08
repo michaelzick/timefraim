@@ -56,7 +56,7 @@ await app.register(cors, {
   exposedHeaders: ["Mcp-Session-Id"],
 });
 
-await registerHttpRoutes(app, plannerService);
+registerHttpRoutes(app, plannerService);
 
 app.post("/mcp", async (request, reply) => {
   try {
