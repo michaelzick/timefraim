@@ -25,8 +25,9 @@ import {
   type TimerStart,
   type TogglConnect,
 } from "@timefraim/shared";
+import { env } from "@/lib/env";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const API_BASE_URL = env.apiBaseUrl;
 
 type Schema<T> = {
   parse: (value: unknown) => T;

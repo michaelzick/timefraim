@@ -28,18 +28,22 @@ export function useGoogleSessionSync({ session, token, onSynced }: UseGoogleSess
     }
 
     syncedGoogleSessionSignature.current = sessionSignature;
-    void api
-      .saveGoogleSession(token, {
-        accessToken: providerToken,
-        refreshToken: providerRefreshToken,
-        expiresAt,
-        email: session?.user.email ?? "",
-        calendarId: "primary",
-      })
-      .then(onSynced)
-      .catch((error: unknown) => {
+    const syncGoogleSession = async () => {
+      try {
+        await api.saveGoogleSession(token, {
+          accessToken: providerToken,
+          refreshToken: providerRefreshToken,
+          expiresAt,
+          email: session?.user.email ?? "",
+          calendarId: "primary",
+        });
+        await onSynced();
+      } catch (error) {
         console.error(error);
         syncedGoogleSessionSignature.current = null;
-      });
+      }
+    };
+
+    void syncGoogleSession();
   }, [onSynced, session, token]);
 }

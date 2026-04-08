@@ -17,6 +17,21 @@ function AppContent() {
   const { authQuery, date, dayPlanQuery, loading, plannerMutations, queryError, queryErrorMessage, setDate } =
     useAppShellData(session);
 
+  const handleRetry = () => {
+    const retry = async () => {
+      await Promise.all([
+        authQuery.refetch(),
+        dayPlanQuery.refetch(),
+      ]);
+    };
+
+    void retry();
+  };
+
+  const handleSignOut = () => {
+    void supabase.auth.signOut();
+  };
+
   if (!session) {
     return <LoginView />;
   }
@@ -30,15 +45,10 @@ function AppContent() {
             <h1 className="mt-5 text-3xl font-semibold text-white">TimeFraim could not finish loading.</h1>
             <p className="mt-4 text-base leading-7 text-[var(--muted-strong)]">{queryErrorMessage}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button
-                onClick={() => {
-                  void authQuery.refetch();
-                  void dayPlanQuery.refetch();
-                }}
-              >
+              <Button onClick={handleRetry}>
                 Retry
               </Button>
-              <Button variant="secondary" onClick={() => void supabase.auth.signOut()}>
+              <Button variant="secondary" onClick={handleSignOut}>
                 Sign out
               </Button>
             </div>
@@ -62,7 +72,7 @@ function AppContent() {
       isSavingToggl={plannerMutations.isSavingToggl}
       onDateChange={setDate}
       onSaveToggl={plannerMutations.actions.saveToggl}
-      onSignOut={() => void supabase.auth.signOut()}
+      onSignOut={handleSignOut}
       plannerPageProps={{
         isMutating: plannerMutations.isMutating,
         isSyncing: plannerMutations.isSyncing,

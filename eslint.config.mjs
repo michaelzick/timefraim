@@ -19,7 +19,10 @@ export default tseslint.config(
     ],
   },
   js.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.recommendedTypeChecked.map((config) => ({
+    ...config,
+    files: sourceFiles,
+  })),
   {
     files: sourceFiles,
     languageOptions: {

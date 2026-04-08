@@ -2,6 +2,7 @@ import type { Session } from "@supabase/supabase-js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useEffectEvent, useMemo, useState } from "react";
 import { api } from "@/lib/api";
+import { env } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
 import { getTodayDate, getTimezoneOffsetForDate } from "@/lib/utils";
 import { useGoogleSessionSync } from "@/hooks/use-google-session-sync";
@@ -21,7 +22,7 @@ export function useAppShellData(session: Session | null) {
 
   const ensureAllowedEmail = useEffectEvent(async () => {
     const email = session?.user.email?.toLowerCase();
-    const allowedEmail = import.meta.env.VITE_ALLOWED_EMAIL.toLowerCase();
+    const allowedEmail = env.allowedEmail;
     if (email && email !== allowedEmail) {
       await supabase.auth.signOut();
       window.alert(`This app only allows ${allowedEmail}.`);

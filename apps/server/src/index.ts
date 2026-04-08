@@ -71,7 +71,7 @@ app.post("/mcp", async (request, reply) => {
     }
 
     if (!transport && !isInitializeRequest(request.body)) {
-      reply.status(400).send({
+      return reply.status(400).send({
         jsonrpc: "2.0",
         error: {
           code: -32000,
@@ -79,7 +79,6 @@ app.post("/mcp", async (request, reply) => {
         },
         id: null,
       });
-      return;
     }
 
     if (!transport) {
@@ -94,12 +93,12 @@ app.post("/mcp", async (request, reply) => {
       await server.connect(transport);
     }
 
-    reply.hijack();
+    void reply.hijack();
     await transport.handleRequest(request.raw, reply.raw, request.body);
   } catch (error) {
     app.log.error(error);
     if (!reply.sent) {
-      reply.status(401).send({
+      return reply.status(401).send({
         jsonrpc: "2.0",
         error: {
           code: -32001,
@@ -112,7 +111,7 @@ app.post("/mcp", async (request, reply) => {
 });
 
 app.get("/mcp", async (request, reply) => {
-  reply.status(405).header("Allow", "POST").send("Method Not Allowed");
+  return reply.status(405).header("Allow", "POST").send("Method Not Allowed");
 });
 
 const address = await app.listen({

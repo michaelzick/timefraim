@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { env } from "@/lib/env";
 
 type TogglFormValues = {
   apiToken: string;
@@ -106,7 +107,7 @@ export function SettingsPage({
           <div className="space-y-4 text-sm text-[var(--muted-strong)]">
             <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
               <p className="font-medium text-white">Remote endpoint</p>
-              <p className="mt-2 break-all">{import.meta.env.VITE_API_BASE_URL.replace(/\/$/, "")}/mcp</p>
+              <p className="mt-2 break-all">{env.apiBaseUrl}/mcp</p>
             </div>
             <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
               <p className="font-medium text-white">Access profiles</p>

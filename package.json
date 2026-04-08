@@ -12,7 +12,7 @@
     "dev": "corepack pnpm -r --parallel --filter @timefraim/server --filter @timefraim/web dev",
     "dev:web": "corepack pnpm --filter @timefraim/web dev",
     "dev:server": "corepack pnpm --filter @timefraim/server dev",
-    "lint": "corepack pnpm --filter @timefraim/shared lint && corepack pnpm --filter @timefraim/server lint && corepack pnpm --filter @timefraim/web lint",
+    "lint": "corepack pnpm exec eslint eslint.config.mjs && corepack pnpm --filter @timefraim/shared lint && corepack pnpm --filter @timefraim/server lint && corepack pnpm --filter @timefraim/web lint",
     "typecheck": "corepack pnpm --filter @timefraim/shared typecheck && corepack pnpm --filter @timefraim/server typecheck && corepack pnpm --filter @timefraim/web typecheck",
     "build": "corepack pnpm --filter @timefraim/shared build && corepack pnpm --filter @timefraim/server build && corepack pnpm --filter @timefraim/web build",
     "test": "corepack pnpm --filter @timefraim/shared test && corepack pnpm --filter @timefraim/server test && corepack pnpm --filter @timefraim/web test",

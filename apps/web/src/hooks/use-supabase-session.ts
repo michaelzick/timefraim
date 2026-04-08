@@ -7,11 +7,17 @@ export function useSupabaseSession() {
 
   useEffect(() => {
     let mounted = true;
-    void supabase.auth.getSession().then(({ data }) => {
-      if (mounted) {
-        startTransition(() => setSession(data.session));
+    const loadSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (mounted) {
+          startTransition(() => setSession(data.session));
+        }
+      } catch (error) {
+        console.error(error);
       }
-    });
+    };
+    void loadSession();
 
     const { data } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, nextSession: Session | null) => {
