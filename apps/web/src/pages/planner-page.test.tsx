@@ -159,10 +159,12 @@ describe("PlannerPage", () => {
     await user.click(screen.getByRole("button", { name: /save detail/i }));
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith("Failed to save the task. Please try again.");
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Tasks can\'t overlap on the timeline. This change would overlap with "Standup". Shorten or move this task, or clear the conflicting event first.',
+      );
     });
     expect(errorSpy).toHaveBeenCalledWith(
-      "Failed to save the task. Please try again.",
+      'Tasks can\'t overlap on the timeline. This change would overlap with "Standup". Shorten or move this task, or clear the conflicting event first.',
       expect.any(Error),
     );
   });

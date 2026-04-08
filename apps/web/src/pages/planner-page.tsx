@@ -10,9 +10,19 @@ import { TaskQueueCard } from "@/features/planner/task-queue-card";
 import { type CreateTaskValues, type PlannerPageProps, type TaskFormValues } from "@/features/planner/types";
 import { TimelineBoard } from "@/components/timeline-board";
 
+function getActionErrorMessage(message: string, error: unknown) {
+  if (error instanceof Error && error.message.startsWith("Schedule conflict with ")) {
+    const conflictingTitle = error.message.slice("Schedule conflict with ".length).trim();
+    return `Tasks can't overlap on the timeline. This change would overlap with "${conflictingTitle}". Shorten or move this task, or clear the conflicting event first.`;
+  }
+
+  return message;
+}
+
 function showActionError(message: string, error: unknown) {
-  console.error(message, error);
-  window.alert(message);
+  const displayMessage = getActionErrorMessage(message, error);
+  console.error(displayMessage, error);
+  window.alert(displayMessage);
 }
 
 export function PlannerPage({
