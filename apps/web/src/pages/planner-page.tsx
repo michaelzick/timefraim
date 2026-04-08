@@ -1,5 +1,5 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import type { DayPlan, Task } from "@timefraim/shared";
 import { useDeferredValue, useMemo, useRef, useState, startTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -76,6 +76,12 @@ export function PlannerPage({
   const [search, setSearch] = useState("");
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const deferredSearch = useDeferredValue(search);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+  );
 
   const createTaskForm = useForm<CreateTaskValues>({
     defaultValues: {
@@ -172,7 +178,12 @@ export function PlannerPage({
     startTransition(() => {
       setSelectedTaskId(nextTask?.id ?? null);
     });
-    await onDeleteTask(selectedTask.id);
+    try {
+      await onDeleteTask(selectedTask.id);
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+      window.alert("Failed to delete the task. Please try again.");
+    }
   }
 
   async function handleDismissCalendarEvent(calendarEventId: string, title: string) {
@@ -180,18 +191,28 @@ export function PlannerPage({
       return;
     }
 
-    await onDismissCalendarEvent(calendarEventId);
+    try {
+      await onDismissCalendarEvent(calendarEventId);
+    } catch (error) {
+      console.error("Failed to dismiss calendar event:", error);
+      window.alert("Failed to dismiss the calendar event. Please try again.");
+    }
   }
 
   async function handleDeleteScheduleBlock(scheduleBlockId: string, title: string) {
     if (!window.confirm(`Remove "${title}" from the timeline? The task will return to the queue.`)) {
       return;
     }
-    await onDeleteScheduleBlock(scheduleBlockId);
+    try {
+      await onDeleteScheduleBlock(scheduleBlockId);
+    } catch (error) {
+      console.error("Failed to remove schedule block:", error);
+      window.alert("Failed to remove the schedule block. Please try again.");
+    }
   }
 
   return (
-    <DndContext onDragEnd={(event) => void handleDragEnd(event)}>
+    <DndContext sensors={sensors} onDragEnd={(event) => void handleDragEnd(event)}>
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
         <div className="space-y-6">
         <Card className="overflow-hidden">
@@ -260,6 +281,15 @@ export function PlannerPage({
                   onSelect={() => {
                     setSelectedTaskId(task.id);
                     detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  }}
+                  onDelete={() => {
+                    if (!window.confirm(`Delete "${task.title}"?`)) {
+                      return;
+                    }
+                    onDeleteTask(task.id).catch((error) => {
+                      console.error("Failed to delete task:", error);
+                      window.alert("Failed to delete the task. Please try again.");
+                    });
                   }}
                 />
               ))}
