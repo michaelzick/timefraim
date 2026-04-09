@@ -2,29 +2,9 @@ import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors, type D
 import type { ScheduleBlock, Task } from "@timefraim/shared";
 import { useDeferredValue, useMemo, useRef, useState, startTransition } from "react";
 import { useForm } from "react-hook-form";
-import { PlannerActivityCard } from "@/features/planner/planner-activity-card";
-import { CreateTaskCard } from "@/features/planner/create-task-card";
-import { PlannerSummaryCard } from "@/features/planner/planner-summary-card";
-import { TaskDetailCard } from "@/features/planner/task-detail-card";
-import { getTaskLifecycleValue, resolveActiveTaskStatus } from "@/features/planner/task-presentation";
-import { TaskQueueCard } from "@/features/planner/task-queue-card";
+import { PlannerDetailColumn, PlannerQueueColumn, PlannerTimelineColumn } from "@/features/planner/planner-page-columns";
+import { EMPTY_CREATE_TASK_VALUES, getTaskFormValues, resolvePlannerTaskStatus, showActionError, type LocalPlannerScheduleBlockUpdateInput, type LocalPlannerTaskInput, type LocalPlannerTaskUpdateInput, type PlannerCreateTaskValues, type PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
 import { type CreateTaskValues, type PlannerPageProps, type TaskFormValues } from "@/features/planner/types";
-import { TimelineBoard } from "@/components/timeline-board";
-
-function getActionErrorMessage(message: string, error: unknown) {
-  if (error instanceof Error && error.message.startsWith("Schedule conflict with ")) {
-    const conflictingTitle = error.message.slice("Schedule conflict with ".length).trim();
-    return `Tasks can't overlap on the timeline. This change would overlap with "${conflictingTitle}". Shorten or move this task, or clear the conflicting event first.`;
-  }
-
-  return message;
-}
-
-function showActionError(message: string, error: unknown) {
-  const displayMessage = getActionErrorMessage(message, error);
-  console.error(displayMessage, error);
-  window.alert(displayMessage);
-}
 
 export function PlannerPage({
   date,
@@ -45,30 +25,22 @@ export function PlannerPage({
   isSyncing,
   isMutating,
 }: PlannerPageProps) {
+  const createTask = onCreateTask as (values: LocalPlannerTaskInput) => Promise<unknown>;
+  const updateTask = onUpdateTask as (taskId: string, values: LocalPlannerTaskUpdateInput) => Promise<unknown>;
+  const updateScheduleBlock = onUpdateScheduleBlock as (scheduleBlockId: string, values: LocalPlannerScheduleBlockUpdateInput) => Promise<unknown>;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(dayPlan.tasks[0]?.id ?? null);
   const [search, setSearch] = useState("");
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const deferredSearch = useDeferredValue(search);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
-  const createTaskForm = useForm<CreateTaskValues>({
-    defaultValues: { title: "", notes: "", estimatedMinutes: 30, priority: "low" },
-  });
+  const createTaskForm = useForm<CreateTaskValues>({ defaultValues: EMPTY_CREATE_TASK_VALUES });
   const selectedTask = useMemo(
     () => dayPlan.tasks.find((task) => task.id === selectedTaskId) ?? dayPlan.tasks[0] ?? null,
     [dayPlan.tasks, selectedTaskId],
   );
-  const detailForm = useForm<TaskFormValues>({
-    values: selectedTask
-      ? {
-          title: selectedTask.title,
-          notes: selectedTask.notes ?? "",
-          estimatedMinutes: selectedTask.estimatedMinutes,
-          priority: selectedTask.priority,
-          lifecycle: getTaskLifecycleValue(selectedTask),
-        }
-      : { title: "", notes: "", estimatedMinutes: 30, priority: "low", lifecycle: "active" },
-  });
+  const detailFormValues = useMemo(() => getTaskFormValues(selectedTask), [selectedTask]);
+  const detailForm = useForm<TaskFormValues>({ values: detailFormValues });
 
   const filteredQueueTasks = useMemo(() => {
     const needle = deferredSearch.trim().toLowerCase();
@@ -80,15 +52,16 @@ export function PlannerPage({
     });
   }, [dayPlan.tasks, deferredSearch]);
 
-  async function handleCreateTask(values: CreateTaskValues) {
-    await onCreateTask({
+  async function handleCreateTask(values: PlannerCreateTaskValues) {
+    const taskInput: LocalPlannerTaskInput = {
       title: values.title,
       notes: values.notes || undefined,
       estimatedMinutes: Number(values.estimatedMinutes),
       priority: values.priority,
       status: "planned",
-    });
-    createTaskForm.reset({ title: "", notes: "", estimatedMinutes: 30, priority: "low" });
+    };
+    await createTask(taskInput);
+    createTaskForm.reset(EMPTY_CREATE_TASK_VALUES);
   }
 
   async function handleDragEnd(event: DragEndEvent) {
@@ -128,7 +101,8 @@ export function PlannerPage({
     }
 
     try {
-      await onUpdateScheduleBlock(draggedBlock.id, { startAt: slotIso, endAt });
+      const scheduleBlockUpdate: LocalPlannerScheduleBlockUpdateInput = { startAt: slotIso, endAt };
+      await updateScheduleBlock(draggedBlock.id, scheduleBlockUpdate);
     } catch (error) {
       showActionError("Failed to move the scheduled task. Please try again.", error);
     }
@@ -151,106 +125,96 @@ export function PlannerPage({
     }
   }
 
-  function handleSelectTask(taskId: string) {
-    setSelectedTaskId(taskId);
-    detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  function handleQueueTaskDelete(taskId: string, title: string) {
+    if (!window.confirm(`Delete "${title}"?`)) {
+      return;
+    }
+
+    void onDeleteTask(taskId).catch((error) => showActionError("Failed to delete the task. Please try again.", error));
+  }
+
+  function handleDismissTimelineEvent(calendarEventId: string, title: string) {
+    if (!window.confirm(`Hide "${title}" from the planner timeline until it changes in Google Calendar?`)) {
+      return;
+    }
+
+    void onDismissCalendarEvent(calendarEventId).catch((error) => {
+      showActionError("Failed to dismiss the calendar event. Please try again.", error);
+    });
+  }
+
+  function handleDeleteTimelineBlock(blockId: string, title: string) {
+    if (!window.confirm(`Remove "${title}" from the timeline? The task will return to the queue.`)) {
+      return;
+    }
+
+    void onDeleteScheduleBlock(blockId).catch((error) => {
+      showActionError("Failed to remove the schedule block. Please try again.", error);
+    });
+  }
+
+  function handleSelectTask(taskId: string) { setSelectedTaskId(taskId); detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+
+  async function handleSaveTask(values: PlannerSaveTaskValues) {
+    if (!selectedTask) {
+      return;
+    }
+
+    const status = resolvePlannerTaskStatus(selectedTask, values.lifecycle, dayPlan.activeTimer?.taskId ?? null);
+
+    try {
+      const taskUpdate: LocalPlannerTaskUpdateInput = {
+        title: values.title,
+        notes: values.notes,
+        estimatedMinutes: values.estimatedMinutes,
+        priority: values.priority,
+        status,
+      };
+      await updateTask(selectedTask.id, taskUpdate);
+    } catch (error) {
+      showActionError("Failed to save the task. Please try again.", error);
+    }
   }
 
   return (
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={(event) => void handleDragEnd(event)}>
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
-        <div className="space-y-6">
-          <CreateTaskCard
-            form={createTaskForm}
-            totalTasks={dayPlan.tasks.length}
-            isMutating={isMutating}
-            onSubmit={handleCreateTask}
-          />
-          <TaskQueueCard
-            search={search}
-            selectedTaskId={selectedTask?.id ?? null}
-            tasks={filteredQueueTasks}
-            onSearchChange={setSearch}
-            onSelectTask={handleSelectTask}
-            onDeleteTask={(taskId, title) => {
-              if (!window.confirm(`Delete "${title}"?`)) {
-                return;
-              }
-              void onDeleteTask(taskId).catch((error) => showActionError("Failed to delete the task. Please try again.", error));
-            }}
-          />
-        </div>
-
-        <div className="space-y-6">
-          <PlannerSummaryCard
-            date={date}
-            integrationStatus={dayPlan.integrationStatus}
-            isSyncing={isSyncing}
-            onDateChange={onDateChange}
-            onSyncCalendar={onSyncCalendar}
-          />
-          <TimelineBoard
-            date={date}
-            tasks={dayPlan.tasks}
-            scheduleBlocks={dayPlan.scheduleBlocks}
-            calendarEvents={dayPlan.calendarEvents}
-            onSelectTask={setSelectedTaskId}
-            onDismissCalendarEvent={(calendarEventId, title) => {
-              if (!window.confirm(`Hide "${title}" from the planner timeline until it changes in Google Calendar?`)) {
-                return;
-              }
-              void onDismissCalendarEvent(calendarEventId).catch((error) => {
-                showActionError("Failed to dismiss the calendar event. Please try again.", error);
-              });
-            }}
-            onDeleteScheduleBlock={(blockId, title) => {
-              if (!window.confirm(`Remove "${title}" from the timeline? The task will return to the queue.`)) {
-                return;
-              }
-              void onDeleteScheduleBlock(blockId).catch((error) => {
-                showActionError("Failed to remove the schedule block. Please try again.", error);
-              });
-            }}
-          />
-        </div>
-
-        <div className="space-y-6">
-          <TaskDetailCard
-            detailPanelRef={detailPanelRef}
-            form={detailForm}
-            selectedTask={selectedTask}
-            activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
-            isMutating={isMutating}
-            onDeleteTask={() => void handleDeleteSelectedTask()}
-            onSaveTask={async (values) => {
-              if (!selectedTask) {
-                return;
-              }
-              try {
-                await onUpdateTask(selectedTask.id, {
-                  title: values.title,
-                  notes: values.notes,
-                  estimatedMinutes: values.estimatedMinutes,
-                  priority: values.priority,
-                  status:
-                    values.lifecycle === "active"
-                      ? resolveActiveTaskStatus(selectedTask, dayPlan.activeTimer?.taskId ?? null)
-                      : values.lifecycle,
-                });
-              } catch (error) {
-                showActionError("Failed to save the task. Please try again.", error);
-              }
-            }}
-            onStartTimer={(taskId) => void onStartTimer(taskId)}
-            onStopTimer={() => void onStopTimer()}
-          />
-          <PlannerActivityCard
-            dayPlan={dayPlan}
-            onConfirmDraft={(draftId) => void onConfirmDraft(draftId)}
-            onRejectDraft={(draftId) => void onRejectDraft(draftId)}
-            onStopTimer={() => void onStopTimer()}
-          />
-        </div>
+        <PlannerQueueColumn
+          createTaskForm={createTaskForm}
+          totalTasks={dayPlan.tasks.length}
+          isMutating={isMutating}
+          search={search}
+          selectedTaskId={selectedTask?.id ?? null}
+          tasks={filteredQueueTasks}
+          onCreateTask={handleCreateTask}
+          onSearchChange={setSearch}
+          onSelectTask={handleSelectTask}
+          onDeleteTask={handleQueueTaskDelete}
+        />
+        <PlannerTimelineColumn
+          date={date}
+          dayPlan={dayPlan}
+          isSyncing={isSyncing}
+          onDateChange={onDateChange}
+          onSyncCalendar={() => void onSyncCalendar()}
+          onSelectTask={setSelectedTaskId}
+          onDismissCalendarEvent={handleDismissTimelineEvent}
+          onDeleteScheduleBlock={handleDeleteTimelineBlock}
+        />
+        <PlannerDetailColumn
+          detailPanelRef={detailPanelRef}
+          detailForm={detailForm}
+          selectedTask={selectedTask}
+          dayPlan={dayPlan}
+          activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
+          isMutating={isMutating}
+          onDeleteTask={() => void handleDeleteSelectedTask()}
+          onSaveTask={handleSaveTask}
+          onStartTimer={(taskId) => void onStartTimer(taskId)}
+          onStopTimer={() => void onStopTimer()}
+          onConfirmDraft={(draftId) => void onConfirmDraft(draftId)}
+          onRejectDraft={(draftId) => void onRejectDraft(draftId)}
+        />
       </div>
     </DndContext>
   );
