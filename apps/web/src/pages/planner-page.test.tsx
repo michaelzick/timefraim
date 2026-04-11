@@ -26,6 +26,7 @@ describe("PlannerPage", () => {
         onUpdateTask={noopAsync}
         onDeleteTask={noopAsync}
         onCreateScheduleBlock={noopAsync}
+        onUpdateScheduleBlock={noopAsync}
         onDeleteScheduleBlock={noopAsync}
         onDismissCalendarEvent={noopAsync}
         onConfirmDraft={noopAsync}
@@ -40,7 +41,7 @@ describe("PlannerPage", () => {
     await user.type(screen.getByLabelText("Task notes"), "Protect a quiet block.");
     await user.clear(screen.getByLabelText("Estimated minutes"));
     await user.type(screen.getByLabelText("Estimated minutes"), "60");
-    await user.selectOptions(screen.getByLabelText("Task status"), "planned");
+    await user.selectOptions(screen.getByLabelText("Task priority"), "high");
     await user.click(screen.getByRole("button", { name: /add task/i }));
 
     await waitFor(() => {
@@ -48,6 +49,7 @@ describe("PlannerPage", () => {
         title: "Deep work",
         notes: "Protect a quiet block.",
         estimatedMinutes: 60,
+        priority: "high",
         status: "planned",
       });
     });
@@ -72,6 +74,7 @@ describe("PlannerPage", () => {
         onUpdateTask={onUpdateTask}
         onDeleteTask={noopAsync}
         onCreateScheduleBlock={noopAsync}
+        onUpdateScheduleBlock={noopAsync}
         onDeleteScheduleBlock={noopAsync}
         onDismissCalendarEvent={noopAsync}
         onConfirmDraft={noopAsync}
@@ -84,11 +87,15 @@ describe("PlannerPage", () => {
 
     await user.clear(screen.getByLabelText("Detail title"));
     await user.type(screen.getByLabelText("Detail title"), "Refined task");
-    await user.click(screen.getByRole("button", { name: /save detail/i }));
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
     await waitFor(() => {
       expect(onUpdateTask).toHaveBeenCalledWith(
         dayPlan.tasks[0].id,
-        expect.objectContaining({ title: "Refined task" }),
+        expect.objectContaining({
+          title: "Refined task",
+          priority: dayPlan.tasks[0].priority,
+          status: "planned",
+        }),
       );
     });
 
@@ -112,6 +119,7 @@ describe("PlannerPage", () => {
         onUpdateTask={noopAsync}
         onDeleteTask={onDeleteTask}
         onCreateScheduleBlock={noopAsync}
+        onUpdateScheduleBlock={noopAsync}
         onDeleteScheduleBlock={noopAsync}
         onDismissCalendarEvent={noopAsync}
         onConfirmDraft={noopAsync}
@@ -127,5 +135,46 @@ describe("PlannerPage", () => {
     await waitFor(() => {
       expect(onDeleteTask).toHaveBeenCalledWith("task-1f8f9660-0000-4000-8000-000000000001");
     });
+  });
+
+  it("shows an error when saving task details fails", async () => {
+    const user = userEvent.setup();
+    const onUpdateTask = vi.fn().mockRejectedValue(new Error("Schedule conflict with Standup"));
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => undefined);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    render(
+      <PlannerPage
+        date="2026-04-06"
+        dayPlan={buildDayPlan()}
+        isMutating={false}
+        isSyncing={false}
+        onDateChange={vi.fn()}
+        onCreateTask={noopAsync}
+        onUpdateTask={onUpdateTask}
+        onDeleteTask={noopAsync}
+        onCreateScheduleBlock={noopAsync}
+        onUpdateScheduleBlock={noopAsync}
+        onDeleteScheduleBlock={noopAsync}
+        onDismissCalendarEvent={noopAsync}
+        onConfirmDraft={noopAsync}
+        onRejectDraft={noopAsync}
+        onStartTimer={noopAsync}
+        onStopTimer={noopAsync}
+        onSyncCalendar={noopAsync}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Tasks can\'t overlap on the timeline. This change would overlap with "Standup". Shorten or move this task, or clear the conflicting event first.',
+      );
+    });
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Tasks can\'t overlap on the timeline. This change would overlap with "Standup". Shorten or move this task, or clear the conflicting event first.',
+      expect.any(Error),
+    );
   });
 });

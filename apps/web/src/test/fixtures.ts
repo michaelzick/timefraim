@@ -7,6 +7,7 @@ export function buildTask(overrides: Partial<Task> = {}): Task {
     notes: "Outline the week and protect deep-work blocks.",
     estimatedMinutes: 45,
     status: "planned",
+    priority: "medium",
     scheduledBlockId: null,
     togglProjectId: null,
     createdAt: "2026-04-06T08:00:00.000Z",

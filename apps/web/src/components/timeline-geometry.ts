@@ -1,8 +1,8 @@
 export const START_HOUR = 5;
 export const END_HOUR_EXCLUSIVE = 24;
-export const SLOT_HEIGHT = 56;
+export const SLOT_HEIGHT = 28;
 
-const HALF_HOUR_MS = 30 * 60 * 1000;
+const QUARTER_HOUR_MS = 15 * 60 * 1000;
 
 function getLocalDateTime(date: string, hour: number, minute: number) {
   const value = new Date(`${date}T00:00:00`);
@@ -18,22 +18,23 @@ export function getTimelineWindow(date: string) {
 }
 
 export function getTimelineContainerHeight() {
-  return ((END_HOUR_EXCLUSIVE - START_HOUR) * 2) * SLOT_HEIGHT;
+  return ((END_HOUR_EXCLUSIVE - START_HOUR) * 4) * SLOT_HEIGHT;
 }
 
 export function buildTimelineSlots(date: string) {
   const { startAt } = getTimelineWindow(date);
-  const totalSlots = (END_HOUR_EXCLUSIVE - START_HOUR) * 2;
+  const totalSlots = (END_HOUR_EXCLUSIVE - START_HOUR) * 4;
 
   return Array.from({ length: totalSlots }, (_, index) => {
-    const slotDate = new Date(startAt.getTime() + index * HALF_HOUR_MS);
+    const slotDate = new Date(startAt.getTime() + index * QUARTER_HOUR_MS);
     const hour = slotDate.getHours();
     const minute = slotDate.getMinutes();
+    const showLabel = minute === 0 || minute === 30;
 
     return {
       id: `slot-${slotDate.toISOString()}`,
       iso: slotDate.toISOString(),
-      label: `${((hour + 11) % 12) + 1}:${String(minute).padStart(2, "0")}`,
+      label: showLabel ? `${((hour + 11) % 12) + 1}:${String(minute).padStart(2, "0")}` : "",
       top: index * SLOT_HEIGHT,
     };
   });
@@ -52,7 +53,7 @@ export function getTimelinePlacement(date: string, startAt: string, endAt: strin
   }
 
   return {
-    top: ((visibleStartMs - window.startAt.getTime()) / HALF_HOUR_MS) * SLOT_HEIGHT,
-    height: Math.max(44, ((visibleEndMs - visibleStartMs) / HALF_HOUR_MS) * SLOT_HEIGHT),
+    top: ((visibleStartMs - window.startAt.getTime()) / QUARTER_HOUR_MS) * SLOT_HEIGHT,
+    height: Math.max(SLOT_HEIGHT, ((visibleEndMs - visibleStartMs) / QUARTER_HOUR_MS) * SLOT_HEIGHT),
   };
 }

@@ -2,6 +2,7 @@ import type {
   ActorRole,
   DraftKind,
   IntegrationStatus,
+  TaskPriority,
   ScheduleBlockSource,
   ScheduleBlockState,
   TaskStatus,
@@ -35,6 +36,7 @@ export type CreateTaskInput = {
   notes: string | null;
   estimatedMinutes: number;
   status: TaskStatus;
+  priority: TaskPriority;
   togglProjectId: string | null;
 };
 
@@ -43,6 +45,7 @@ export type TaskPatch = Partial<{
   notes: string | null;
   estimatedMinutes: number;
   status: TaskStatus;
+  priority: TaskPriority;
   togglProjectId: string | null;
   scheduledBlockId: string | null;
 }>;

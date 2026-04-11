@@ -1,5 +1,6 @@
 import type { TaskInput, TaskUpdate } from "@timefraim/shared";
 import type { DraftHandlerContext } from "./planner-service-types.js";
+import { updateScheduleBlockWithValidation } from "./planner-schedule-changes.js";
 
 export async function applyTaskCreateDraft(context: DraftHandlerContext) {
   const payload = context.draft.payload as TaskInput;
@@ -8,7 +9,8 @@ export async function applyTaskCreateDraft(context: DraftHandlerContext) {
       title: payload.title,
       notes: payload.notes ?? null,
       estimatedMinutes: payload.estimatedMinutes ?? 30,
-      status: payload.status ?? "inbox",
+      status: payload.status ?? "planned",
+      priority: payload.priority ?? "low",
       togglProjectId: payload.togglProjectId ?? null,
     },
     context.client,
@@ -29,6 +31,11 @@ export async function applyTaskCreateDraft(context: DraftHandlerContext) {
 
 export async function applyTaskUpdateDraft(context: DraftHandlerContext) {
   const payload = context.draft.payload as TaskUpdate;
+  const currentTask = await context.repository.getTask(payload.taskId, context.client);
+  if (!currentTask) {
+    throw new Error(`Task ${payload.taskId} not found`);
+  }
+
   const task = await context.repository.updateTask(
     payload.taskId,
     {
@@ -36,10 +43,35 @@ export async function applyTaskUpdateDraft(context: DraftHandlerContext) {
       notes: payload.notes,
       estimatedMinutes: payload.estimatedMinutes,
       status: payload.status,
+      priority: payload.priority,
       togglProjectId: payload.togglProjectId,
     },
     context.client,
   );
+
+  const estimatedMinutesChanged = typeof payload.estimatedMinutes !== "undefined"
+    && payload.estimatedMinutes !== currentTask.estimatedMinutes;
+  const shouldResizeScheduledBlock = estimatedMinutesChanged
+    && (currentTask.scheduledBlockId !== null || currentTask.status === "scheduled");
+
+  if (shouldResizeScheduledBlock) {
+    const scheduledBlock = currentTask.scheduledBlockId
+      ? await context.repository.getScheduleBlock(currentTask.scheduledBlockId, context.client)
+      : null;
+    const existingBlock = scheduledBlock ?? await context.repository.getScheduleBlockByTaskId(currentTask.id, context.client);
+
+    if (existingBlock) {
+      const nextEndAt = new Date(
+        new Date(existingBlock.startAt).getTime() + task.estimatedMinutes * 60_000,
+      ).toISOString();
+
+      await updateScheduleBlockWithValidation(context, {
+        existingBlock,
+        patch: { endAt: nextEndAt },
+      });
+    }
+  }
+
   await context.repository.createAuditLog(
     {
       actorRole: context.actorRole,

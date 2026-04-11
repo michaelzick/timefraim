@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { STATUS_OPTIONS, type CreateTaskValues } from "@/features/planner/types";
+import { PRIORITY_OPTIONS, formatTaskPriority } from "@/features/planner/task-presentation";
+import type { CreateTaskValues } from "@/features/planner/types";
 
 type CreateTaskCardProps = {
   form: UseFormReturn<CreateTaskValues>;
@@ -41,13 +42,13 @@ export function CreateTaskCard({ form, totalTasks, isMutating, onSubmit }: Creat
             {...form.register("estimatedMinutes", { valueAsNumber: true })}
           />
           <select
-            aria-label="Task status"
+            aria-label="Task priority"
             className="h-11 rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)]"
-            {...form.register("status")}
+            {...form.register("priority")}
           >
-            {STATUS_OPTIONS.slice(0, 4).map((status) => (
-              <option key={status} value={status} className="bg-[var(--panel)]">
-                {status.replace("_", " ")}
+            {PRIORITY_OPTIONS.map((priority) => (
+              <option key={priority} value={priority} className="bg-[var(--panel)]">
+                {formatTaskPriority(priority)}
               </option>
             ))}
           </select>

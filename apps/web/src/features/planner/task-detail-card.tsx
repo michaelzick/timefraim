@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { STATUS_OPTIONS, type TaskFormValues } from "@/features/planner/types";
+import {
+  PRIORITY_OPTIONS,
+  TASK_LIFECYCLE_OPTIONS,
+  formatTaskLifecycle,
+  formatTaskPriority,
+  getTaskPriorityBadgeClass,
+} from "@/features/planner/task-presentation";
+import type { TaskFormValues } from "@/features/planner/types";
 
 type TaskDetailCardProps = {
   detailPanelRef: RefObject<HTMLDivElement | null>;
@@ -39,7 +46,9 @@ export function TaskDetailCard({
           <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Focus</p>
           <h2 className="mt-1 text-xl font-semibold text-white">Task detail</h2>
         </div>
-        <Badge>{selectedTask?.status.replace("_", " ") ?? "none"}</Badge>
+        <Badge className={selectedTask ? getTaskPriorityBadgeClass(selectedTask.priority) : "normal-case tracking-[0.08em]"}>
+          {selectedTask ? formatTaskPriority(selectedTask.priority) : "None"}
+        </Badge>
       </div>
       {selectedTask ? (
         <form className="space-y-4" onSubmit={form.handleSubmit(onSaveTask)}>
@@ -54,28 +63,44 @@ export function TaskDetailCard({
               {...form.register("estimatedMinutes", { valueAsNumber: true })}
             />
             <select
-              aria-label="Detail status"
+              aria-label="Detail priority"
               className="h-11 rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)]"
-              {...form.register("status")}
+              {...form.register("priority")}
             >
-              {STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status} className="bg-[var(--panel)]">
-                  {status.replace("_", " ")}
+              {PRIORITY_OPTIONS.map((priority) => (
+                <option key={priority} value={priority} className="bg-[var(--panel)]">
+                  {formatTaskPriority(priority)}
                 </option>
               ))}
             </select>
           </div>
+          <select
+            aria-label="Detail lifecycle"
+            className="h-11 w-full rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)]"
+            {...form.register("lifecycle")}
+          >
+            {TASK_LIFECYCLE_OPTIONS.map((value) => (
+              <option key={value} value={value} className="bg-[var(--panel)]">
+                {formatTaskLifecycle(value)}
+              </option>
+            ))}
+          </select>
           <div className="grid grid-cols-2 gap-3">
-            <Button type="submit" variant="secondary" disabled={isMutating}>
-              Save detail
+            <Button type="submit" disabled={isMutating}>
+              Save
             </Button>
             {activeTimerTaskId === selectedTask.id ? (
-              <Button type="button" onClick={onStopTimer} disabled={isMutating}>
+              <Button type="button" variant="secondary" onClick={onStopTimer} disabled={isMutating}>
                 <Square className="h-4 w-4" />
                 Stop timer
               </Button>
             ) : (
-              <Button type="button" onClick={() => onStartTimer(selectedTask.id)} disabled={isMutating}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => onStartTimer(selectedTask.id)}
+                disabled={isMutating}
+              >
                 <Play className="h-4 w-4" />
                 Start timer
               </Button>
@@ -93,7 +118,7 @@ export function TaskDetailCard({
           </Button>
         </form>
       ) : (
-        <p className="text-sm text-[var(--muted)]">Select a task to refine notes, status, and timers.</p>
+        <p className="text-sm text-[var(--muted)]">Select a task to refine notes, priority, lifecycle, and timers.</p>
       )}
     </Card>
   );

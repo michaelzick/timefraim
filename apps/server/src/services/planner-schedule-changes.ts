@@ -1,10 +1,62 @@
-import type { ScheduleBlockCreate, ScheduleBlockUpdate } from "@timefraim/shared";
+import type { ScheduleBlock, ScheduleBlockUpdate } from "@timefraim/shared";
 import { detectScheduleConflicts } from "./planner-domain.js";
 import { endOfDay, startOfDay } from "../utils/date.js";
 import { isUniqueViolation, type DraftHandlerContext } from "./planner-service-types.js";
 
+type ScheduleBlockMutationContext = Pick<
+  DraftHandlerContext,
+  "client" | "googleConnected" | "repository" | "sideEffects"
+>;
+
+export async function updateScheduleBlockWithValidation(
+  context: ScheduleBlockMutationContext,
+  params: {
+    existingBlock: ScheduleBlock;
+    patch: Pick<ScheduleBlockUpdate, "startAt" | "endAt" | "source">;
+  },
+) {
+  const nextStartAt = params.patch.startAt ?? params.existingBlock.startAt;
+  const nextEndAt = params.patch.endAt ?? params.existingBlock.endAt;
+  const range = {
+    startAt: startOfDay(nextStartAt.slice(0, 10)).toISOString(),
+    endAt: endOfDay(nextStartAt.slice(0, 10)).toISOString(),
+  };
+  const [blocks, events] = await Promise.all([
+    context.repository.listScheduleBlocksForRange(range, context.client),
+    context.repository.listCalendarEventsForRange(range, context.client),
+  ]);
+  const conflicts = detectScheduleConflicts({
+    candidateStartAt: nextStartAt,
+    candidateEndAt: nextEndAt,
+    scheduleBlocks: blocks,
+    calendarEvents: events,
+    ignoreScheduleBlockId: params.existingBlock.id,
+  });
+  if (conflicts.length > 0) {
+    throw new Error(`Schedule conflict with ${conflicts[0].title}`);
+  }
+
+  const block = await context.repository.updateScheduleBlock(
+    params.existingBlock.id,
+    {
+      startAt: params.patch.startAt,
+      endAt: params.patch.endAt,
+      source: params.patch.source,
+      state: context.googleConnected ? "sync_pending" : "confirmed",
+    },
+    context.client,
+  );
+  context.sideEffects.push({ type: "google.upsert", taskId: block.taskId, scheduleBlockId: block.id });
+  return block;
+}
+
 export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext) {
-  const payload = context.draft.payload as ScheduleBlockCreate;
+  const payload = context.draft.payload as {
+    taskId: string;
+    startAt: string;
+    endAt: string;
+    source: "manual" | "ai" | "sync";
+  };
   const task = await context.repository.getTask(payload.taskId, context.client);
   if (!task) {
     throw new Error(`Task ${payload.taskId} not found`);
@@ -78,37 +130,14 @@ export async function applyScheduleBlockUpdateDraft(context: DraftHandlerContext
     throw new Error(`Schedule block ${payload.scheduleBlockId} not found`);
   }
 
-  const nextStartAt = payload.startAt ?? existingBlock.startAt;
-  const nextEndAt = payload.endAt ?? existingBlock.endAt;
-  const range = {
-    startAt: startOfDay(nextStartAt.slice(0, 10)).toISOString(),
-    endAt: endOfDay(nextStartAt.slice(0, 10)).toISOString(),
-  };
-  const [blocks, events] = await Promise.all([
-    context.repository.listScheduleBlocksForRange(range, context.client),
-    context.repository.listCalendarEventsForRange(range, context.client),
-  ]);
-  const conflicts = detectScheduleConflicts({
-    candidateStartAt: nextStartAt,
-    candidateEndAt: nextEndAt,
-    scheduleBlocks: blocks,
-    calendarEvents: events,
-    ignoreScheduleBlockId: existingBlock.id,
-  });
-  if (conflicts.length > 0) {
-    throw new Error(`Schedule conflict with ${conflicts[0].title}`);
-  }
-
-  const block = await context.repository.updateScheduleBlock(
-    existingBlock.id,
-    {
+  const block = await updateScheduleBlockWithValidation(context, {
+    existingBlock,
+    patch: {
       startAt: payload.startAt,
       endAt: payload.endAt,
       source: payload.source,
-      state: context.googleConnected ? "sync_pending" : "confirmed",
     },
-    context.client,
-  );
+  });
   await context.repository.createAuditLog(
     {
       actorRole: context.actorRole,
@@ -120,7 +149,6 @@ export async function applyScheduleBlockUpdateDraft(context: DraftHandlerContext
     },
     context.client,
   );
-  context.sideEffects.push({ type: "google.upsert", taskId: block.taskId, scheduleBlockId: block.id });
   return context.markApplied();
 }
 
