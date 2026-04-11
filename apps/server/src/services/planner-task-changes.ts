@@ -3,7 +3,7 @@ import type { DraftHandlerContext } from "./planner-service-types.js";
 import { updateScheduleBlockWithValidation } from "./planner-schedule-changes.js";
 
 export async function applyTaskCreateDraft(context: DraftHandlerContext) {
-  const payload = context.draft.payload as TaskInput;
+  const payload = context.draft.payload as TaskInput & { plannerDate?: string };
   const task = await context.repository.createTask(
     {
       title: payload.title,
@@ -15,6 +15,15 @@ export async function applyTaskCreateDraft(context: DraftHandlerContext) {
     },
     context.client,
   );
+
+  if (context.googleConnected) {
+    context.sideEffects.push({
+      type: "google.task.create",
+      taskId: task.id,
+      plannerDate: payload.plannerDate ?? null,
+    });
+  }
+
   await context.repository.createAuditLog(
     {
       actorRole: context.actorRole,

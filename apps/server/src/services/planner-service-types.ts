@@ -5,6 +5,7 @@ import type { PlannerRepository } from "../repositories/planner-repository.js";
 export type SideEffect =
   | { type: "google.upsert"; taskId: string; scheduleBlockId: string }
   | { type: "google.delete"; googleEventId: string | null; scheduleBlockId: string }
+  | { type: "google.task.create"; taskId: string; plannerDate: string | null }
   | { type: "toggl.start"; taskId: string; timerSessionId: string; source: "manual" | "ai" | "sync" }
   | { type: "toggl.stop"; togglEntryId: string | null | undefined };
 

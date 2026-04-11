@@ -18,6 +18,7 @@ export type PlannerTaskInput = {
   estimatedMinutes: number;
   priority: TaskPriority;
   status: TaskStatus;
+  plannerDate?: string;
 };
 
 export type PlannerTaskUpdateInput = Partial<Omit<TaskFormValues, "lifecycle"> & { status: TaskStatus }>;

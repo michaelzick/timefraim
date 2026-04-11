@@ -5,7 +5,6 @@ import { syncGoogleCalendarWindow } from "../integration/google-calendar.js";
 import { PlannerRepository } from "../repositories/planner-repository.js";
 import { endOfDay, startOfDay, todayIsoDate } from "../utils/date.js";
 import { applyDraftChange } from "./planner-draft-application.js";
-import { resolveDismissedExternalUpdatedAt } from "./planner-domain.js";
 import { getGoogleConnection, getTogglConnection, saveGoogleSession, saveTogglConnection } from "./planner-service-integrations.js";
 import { runPlannerSideEffects } from "./planner-side-effects.js";
 import type { DraftToApply, SideEffect } from "./planner-service-types.js";
@@ -70,7 +69,6 @@ export class PlannerService {
     const records = await syncGoogleCalendarWindow(connection, range);
 
     for (const record of records) {
-      const existingRecord = await this.repository.getCalendarEventByExternalEventId(record.externalEventId, pool);
       await this.repository.upsertCalendarEvent(
         {
           externalEventId: record.externalEventId,
@@ -81,11 +79,7 @@ export class PlannerService {
           scheduleBlockId: record.scheduleBlockId,
           rawPayload: record.rawPayload,
           externalUpdatedAt: record.externalUpdatedAt,
-          dismissedExternalUpdatedAt: resolveDismissedExternalUpdatedAt({
-            previousExternalUpdatedAt: existingRecord?.externalUpdatedAt ?? null,
-            previousDismissedExternalUpdatedAt: existingRecord?.dismissedExternalUpdatedAt ?? null,
-            nextExternalUpdatedAt: record.externalUpdatedAt,
-          }),
+          dismissedExternalUpdatedAt: null,
         },
         pool,
       );

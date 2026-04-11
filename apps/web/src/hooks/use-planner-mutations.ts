@@ -1,5 +1,5 @@
-import { useMutation } from "@tanstack/react-query";
-import type { TaskInput, TaskUpdate, TogglConnect } from "@timefraim/shared";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { CalendarSyncResult, DayPlan, TaskInput, TaskUpdate, TogglConnect } from "@timefraim/shared";
 import { api } from "@/lib/api";
 
 type UpdateTaskInput = Omit<TaskUpdate, "taskId">;
@@ -11,6 +11,8 @@ type UsePlannerMutationsOptions = {
 };
 
 export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutationsOptions) {
+  const queryClient = useQueryClient();
+  const dayPlanQueryKey = ["day-plan", token, date] as const;
   const createTaskMutation = useMutation({
     mutationFn: (values: TaskInput) => api.createTask(token, values),
     onSuccess,
@@ -41,6 +43,24 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
   });
   const dismissCalendarEventMutation = useMutation({
     mutationFn: (calendarEventId: string) => api.dismissCalendarEvent(token, calendarEventId),
+    onMutate: async (calendarEventId) => {
+      await queryClient.cancelQueries({ queryKey: dayPlanQueryKey });
+      const previousDayPlan = queryClient.getQueryData<DayPlan>(dayPlanQueryKey);
+      queryClient.setQueryData<DayPlan>(dayPlanQueryKey, (current) =>
+        current
+          ? {
+              ...current,
+              calendarEvents: current.calendarEvents.filter((event) => event.id !== calendarEventId),
+            }
+          : current,
+      );
+      return { previousDayPlan };
+    },
+    onError: (_error, _calendarEventId, context) => {
+      if (context?.previousDayPlan) {
+        queryClient.setQueryData(dayPlanQueryKey, context.previousDayPlan);
+      }
+    },
     onSuccess,
   });
   const confirmDraftMutation = useMutation({
@@ -61,7 +81,17 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
   });
   const syncCalendarMutation = useMutation({
     mutationFn: () => api.syncCalendar(token, date, new Date(`${date}T12:00:00`).getTimezoneOffset()),
-    onSuccess,
+    onSuccess: async (result: CalendarSyncResult) => {
+      queryClient.setQueryData<DayPlan>(dayPlanQueryKey, (current) =>
+        current
+          ? {
+              ...current,
+              calendarEvents: result.events,
+            }
+          : current,
+      );
+      await onSuccess();
+    },
   });
   const saveTogglMutation = useMutation({
     mutationFn: (values: TogglConnect) => api.saveTogglConnection(token, values),

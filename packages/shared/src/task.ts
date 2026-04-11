@@ -30,6 +30,7 @@ export const taskInputSchema = z.object({
   status: taskStatusSchema.default("planned"),
   priority: taskPrioritySchema.default("low"),
   togglProjectId: z.string().optional().nullable(),
+  plannerDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export const taskUpdateSchema = taskInputSchema.partial().extend({

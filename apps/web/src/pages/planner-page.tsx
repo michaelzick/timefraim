@@ -59,6 +59,7 @@ export function PlannerPage({
       estimatedMinutes: Number(values.estimatedMinutes),
       priority: values.priority,
       status: "planned",
+      plannerDate: date,
     };
     await createTask(taskInput);
     createTaskForm.reset(EMPTY_CREATE_TASK_VALUES);

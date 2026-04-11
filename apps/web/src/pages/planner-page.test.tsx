@@ -51,6 +51,7 @@ describe("PlannerPage", () => {
         estimatedMinutes: 60,
         priority: "high",
         status: "planned",
+        plannerDate: "2026-04-06",
       });
     });
     expect(screen.getByLabelText("Task title")).toHaveValue("");

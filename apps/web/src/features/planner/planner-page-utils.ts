@@ -22,6 +22,7 @@ export type LocalPlannerTaskInput = {
   estimatedMinutes: number;
   priority: PlannerPriority;
   status: PlannerStatus;
+  plannerDate?: string;
 };
 export type LocalPlannerTaskUpdateInput = {
   title: string;
