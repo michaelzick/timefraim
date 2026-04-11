@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -9,7 +10,7 @@ vi.mock("@dnd-kit/core", () => ({
     children,
     onDragEnd,
   }: {
-    children: any;
+    children: ReactNode;
     onDragEnd?: (event: unknown) => void;
   }) => (
     <div>
