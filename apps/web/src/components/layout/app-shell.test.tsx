@@ -46,7 +46,9 @@ describe("AppShell", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/allowlisted for allowed@example.com/i)).toBeInTheDocument();
+    expect(screen.getByText(/synced with allowed@example.com/i)).toBeInTheDocument();
+    expect(screen.queryByText(/allowlisted for allowed@example.com/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/calendar-aware daily planning with guarded ai writes/i)).not.toBeInTheDocument();
     expect(await screen.findByText("settings route")).toBeInTheDocument();
   });
 });

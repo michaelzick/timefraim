@@ -1,10 +1,64 @@
 import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import type { ScheduleBlock, Task } from "@timefraim/shared";
-import { useDeferredValue, useMemo, useRef, useState, startTransition } from "react";
+import { startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { PlannerDetailColumn, PlannerQueueColumn, PlannerTimelineColumn } from "@/features/planner/planner-page-columns";
 import { EMPTY_CREATE_TASK_VALUES, getTaskFormValues, resolvePlannerTaskStatus, showActionError, type LocalPlannerScheduleBlockUpdateInput, type LocalPlannerTaskInput, type LocalPlannerTaskUpdateInput, type PlannerCreateTaskValues, type PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
 import { type CreateTaskValues, type PlannerPageProps, type TaskFormValues } from "@/features/planner/types";
+
+type SelectedTaskSource = "queue" | "timeline";
+
+function isVisibleQueueTask(task: Task) {
+  return task.scheduledBlockId === null && task.status !== "done" && task.status !== "archived";
+}
+
+function filterQueueTasks(tasks: Task[], search: string) {
+  const needle = search.trim().toLowerCase();
+  return tasks.filter((task) => {
+    if (!isVisibleQueueTask(task)) {
+      return false;
+    }
+
+    return !needle || [task.title, task.notes ?? ""].join(" ").toLowerCase().includes(needle);
+  });
+}
+
+function resolveTaskSelection({
+  tasks,
+  queueTasks,
+  selectedTaskId,
+  selectedTaskSource,
+}: {
+  tasks: Task[];
+  queueTasks: Task[];
+  selectedTaskId: string | null;
+  selectedTaskSource: SelectedTaskSource;
+}) {
+  const selectedTask = selectedTaskId ? tasks.find((task) => task.id === selectedTaskId) ?? null : null;
+
+  if (selectedTaskSource === "timeline" && selectedTask) {
+    return {
+      selectedTask,
+      selectedTaskId: selectedTask.id,
+      selectedTaskSource,
+    };
+  }
+
+  if (selectedTask && queueTasks.some((task) => task.id === selectedTask.id)) {
+    return {
+      selectedTask,
+      selectedTaskId: selectedTask.id,
+      selectedTaskSource: "queue" as const,
+    };
+  }
+
+  const fallbackTask = queueTasks[0] ?? null;
+  return {
+    selectedTask: fallbackTask,
+    selectedTaskId: fallbackTask?.id ?? null,
+    selectedTaskSource: "queue" as const,
+  };
+}
 
 export function PlannerPage({
   date,
@@ -28,29 +82,56 @@ export function PlannerPage({
   const createTask = onCreateTask as (values: LocalPlannerTaskInput) => Promise<unknown>;
   const updateTask = onUpdateTask as (taskId: string, values: LocalPlannerTaskUpdateInput) => Promise<unknown>;
   const updateScheduleBlock = onUpdateScheduleBlock as (scheduleBlockId: string, values: LocalPlannerScheduleBlockUpdateInput) => Promise<unknown>;
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(dayPlan.tasks[0]?.id ?? null);
+  const [selectedTaskState, setSelectedTaskState] = useState<{
+    taskId: string | null;
+    source: SelectedTaskSource;
+  }>(() => ({
+    taskId: filterQueueTasks(dayPlan.tasks, "")[0]?.id ?? null,
+    source: "queue",
+  }));
   const [search, setSearch] = useState("");
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const deferredSearch = useDeferredValue(search);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   const createTaskForm = useForm<CreateTaskValues>({ defaultValues: EMPTY_CREATE_TASK_VALUES });
-  const selectedTask = useMemo(
-    () => dayPlan.tasks.find((task) => task.id === selectedTaskId) ?? dayPlan.tasks[0] ?? null,
-    [dayPlan.tasks, selectedTaskId],
+  const filteredQueueTasks = useMemo(() => {
+    return filterQueueTasks(dayPlan.tasks, deferredSearch);
+  }, [dayPlan.tasks, deferredSearch]);
+  const resolvedTaskSelection = useMemo(
+    () =>
+      resolveTaskSelection({
+        tasks: dayPlan.tasks,
+        queueTasks: filteredQueueTasks,
+        selectedTaskId: selectedTaskState.taskId,
+        selectedTaskSource: selectedTaskState.source,
+      }),
+    [dayPlan.tasks, filteredQueueTasks, selectedTaskState.taskId, selectedTaskState.source],
   );
+  const selectedTask = resolvedTaskSelection.selectedTask;
   const detailFormValues = useMemo(() => getTaskFormValues(selectedTask), [selectedTask]);
   const detailForm = useForm<TaskFormValues>({ values: detailFormValues });
 
-  const filteredQueueTasks = useMemo(() => {
-    const needle = deferredSearch.trim().toLowerCase();
-    return dayPlan.tasks.filter((task) => {
-      if (task.scheduledBlockId !== null || task.status === "done" || task.status === "archived") {
-        return false;
-      }
-      return !needle || [task.title, task.notes ?? ""].join(" ").toLowerCase().includes(needle);
+  useEffect(() => {
+    if (
+      selectedTaskState.taskId === resolvedTaskSelection.selectedTaskId &&
+      selectedTaskState.source === resolvedTaskSelection.selectedTaskSource
+    ) {
+      return;
+    }
+
+    startTransition(() => {
+      setSelectedTaskState({
+        taskId: resolvedTaskSelection.selectedTaskId,
+        source: resolvedTaskSelection.selectedTaskSource,
+      });
     });
-  }, [dayPlan.tasks, deferredSearch]);
+  }, [
+    resolvedTaskSelection.selectedTaskId,
+    resolvedTaskSelection.selectedTaskSource,
+    selectedTaskState.source,
+    selectedTaskState.taskId,
+  ]);
 
   async function handleCreateTask(values: PlannerCreateTaskValues) {
     const taskInput: LocalPlannerTaskInput = {
@@ -82,9 +163,20 @@ export function PlannerPage({
       const endAt = new Date(new Date(slotIso).getTime() + draggedTask.estimatedMinutes * 60000).toISOString();
 
       try {
-        startTransition(() => setSelectedTaskId(draggedTask.id));
+        startTransition(() => {
+          setSelectedTaskState({
+            taskId: draggedTask.id,
+            source: "timeline",
+          });
+        });
         await onCreateScheduleBlock({ taskId: draggedTask.id, startAt: slotIso, endAt, source: "manual" });
       } catch (error) {
+        startTransition(() => {
+          setSelectedTaskState({
+            taskId: draggedTask.id,
+            source: "queue",
+          });
+        });
         showActionError("Failed to schedule the task. Please try again.", error);
       }
       return;
@@ -113,11 +205,6 @@ export function PlannerPage({
     if (!selectedTask || !window.confirm(`Delete "${selectedTask.title}" and remove any scheduled block?`)) {
       return;
     }
-
-    const selectedIndex = dayPlan.tasks.findIndex((task) => task.id === selectedTask.id);
-    const remainingTasks = dayPlan.tasks.filter((task) => task.id !== selectedTask.id);
-    const nextTask = remainingTasks[selectedIndex] ?? remainingTasks[selectedIndex - 1] ?? null;
-    startTransition(() => setSelectedTaskId(nextTask?.id ?? null));
 
     try {
       await onDeleteTask(selectedTask.id);
@@ -154,7 +241,24 @@ export function PlannerPage({
     });
   }
 
-  function handleSelectTask(taskId: string) { setSelectedTaskId(taskId); detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+  function handleSelectQueueTask(taskId: string) {
+    startTransition(() => {
+      setSelectedTaskState({
+        taskId,
+        source: "queue",
+      });
+    });
+    detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function handleSelectTimelineTask(taskId: string) {
+    startTransition(() => {
+      setSelectedTaskState({
+        taskId,
+        source: "timeline",
+      });
+    });
+  }
 
   async function handleSaveTask(values: PlannerSaveTaskValues) {
     if (!selectedTask) {
@@ -185,11 +289,11 @@ export function PlannerPage({
           totalTasks={dayPlan.tasks.length}
           isMutating={isMutating}
           search={search}
-          selectedTaskId={selectedTask?.id ?? null}
+          selectedTaskId={resolvedTaskSelection.selectedTaskSource === "queue" ? selectedTask?.id ?? null : null}
           tasks={filteredQueueTasks}
           onCreateTask={handleCreateTask}
           onSearchChange={setSearch}
-          onSelectTask={handleSelectTask}
+          onSelectTask={handleSelectQueueTask}
           onDeleteTask={handleQueueTaskDelete}
         />
         <PlannerTimelineColumn
@@ -198,7 +302,7 @@ export function PlannerPage({
           isSyncing={isSyncing}
           onDateChange={onDateChange}
           onSyncCalendar={() => void onSyncCalendar()}
-          onSelectTask={setSelectedTaskId}
+          onSelectTask={handleSelectTimelineTask}
           onDismissCalendarEvent={handleDismissTimelineEvent}
           onDeleteScheduleBlock={handleDeleteTimelineBlock}
         />

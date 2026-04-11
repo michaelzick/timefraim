@@ -35,7 +35,7 @@ export function PlannerQueueColumn({
   onDeleteTask,
 }: PlannerQueueColumnProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
       <CreateTaskCard form={createTaskForm} totalTasks={totalTasks} isMutating={isMutating} onSubmit={onCreateTask} />
       <TaskQueueCard
         search={search}
@@ -122,7 +122,7 @@ export function PlannerDetailColumn({
   onRejectDraft,
 }: PlannerDetailColumnProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
       <TaskDetailCard
         detailPanelRef={detailPanelRef}
         form={detailForm}
