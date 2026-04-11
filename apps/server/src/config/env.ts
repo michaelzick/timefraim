@@ -33,6 +33,7 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional().default(""),
   GOOGLE_CLIENT_SECRET: z.string().optional().default(""),
   GOOGLE_CALENDAR_ID: z.string().default("primary"),
+  GOOGLE_PLANNER_CALENDAR_ID: z.string().default("Free Time Tasks"),
   TOGGL_WORKSPACE_ID: z.string().optional().default(""),
   TUNNEL_PUBLIC_BASE_URL: z.string().optional().default(""),
 });

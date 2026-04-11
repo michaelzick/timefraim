@@ -15,6 +15,10 @@ export async function getGoogleConnection(repository: PlannerRepository): Promis
     refreshToken: row.refresh_token,
     expiresAt: row.expires_at ? new Date(row.expires_at).toISOString() : null,
     calendarId: typeof row.metadata?.calendarId === "string" ? row.metadata.calendarId : env.GOOGLE_CALENDAR_ID,
+    plannerCalendarId:
+      typeof row.metadata?.plannerCalendarId === "string"
+        ? row.metadata.plannerCalendarId
+        : env.GOOGLE_PLANNER_CALENDAR_ID,
     email: typeof row.metadata?.email === "string" ? row.metadata.email : env.ALLOWED_EMAIL,
   };
 }
@@ -48,7 +52,11 @@ export async function saveGoogleSession(
       accessToken: input.accessToken,
       refreshToken: input.refreshToken,
       expiresAt: input.expiresAt,
-      metadata: { email: input.email, calendarId: input.calendarId },
+      metadata: {
+        email: input.email,
+        calendarId: input.calendarId,
+        plannerCalendarId: env.GOOGLE_PLANNER_CALENDAR_ID,
+      },
     },
     pool,
   );

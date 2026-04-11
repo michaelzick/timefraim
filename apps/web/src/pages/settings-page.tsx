@@ -55,7 +55,7 @@ export function SettingsPage({
             <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
               <p className="text-sm font-medium text-white">Scope guardrails</p>
               <p className="mt-2 text-sm text-[var(--muted-strong)]">
-                The primary Google Calendar stays in sync for blockers and focus blocks, while newly created planner tasks mirror into your default Google Tasks list.
+                The primary Google Calendar stays in sync for blockers, while planner-created time blocks write to the dedicated planner calendar and newly created planner tasks mirror into your default Google Tasks list.
               </p>
             </div>
           </div>
