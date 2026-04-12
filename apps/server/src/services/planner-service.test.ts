@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ScheduleBlock, Task } from "@timefraim/shared";
 
 const {
+  createGoogleTask,
   fakeDb,
   deleteGoogleScheduleBlock,
   startTogglTimer,
@@ -9,6 +10,7 @@ const {
   syncGoogleCalendarWindow,
   upsertGoogleScheduleBlock,
 } = vi.hoisted(() => ({
+  createGoogleTask: vi.fn(),
   fakeDb: { query: vi.fn() },
   deleteGoogleScheduleBlock: vi.fn(),
   syncGoogleCalendarWindow: vi.fn(),
@@ -26,6 +28,10 @@ vi.mock("../integration/google-calendar.js", () => ({
   deleteGoogleScheduleBlock,
   syncGoogleCalendarWindow,
   upsertGoogleScheduleBlock,
+}));
+
+vi.mock("../integration/google-tasks.js", () => ({
+  createGoogleTask,
 }));
 
 vi.mock("../integration/toggl-track.js", () => ({
@@ -114,6 +120,7 @@ function createRepositoryMock() {
 describe("planner-service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    createGoogleTask.mockResolvedValue("google-task-123");
     upsertGoogleScheduleBlock.mockResolvedValue(null);
     startTogglTimer.mockResolvedValue({ togglEntryId: null });
   });
@@ -213,6 +220,137 @@ describe("planner-service", () => {
       expect.objectContaining({ accessToken: "google-token", calendarId: "primary" }),
       baseBlock.googleEventId,
     );
+  });
+
+  it("mirrors created planner tasks into Google Tasks using the default list", async () => {
+    const repository = createRepositoryMock();
+    const createdTask = {
+      ...baseTask,
+      id: "970c02c6-d0e2-491d-a386-4d447b6dce7a",
+      title: "Deep work",
+      notes: "Protect focus time",
+      estimatedMinutes: 60,
+      status: "planned" as const,
+      scheduledBlockId: null,
+    };
+
+    repository.getIntegrationToken.mockImplementation(async (provider: string) =>
+      provider === "google"
+        ? {
+            provider: "google",
+            access_token: "google-token",
+            refresh_token: null,
+            expires_at: null,
+            metadata: {
+              calendarId: "primary",
+              email: "allowed@example.com",
+            },
+          }
+        : null,
+    );
+    repository.getDraft.mockResolvedValue(
+      createDraft("task.create", {
+        title: "Deep work",
+        notes: "Protect focus time",
+        estimatedMinutes: 60,
+        priority: "high",
+        status: "planned",
+        plannerDate: "2026-04-06",
+      }),
+    );
+    repository.createTask.mockResolvedValue(createdTask);
+    repository.getTask.mockResolvedValue(createdTask);
+    repository.updateDraftStatus.mockResolvedValue({
+      ...createDraft("task.create", { title: "Deep work" }),
+      status: "applied",
+      appliedAt: "2026-04-06T09:05:00.000Z",
+    });
+
+    const service = new PlannerService(repository as never);
+
+    await service.confirmDraft("draft-1", "user");
+
+    expect(repository.createTask).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Deep work",
+        notes: "Protect focus time",
+        estimatedMinutes: 60,
+        priority: "high",
+        status: "planned",
+      }),
+      fakeDb,
+    );
+    expect(createGoogleTask).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connection: expect.objectContaining({ accessToken: "google-token", calendarId: "primary" }),
+        title: "Deep work",
+        notes: "Protect focus time",
+        plannerDate: "2026-04-06",
+      }),
+    );
+  });
+
+  it("keeps local task creation successful when Google Tasks mirroring fails", async () => {
+    const repository = createRepositoryMock();
+    const createdTask = {
+      ...baseTask,
+      id: "970c02c6-d0e2-491d-a386-4d447b6dce7a",
+      title: "Deep work",
+      notes: "Protect focus time",
+      estimatedMinutes: 60,
+      status: "planned" as const,
+      scheduledBlockId: null,
+    };
+
+    repository.getIntegrationToken.mockImplementation(async (provider: string) =>
+      provider === "google"
+        ? {
+            provider: "google",
+            access_token: "google-token",
+            refresh_token: null,
+            expires_at: null,
+            metadata: {
+              calendarId: "primary",
+              email: "allowed@example.com",
+            },
+          }
+        : null,
+    );
+    repository.createTask.mockResolvedValue(createdTask);
+    repository.getTask.mockResolvedValue(createdTask);
+    createGoogleTask.mockRejectedValue(new Error("Missing Google Tasks scope"));
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const service = new PlannerService(repository as never);
+
+    await expect(
+      service.applyChange(
+        "task.create",
+        {
+          title: "Deep work",
+          notes: "Protect focus time",
+          estimatedMinutes: 60,
+          priority: "high",
+          status: "planned",
+          plannerDate: "2026-04-06",
+        },
+        "user",
+      ),
+    ).resolves.toEqual({
+      status: "applied",
+      kind: "task.create",
+      diffSummary: 'Create task "Deep work"',
+    });
+
+    expect(repository.createTask).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Deep work",
+        notes: "Protect focus time",
+      }),
+      fakeDb,
+    );
+    expect(errorSpy).toHaveBeenCalledWith("Google task create failed", expect.any(Error));
+    errorSpy.mockRestore();
   });
 
   it("resizes a scheduled block when task duration changes", async () => {
@@ -574,7 +712,7 @@ describe("planner-service", () => {
     );
   });
 
-  it("preserves dismissals for unchanged Google events and clears them when the event changes", async () => {
+  it("clears dismissals for synced Google events on every manual sync", async () => {
     const repository = createRepositoryMock();
     repository.getIntegrationToken.mockResolvedValue({
       provider: "google",
@@ -606,42 +744,13 @@ describe("planner-service", () => {
           externalEventId: "evt-1",
           title: "Investor breakfast",
           startAt: "2026-04-06T15:00:00.000Z",
-          endAt: "2026-04-06T16:30:00.000Z",
+          endAt: "2026-04-06T16:00:00.000Z",
           isAppManaged: false,
           rawPayload: {},
           scheduleBlockId: null,
-          externalUpdatedAt: "2026-04-06T08:45:00.000Z",
+          externalUpdatedAt: "2026-04-06T07:30:00.000Z",
         },
       ]);
-    repository.getCalendarEventByExternalEventId
-      .mockResolvedValueOnce({
-        id: "event-row-1",
-        externalEventId: "evt-1",
-        title: "Investor breakfast",
-        startAt: "2026-04-06T15:00:00.000Z",
-        endAt: "2026-04-06T16:00:00.000Z",
-        isAppManaged: false,
-        scheduleBlockId: null,
-        rawPayload: {},
-        externalUpdatedAt: "2026-04-06T07:30:00.000Z",
-        dismissedExternalUpdatedAt: "2026-04-06T07:30:00.000Z",
-        createdAt: "2026-04-06T07:30:00.000Z",
-        updatedAt: "2026-04-06T07:30:00.000Z",
-      })
-      .mockResolvedValueOnce({
-        id: "event-row-1",
-        externalEventId: "evt-1",
-        title: "Investor breakfast",
-        startAt: "2026-04-06T15:00:00.000Z",
-        endAt: "2026-04-06T16:00:00.000Z",
-        isAppManaged: false,
-        scheduleBlockId: null,
-        rawPayload: {},
-        externalUpdatedAt: "2026-04-06T07:30:00.000Z",
-        dismissedExternalUpdatedAt: "2026-04-06T07:30:00.000Z",
-        createdAt: "2026-04-06T07:30:00.000Z",
-        updatedAt: "2026-04-06T07:30:00.000Z",
-      });
 
     const service = new PlannerService(repository as never);
 
@@ -652,7 +761,7 @@ describe("planner-service", () => {
       1,
       expect.objectContaining({
         externalEventId: "evt-1",
-        dismissedExternalUpdatedAt: "2026-04-06T07:30:00.000Z",
+        dismissedExternalUpdatedAt: null,
       }),
       fakeDb,
     );

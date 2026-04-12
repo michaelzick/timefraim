@@ -2,6 +2,8 @@ import type {
   ActorRole,
   DraftKind,
   IntegrationStatus,
+  TogglProjectOption,
+  TogglWorkspaceOption,
   TaskPriority,
   ScheduleBlockSource,
   ScheduleBlockState,
@@ -27,6 +29,21 @@ export type CalendarEventRecord = {
   rawPayload: Record<string, unknown>;
   externalUpdatedAt: string | null;
   dismissedExternalUpdatedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UserTogglConnectionRecord = {
+  userId: string;
+  apiTokenCiphertext: string;
+  apiTokenHint: string;
+  workspaceId: string;
+  workspaceName: string;
+  defaultProjectId: string | null;
+  defaultProjectName: string | null;
+  availableWorkspaces: TogglWorkspaceOption[];
+  availableProjects: TogglProjectOption[];
+  lastValidatedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -84,6 +101,7 @@ export type CreateDraftInput = {
   diffSummary: string;
   actorRole: ActorRole;
   expiresAt: string;
+  ownerUserId: string | null;
 };
 
 export type CreateAuditLogInput = {
@@ -97,5 +115,14 @@ export type CreateAuditLogInput = {
 
 export type EnvironmentStatus = Omit<
   IntegrationStatus,
-  "googleConnected" | "googleEmail" | "googleCalendarId" | "togglConnected" | "togglWorkspaceId"
+  | "googleConnected"
+  | "googleEmail"
+  | "googleCalendarId"
+  | "togglConnected"
+  | "togglWorkspaceId"
+  | "togglWorkspaceName"
+  | "togglDefaultProjectId"
+  | "togglDefaultProjectName"
+  | "togglHasSavedToken"
+  | "togglApiTokenHint"
 >;

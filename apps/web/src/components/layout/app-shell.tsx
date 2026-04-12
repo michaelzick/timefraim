@@ -1,4 +1,11 @@
-import type { AuthSession, DayPlan, TogglConnect } from "@timefraim/shared";
+import type {
+  AuthSession,
+  DayPlan,
+  TogglConnect,
+  TogglDiscoverInput,
+  TogglDiscoverResult,
+  TogglIntegrationSettings,
+} from "@timefraim/shared";
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
@@ -17,9 +24,13 @@ type AppShellProps = {
   authSession: AuthSession;
   date: string;
   dayPlan: DayPlan;
+  togglSettings: TogglIntegrationSettings;
+  isDiscoveringToggl: boolean;
   isSavingToggl: boolean;
   onDateChange: (nextDate: string) => void;
-  onSaveToggl: (values: TogglConnect) => Promise<unknown>;
+  onDiscoverToggl: (values: TogglDiscoverInput) => Promise<TogglDiscoverResult>;
+  onDeleteToggl: () => Promise<TogglIntegrationSettings>;
+  onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
   onSignOut: () => void;
   plannerPageProps: Omit<PlannerPageProps, "date" | "dayPlan" | "onDateChange">;
 };
@@ -36,8 +47,12 @@ export function AppShell({
   authSession,
   date,
   dayPlan,
+  togglSettings,
+  isDiscoveringToggl,
   isSavingToggl,
   onDateChange,
+  onDiscoverToggl,
+  onDeleteToggl,
   onSaveToggl,
   onSignOut,
   plannerPageProps,
@@ -64,7 +79,11 @@ export function AppShell({
               element={
                 <SettingsPage
                   authSession={authSession}
+                  togglSettings={togglSettings}
+                  isDiscovering={isDiscoveringToggl}
                   onSaveToggl={onSaveToggl}
+                  onDiscoverToggl={onDiscoverToggl}
+                  onDeleteToggl={onDeleteToggl}
                   isSaving={isSavingToggl}
                 />
               }

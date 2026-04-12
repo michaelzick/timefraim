@@ -1,40 +1,40 @@
-import type { ScheduleBlockSource, Task } from "@timefraim/shared";
+import type {
+  ScheduleBlockSource,
+  Task,
+  TogglProjectOption,
+  TogglWorkspaceOption,
+} from "@timefraim/shared";
+import { getStringId, togglRequest } from "./toggl-track-client.js";
+
+export { discoverTogglData, getTogglProfile, listTogglProjects, listTogglWorkspaces, validateTogglConnection } from "./toggl-track-catalog.js";
 
 export type TogglConnection = {
   apiToken: string;
+  apiTokenHint: string;
   workspaceId: string;
+  workspaceName: string;
   defaultProjectId: string | null;
+  defaultProjectName: string | null;
+  availableWorkspaces: TogglWorkspaceOption[];
+  availableProjects: TogglProjectOption[];
+  lastValidatedAt: string | null;
 };
 
 export type TogglStartResult = {
   togglEntryId: string | null;
 };
 
-function getAuthHeader(apiToken: string): string {
-  return `Basic ${Buffer.from(`${apiToken}:api_token`).toString("base64")}`;
-}
-
-async function parseJsonResponse(response: Response): Promise<Record<string, unknown> | null> {
-  if (response.status === 204) {
+function getEntryId(payload: unknown) {
+  if (!payload || typeof payload !== "object") {
     return null;
   }
 
-  return (await response.json()) as Record<string, unknown>;
-}
-
-function getEntryId(payload: Record<string, unknown> | null) {
-  if (!payload) {
-    return null;
+  if ("id" in payload) {
+    return getStringId(payload.id);
   }
 
-  if (typeof payload.id === "string" || typeof payload.id === "number") {
-    return `${payload.id}`;
-  }
-
-  const nestedPayload = payload.data;
-  if (typeof nestedPayload === "object" && nestedPayload !== null && "id" in nestedPayload) {
-    const id = nestedPayload.id;
-    return typeof id === "string" || typeof id === "number" ? `${id}` : null;
+  if ("data" in payload && typeof payload.data === "object" && payload.data !== null && "id" in payload.data) {
+    return getStringId(payload.data.id);
   }
 
   return null;
@@ -49,14 +49,12 @@ export async function startTogglTimer(params: {
     return { togglEntryId: null };
   }
 
-  const response = await fetch(
-    `https://api.track.toggl.com/api/v9/workspaces/${params.connection.workspaceId}/time_entries`,
+  const projectId = params.task.togglProjectId ?? params.connection.defaultProjectId ?? undefined;
+  const payload = await togglRequest<unknown>(
+    `/workspaces/${encodeURIComponent(params.connection.workspaceId)}/time_entries`,
+    params.connection.apiToken,
     {
       method: "POST",
-      headers: {
-        Authorization: getAuthHeader(params.connection.apiToken),
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({
         created_with: "TimeFraim",
         description: params.task.title,
@@ -64,24 +62,13 @@ export async function startTogglTimer(params: {
         start: new Date().toISOString(),
         stop: null,
         workspace_id: Number(params.connection.workspaceId),
-        project_id: params.task.togglProjectId
-          ? Number(params.task.togglProjectId)
-          : params.connection.defaultProjectId
-            ? Number(params.connection.defaultProjectId)
-            : undefined,
+        project_id: projectId ? Number(projectId) : undefined,
         tags: ["timefraim", params.source],
       }),
     },
   );
 
-  if (!response.ok) {
-    throw new Error(`Toggl start failed with status ${response.status}`);
-  }
-
-  const payload = await parseJsonResponse(response);
-  return {
-    togglEntryId: getEntryId(payload),
-  };
+  return { togglEntryId: getEntryId(payload) };
 }
 
 export async function stopTogglTimer(
@@ -92,18 +79,9 @@ export async function stopTogglTimer(
     return;
   }
 
-  const response = await fetch(
-    `https://api.track.toggl.com/api/v9/workspaces/${connection.workspaceId}/time_entries/${togglEntryId}/stop`,
-    {
-      method: "PATCH",
-      headers: {
-        Authorization: getAuthHeader(connection.apiToken),
-        "Content-Type": "application/json",
-      },
-    },
+  await togglRequest(
+    `/workspaces/${encodeURIComponent(connection.workspaceId)}/time_entries/${encodeURIComponent(togglEntryId)}/stop`,
+    connection.apiToken,
+    { method: "PATCH" },
   );
-
-  if (!response.ok) {
-    throw new Error(`Toggl stop failed with status ${response.status}`);
-  }
 }

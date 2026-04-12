@@ -27,6 +27,9 @@ describe("LoginView", () => {
       expect(signInWithOAuth).toHaveBeenCalledWith(
         expect.objectContaining({
           provider: "google",
+          options: expect.objectContaining({
+            scopes: expect.stringContaining("https://www.googleapis.com/auth/tasks"),
+          }),
         }),
       );
     });

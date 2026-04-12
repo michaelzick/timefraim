@@ -73,6 +73,7 @@ export function buildGoogleEventPayload(task: Task, block: ScheduleBlock) {
     description: task.notes ?? "",
     start: { dateTime: block.startAt },
     end: { dateTime: block.endAt },
+    transparency: "transparent",
     extendedProperties: {
       private: {
         origin: "timefraim",

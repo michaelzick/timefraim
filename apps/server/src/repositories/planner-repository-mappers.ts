@@ -5,10 +5,12 @@ import {
   syncDraftSchema,
   taskSchema,
   timerSessionSchema,
+  togglProjectOptionSchema,
+  togglWorkspaceOptionSchema,
 } from "@timefraim/shared";
 import type { QueryResultRow } from "pg";
 import { asIso } from "../utils/date.js";
-import type { CalendarEventRecord } from "./planner-repository-types.js";
+import type { CalendarEventRecord, UserTogglConnectionRecord } from "./planner-repository-types.js";
 
 export function mapTask(row: QueryResultRow) {
   return taskSchema.parse({
@@ -70,6 +72,7 @@ export function mapCalendarEventRecord(row: QueryResultRow): CalendarEventRecord
 export function mapDraft(row: QueryResultRow) {
   return syncDraftSchema.parse({
     id: row.id,
+    ownerUserId: row.owner_user_id,
     kind: row.kind,
     payload: row.payload,
     diffSummary: row.diff_summary,
@@ -105,4 +108,21 @@ export function mapAuditLog(row: QueryResultRow) {
     payload: row.payload,
     createdAt: asIso(row.created_at),
   });
+}
+
+export function mapUserTogglConnection(row: QueryResultRow): UserTogglConnectionRecord {
+  return {
+    userId: row.user_id,
+    apiTokenCiphertext: row.api_token_ciphertext,
+    apiTokenHint: row.api_token_hint,
+    workspaceId: row.workspace_id,
+    workspaceName: row.workspace_name,
+    defaultProjectId: row.default_project_id,
+    defaultProjectName: row.default_project_name,
+    availableWorkspaces: togglWorkspaceOptionSchema.array().parse(row.available_workspaces ?? []),
+    availableProjects: togglProjectOptionSchema.array().parse(row.available_projects ?? []),
+    lastValidatedAt: asIso(row.last_validated_at),
+    createdAt: asIso(row.created_at)!,
+    updatedAt: asIso(row.updated_at)!,
+  };
 }

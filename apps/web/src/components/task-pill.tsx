@@ -31,7 +31,7 @@ export function TaskPill({
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform) }}
       className={cn(
-        "group w-full rounded-[24px] border p-4 text-left transition hover:border-white/30",
+        "group w-full cursor-pointer rounded-[24px] border p-4 text-left transition hover:border-white/30",
         getTaskPriorityCardClass(task.priority),
         active && "ring-2 ring-[rgba(255,111,59,0.28)]",
         isDragging && "opacity-65",
@@ -52,7 +52,7 @@ export function TaskPill({
           {onDelete ? (
             <button
               type="button"
-              className="rounded-full p-1 text-[var(--muted)] opacity-0 transition hover:bg-white/10 hover:text-white group-hover:opacity-100"
+              className="cursor-pointer rounded-full p-1 text-[var(--muted)] opacity-0 transition hover:bg-white/10 hover:text-white group-hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete();

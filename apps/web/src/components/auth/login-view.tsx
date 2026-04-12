@@ -17,7 +17,7 @@ export function LoginView() {
           options: {
             redirectTo: window.location.origin,
             scopes:
-              "openid email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
+              "openid email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/tasks",
             queryParams: {
               access_type: "offline",
               prompt: "consent",
@@ -39,8 +39,8 @@ export function LoginView() {
         <Badge>Single-user planner</Badge>
         <h1 className="mt-5 text-4xl font-semibold text-white">Sculpt your day before it gets stolen.</h1>
         <p className="mt-4 text-base leading-7 text-[var(--muted-strong)]">
-          TimeFraim reads your primary Google Calendar, creates app-managed focus blocks, syncs Toggl timers,
-          and exposes a guarded MCP endpoint for Claude and ChatGPT.
+          TimeFraim reads your primary Google Calendar, mirrors created tasks into Google Tasks, creates
+          app-managed focus blocks, syncs Toggl timers, and exposes a guarded MCP endpoint for Claude and ChatGPT.
         </p>
         <Button
           className="mt-8 w-full"

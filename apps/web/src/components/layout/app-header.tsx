@@ -10,13 +10,14 @@ type AppHeaderProps = {
 };
 
 export function AppHeader({ authSession, onSignOut }: AppHeaderProps) {
+  const linkedGoogleEmail = authSession.integrationStatus.googleEmail ?? authSession.user.email;
+
   return (
     <header className="flex flex-col gap-4 rounded-[32px] border border-white/10 bg-[rgba(8,12,24,0.82)] p-6 shadow-[0_24px_80px_rgba(5,8,18,0.55)] backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <Badge>Allowlisted for {authSession.user.email}</Badge>
+        <Badge>Synced with {linkedGoogleEmail}</Badge>
         <div className="mt-3 flex items-center gap-3">
           <h1 className="text-2xl font-semibold text-white">TimeFraim</h1>
-          <span className="text-sm text-[var(--muted-strong)]">Calendar-aware daily planning with guarded AI writes</span>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-3">

@@ -1,41 +1,59 @@
+import type { ComponentProps } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { PlannerPage } from "@/pages/planner-page";
-import { buildDayPlan } from "@/test/fixtures";
+import { buildDayPlan, buildTask, buildTogglSettings } from "@/test/fixtures";
 
 vi.mock("@/components/timeline-board", () => ({
   TimelineBoard: () => <div>timeline board</div>,
 }));
 
 const noopAsync = () => Promise.resolve(undefined);
+const resizeObserverMock = vi.fn(() => ({
+  disconnect: vi.fn(),
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+}));
+
+beforeAll(() => {
+  vi.stubGlobal("ResizeObserver", resizeObserverMock);
+});
+
+afterAll(() => {
+  vi.unstubAllGlobals();
+});
+
+function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerPage>> = {}) {
+  return {
+    date: "2026-04-06",
+    dayPlan: buildDayPlan(),
+    isMutating: false,
+    isSyncing: false,
+    onDateChange: vi.fn(),
+    onCreateTask: noopAsync,
+    onUpdateTask: noopAsync,
+    onDeleteTask: noopAsync,
+    onCreateScheduleBlock: noopAsync,
+    onUpdateScheduleBlock: noopAsync,
+    onDeleteScheduleBlock: noopAsync,
+    onDismissCalendarEvent: noopAsync,
+    onConfirmDraft: noopAsync,
+    onRejectDraft: noopAsync,
+    onStartTimer: noopAsync,
+    onStopTimer: noopAsync,
+    onSyncCalendar: noopAsync,
+    togglSettings: buildTogglSettings(),
+    ...overrides,
+  };
+}
 
 describe("PlannerPage", () => {
   it("creates tasks and resets the capture form", async () => {
     const user = userEvent.setup();
     const onCreateTask = vi.fn().mockResolvedValue(undefined);
 
-    render(
-      <PlannerPage
-        date="2026-04-06"
-        dayPlan={buildDayPlan()}
-        isMutating={false}
-        isSyncing={false}
-        onDateChange={vi.fn()}
-        onCreateTask={onCreateTask}
-        onUpdateTask={noopAsync}
-        onDeleteTask={noopAsync}
-        onCreateScheduleBlock={noopAsync}
-        onUpdateScheduleBlock={noopAsync}
-        onDeleteScheduleBlock={noopAsync}
-        onDismissCalendarEvent={noopAsync}
-        onConfirmDraft={noopAsync}
-        onRejectDraft={noopAsync}
-        onStartTimer={noopAsync}
-        onStopTimer={noopAsync}
-        onSyncCalendar={noopAsync}
-      />,
-    );
+    render(<PlannerPage {...buildPlannerPageProps({ onCreateTask })} />);
 
     await user.type(screen.getByLabelText("Task title"), "Deep work");
     await user.type(screen.getByLabelText("Task notes"), "Protect a quiet block.");
@@ -51,6 +69,8 @@ describe("PlannerPage", () => {
         estimatedMinutes: 60,
         priority: "high",
         status: "planned",
+        togglProjectId: null,
+        plannerDate: "2026-04-06",
       });
     });
     expect(screen.getByLabelText("Task title")).toHaveValue("");
@@ -63,27 +83,7 @@ describe("PlannerPage", () => {
     const onUpdateTask = vi.fn().mockResolvedValue(undefined);
     const onStartTimer = vi.fn().mockResolvedValue(undefined);
 
-    render(
-      <PlannerPage
-        date="2026-04-06"
-        dayPlan={dayPlan}
-        isMutating={false}
-        isSyncing={false}
-        onDateChange={vi.fn()}
-        onCreateTask={noopAsync}
-        onUpdateTask={onUpdateTask}
-        onDeleteTask={noopAsync}
-        onCreateScheduleBlock={noopAsync}
-        onUpdateScheduleBlock={noopAsync}
-        onDeleteScheduleBlock={noopAsync}
-        onDismissCalendarEvent={noopAsync}
-        onConfirmDraft={noopAsync}
-        onRejectDraft={noopAsync}
-        onStartTimer={onStartTimer}
-        onStopTimer={noopAsync}
-        onSyncCalendar={noopAsync}
-      />,
-    );
+    render(<PlannerPage {...buildPlannerPageProps({ dayPlan, onUpdateTask, onStartTimer })} />);
 
     await user.clear(screen.getByLabelText("Detail title"));
     await user.type(screen.getByLabelText("Detail title"), "Refined task");
@@ -108,27 +108,7 @@ describe("PlannerPage", () => {
     const onDeleteTask = vi.fn().mockResolvedValue(undefined);
     vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    render(
-      <PlannerPage
-        date="2026-04-06"
-        dayPlan={buildDayPlan()}
-        isMutating={false}
-        isSyncing={false}
-        onDateChange={vi.fn()}
-        onCreateTask={noopAsync}
-        onUpdateTask={noopAsync}
-        onDeleteTask={onDeleteTask}
-        onCreateScheduleBlock={noopAsync}
-        onUpdateScheduleBlock={noopAsync}
-        onDeleteScheduleBlock={noopAsync}
-        onDismissCalendarEvent={noopAsync}
-        onConfirmDraft={noopAsync}
-        onRejectDraft={noopAsync}
-        onStartTimer={noopAsync}
-        onStopTimer={noopAsync}
-        onSyncCalendar={noopAsync}
-      />,
-    );
+    render(<PlannerPage {...buildPlannerPageProps({ onDeleteTask })} />);
 
     await user.click(screen.getByRole("button", { name: /delete task/i }));
 
@@ -137,33 +117,96 @@ describe("PlannerPage", () => {
     });
   });
 
+  it("advances task detail to the next visible queue task after a left-side delete", async () => {
+    const user = userEvent.setup();
+    const dayPlan = buildDayPlan();
+    const onDeleteTask = vi.fn().mockResolvedValue(undefined);
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const props = buildPlannerPageProps({ onDeleteTask });
+    const { rerender } = render(<PlannerPage {...props} dayPlan={dayPlan} />);
+
+    await user.click(screen.getByRole("button", { name: /delete plan launch week/i }));
+
+    await waitFor(() => {
+      expect(onDeleteTask).toHaveBeenCalledWith(dayPlan.tasks[0].id);
+    });
+
+    rerender(
+      <PlannerPage
+        {...props}
+        dayPlan={{
+          ...dayPlan,
+          tasks: [dayPlan.tasks[1]],
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Detail title")).toHaveValue(dayPlan.tasks[1].title);
+    });
+    expect(confirmSpy).toHaveBeenCalledWith(`Delete "${dayPlan.tasks[0].title}"?`);
+  });
+
+  it("clears task detail instead of falling back to a hidden scheduled task after a left-side delete", async () => {
+    const user = userEvent.setup();
+    const dayPlan = buildDayPlan({
+      tasks: [
+        buildTask({
+          id: "task-queue-1f8f9660-0000-4000-8000-000000000001",
+          title: "Queue task",
+        }),
+        buildTask({
+          id: "task-scheduled-1f8f9660-0000-4000-8000-000000000002",
+          title: "Scheduled task",
+          status: "scheduled",
+          scheduledBlockId: "block-1f8f9660-0000-4000-8000-000000000001",
+        }),
+      ],
+    });
+    const onDeleteTask = vi.fn().mockResolvedValue(undefined);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const props = buildPlannerPageProps({ onDeleteTask });
+    const { rerender } = render(<PlannerPage {...props} dayPlan={dayPlan} />);
+
+    await user.click(screen.getByRole("button", { name: /delete queue task/i }));
+
+    await waitFor(() => {
+      expect(onDeleteTask).toHaveBeenCalledWith(dayPlan.tasks[0].id);
+    });
+
+    rerender(
+      <PlannerPage
+        {...props}
+        dayPlan={{
+          ...dayPlan,
+          tasks: [dayPlan.tasks[1]],
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Detail title")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("Select a task to refine notes, priority, lifecycle, and timers.")).toBeInTheDocument();
+    expect(screen.queryByDisplayValue("Scheduled task")).not.toBeInTheDocument();
+  });
+
+  it("removes retired planner chrome copy from the planner page", () => {
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    expect(screen.getByText("Toggl live")).toBeInTheDocument();
+    expect(screen.queryByText("Google live")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tunnel ready")).not.toBeInTheDocument();
+    expect(screen.queryByText("No pending AI drafts. MCP proposals will land here for approval.")).not.toBeInTheDocument();
+  });
+
   it("shows an error when saving task details fails", async () => {
     const user = userEvent.setup();
     const onUpdateTask = vi.fn().mockRejectedValue(new Error("Schedule conflict with Standup"));
     const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => undefined);
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
-    render(
-      <PlannerPage
-        date="2026-04-06"
-        dayPlan={buildDayPlan()}
-        isMutating={false}
-        isSyncing={false}
-        onDateChange={vi.fn()}
-        onCreateTask={noopAsync}
-        onUpdateTask={onUpdateTask}
-        onDeleteTask={noopAsync}
-        onCreateScheduleBlock={noopAsync}
-        onUpdateScheduleBlock={noopAsync}
-        onDeleteScheduleBlock={noopAsync}
-        onDismissCalendarEvent={noopAsync}
-        onConfirmDraft={noopAsync}
-        onRejectDraft={noopAsync}
-        onStartTimer={noopAsync}
-        onStopTimer={noopAsync}
-        onSyncCalendar={noopAsync}
-      />,
-    );
+    render(<PlannerPage {...buildPlannerPageProps({ onUpdateTask })} />);
 
     await user.click(screen.getByRole("button", { name: /^save$/i }));
 

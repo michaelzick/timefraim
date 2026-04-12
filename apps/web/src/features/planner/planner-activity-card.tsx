@@ -35,9 +35,7 @@ export function PlannerActivityCard({
         </Tabs.List>
 
         <Tabs.Content value="drafts" className="space-y-3">
-          {dayPlan.drafts.length === 0 ? (
-            <p className="text-sm text-[var(--muted)]">No pending AI drafts. MCP proposals will land here for approval.</p>
-          ) : (
+          {dayPlan.drafts.length === 0 ? null : (
             dayPlan.drafts.map((draft) => (
               <div key={draft.id} className="rounded-[24px] border border-white/10 bg-white/4 p-4">
                 <div className="mb-2 flex items-center justify-between gap-3">

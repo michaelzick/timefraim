@@ -1,4 +1,4 @@
-import type { DayPlan, Task } from "@timefraim/shared";
+import type { DayPlan, Task, TogglIntegrationSettings } from "@timefraim/shared";
 import type { RefObject } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { TimelineBoard } from "@/components/timeline-board";
@@ -13,6 +13,7 @@ type PlannerQueueColumnProps = {
   createTaskForm: UseFormReturn<CreateTaskValues>;
   totalTasks: number;
   isMutating: boolean;
+  togglSettings: TogglIntegrationSettings;
   search: string;
   selectedTaskId: string | null;
   tasks: Task[];
@@ -26,6 +27,7 @@ export function PlannerQueueColumn({
   createTaskForm,
   totalTasks,
   isMutating,
+  togglSettings,
   search,
   selectedTaskId,
   tasks,
@@ -35,8 +37,14 @@ export function PlannerQueueColumn({
   onDeleteTask,
 }: PlannerQueueColumnProps) {
   return (
-    <div className="space-y-6">
-      <CreateTaskCard form={createTaskForm} totalTasks={totalTasks} isMutating={isMutating} onSubmit={onCreateTask} />
+    <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
+      <CreateTaskCard
+        form={createTaskForm}
+        totalTasks={totalTasks}
+        isMutating={isMutating}
+        togglSettings={togglSettings}
+        onSubmit={onCreateTask}
+      />
       <TaskQueueCard
         search={search}
         selectedTaskId={selectedTaskId}
@@ -99,6 +107,7 @@ type PlannerDetailColumnProps = {
   dayPlan: DayPlan;
   activeTimerTaskId: string | null;
   isMutating: boolean;
+  togglSettings: TogglIntegrationSettings;
   onDeleteTask: () => void;
   onSaveTask: (values: TaskFormValues) => Promise<void>;
   onStartTimer: (taskId: string) => void;
@@ -114,6 +123,7 @@ export function PlannerDetailColumn({
   dayPlan,
   activeTimerTaskId,
   isMutating,
+  togglSettings,
   onDeleteTask,
   onSaveTask,
   onStartTimer,
@@ -122,13 +132,14 @@ export function PlannerDetailColumn({
   onRejectDraft,
 }: PlannerDetailColumnProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
       <TaskDetailCard
         detailPanelRef={detailPanelRef}
         form={detailForm}
         selectedTask={selectedTask}
         activeTimerTaskId={activeTimerTaskId}
         isMutating={isMutating}
+        togglSettings={togglSettings}
         onDeleteTask={onDeleteTask}
         onSaveTask={onSaveTask}
         onStartTimer={onStartTimer}

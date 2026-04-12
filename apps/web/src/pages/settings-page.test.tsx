@@ -2,22 +2,46 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { SettingsPage } from "@/pages/settings-page";
-import { buildAuthSession } from "@/test/fixtures";
+import { buildAuthSession, buildTogglSettings } from "@/test/fixtures";
 
 describe("SettingsPage", () => {
   it("submits Toggl settings and clears the API token field", async () => {
     const user = userEvent.setup();
-    const onSaveToggl = vi.fn().mockResolvedValue(undefined);
+    const togglSettings = buildTogglSettings({ connected: false, hasSavedToken: false, apiTokenHint: null, workspaceId: null, workspaceName: null, defaultProjectId: null, defaultProjectName: null, availableWorkspaces: [], availableProjects: [], lastValidatedAt: null });
+    const onSaveToggl = vi.fn().mockResolvedValue(buildTogglSettings());
+    const onDiscoverToggl = vi.fn().mockResolvedValue({
+      apiTokenHint: "••••7890",
+      selectedWorkspaceId: "workspace-2",
+      selectedWorkspaceName: "Personal",
+      defaultProjectId: null,
+      defaultProjectName: null,
+      availableWorkspaces: [{ id: "workspace-2", name: "Personal" }],
+      availableProjects: [{ id: "project-7", name: "Deep Work", workspaceId: "workspace-2", active: true }],
+    });
 
     render(
-      <SettingsPage authSession={buildAuthSession()} onSaveToggl={onSaveToggl} isSaving={false} />,
+      <SettingsPage
+        authSession={buildAuthSession()}
+        togglSettings={togglSettings}
+        onDiscoverToggl={onDiscoverToggl}
+        onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
+        onSaveToggl={onSaveToggl}
+        isDiscovering={false}
+        isSaving={false}
+      />,
     );
 
-    await user.type(screen.getByPlaceholderText("API token"), "test-token");
-    await user.clear(screen.getByPlaceholderText("Workspace ID"));
-    await user.type(screen.getByPlaceholderText("Workspace ID"), "workspace-2");
-    await user.type(screen.getByPlaceholderText("Default project ID"), "project-7");
-    await user.click(screen.getByRole("button", { name: /save toggl access/i }));
+    await user.type(screen.getByPlaceholderText(/paste toggl api token/i), "test-token");
+    await user.click(screen.getByRole("button", { name: /find workspaces/i }));
+    await waitFor(() => {
+      expect(onDiscoverToggl).toHaveBeenCalledWith({
+        apiToken: "test-token",
+        workspaceId: null,
+      });
+    });
+    await user.selectOptions(screen.getByLabelText("Toggl workspace"), "workspace-2");
+    await user.selectOptions(screen.getByLabelText("Toggl default project"), "project-7");
+    await user.click(screen.getByRole("button", { name: /save toggl setup/i }));
 
     await waitFor(() => {
       expect(onSaveToggl).toHaveBeenCalledWith({
@@ -27,7 +51,7 @@ describe("SettingsPage", () => {
       });
     });
     await waitFor(() => {
-      expect(screen.getByPlaceholderText("API token")).toHaveValue("");
+      expect(screen.getByPlaceholderText(/paste toggl api token/i)).toHaveValue("");
     });
   });
 });

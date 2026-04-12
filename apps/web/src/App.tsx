@@ -14,7 +14,17 @@ const queryClient = new QueryClient();
 
 function AppContent() {
   const session = useSupabaseSession();
-  const { authQuery, date, dayPlanQuery, loading, plannerMutations, queryError, queryErrorMessage, setDate } =
+  const {
+    authQuery,
+    date,
+    dayPlanQuery,
+    loading,
+    plannerMutations,
+    queryError,
+    queryErrorMessage,
+    setDate,
+    togglSettingsQuery,
+  } =
     useAppShellData(session);
 
   const handleRetry = () => {
@@ -36,7 +46,7 @@ function AppContent() {
     return <LoginView />;
   }
 
-  if (loading || !authQuery.data || !dayPlanQuery.data) {
+  if (loading || !authQuery.data || !dayPlanQuery.data || !togglSettingsQuery.data) {
     if (queryError) {
       return (
         <div className="mx-auto flex min-h-screen max-w-[640px] items-center px-6">
@@ -69,8 +79,12 @@ function AppContent() {
       authSession={authQuery.data}
       date={date}
       dayPlan={dayPlanQuery.data}
+      togglSettings={togglSettingsQuery.data}
+      isDiscoveringToggl={plannerMutations.isDiscoveringToggl}
       isSavingToggl={plannerMutations.isSavingToggl}
       onDateChange={setDate}
+      onDiscoverToggl={plannerMutations.actions.discoverToggl}
+      onDeleteToggl={plannerMutations.actions.deleteToggl}
       onSaveToggl={plannerMutations.actions.saveToggl}
       onSignOut={handleSignOut}
       plannerPageProps={{
@@ -88,6 +102,7 @@ function AppContent() {
         onSyncCalendar: plannerMutations.actions.syncCalendar,
         onUpdateScheduleBlock: plannerMutations.actions.updateScheduleBlock,
         onUpdateTask: plannerMutations.actions.updateTask,
+        togglSettings: togglSettingsQuery.data,
       }}
     />
   );

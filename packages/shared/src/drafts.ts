@@ -16,6 +16,7 @@ export const actorRoleSchema = z.enum(["user", "assistant", "system"]);
 
 export const syncDraftSchema = z.object({
   id: z.string().uuid(),
+  ownerUserId: z.string().uuid().nullable(),
   kind: draftKindSchema,
   payload: z.record(z.string(), z.unknown()),
   diffSummary: z.string(),

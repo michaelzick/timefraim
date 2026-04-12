@@ -1,4 +1,5 @@
 import { deleteGoogleScheduleBlock, upsertGoogleScheduleBlock, type GoogleConnection } from "../integration/google-calendar.js";
+import { createGoogleTask } from "../integration/google-tasks.js";
 import { startTogglTimer, stopTogglTimer, type TogglConnection } from "../integration/toggl-track.js";
 import { pool } from "../db/pool.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
@@ -53,6 +54,25 @@ export async function runPlannerSideEffects(
         await deleteGoogleScheduleBlock(googleConnection, effect.googleEventId);
       } catch (error) {
         console.error("Google schedule delete failed", error);
+      }
+      continue;
+    }
+
+    if (effect.type === "google.task.create") {
+      const task = await repository.getTask(effect.taskId, pool);
+      if (!task) {
+        continue;
+      }
+
+      try {
+        await createGoogleTask({
+          connection: googleConnection,
+          title: task.title,
+          notes: task.notes,
+          plannerDate: effect.plannerDate,
+        });
+      } catch (error) {
+        console.error("Google task create failed", error);
       }
       continue;
     }

@@ -42,9 +42,7 @@ export function PlannerSummaryCard({
         </div>
       </div>
       <div className="mt-5 flex flex-wrap gap-3">
-        <Badge>{integrationStatus.googleConnected ? "Google live" : "Google not connected"}</Badge>
         <Badge>{integrationStatus.togglConnected ? "Toggl live" : "Toggl not connected"}</Badge>
-        <Badge>{integrationStatus.tunnelBaseUrl ? "Tunnel ready" : "Tunnel pending"}</Badge>
       </div>
     </Card>
   );

@@ -1,5 +1,5 @@
 import type { ScheduleBlock, Task } from "@timefraim/shared";
-import { google } from "googleapis";
+import { google, type calendar_v3 } from "googleapis";
 import { env } from "../config/env.js";
 import { buildGoogleEventPayload } from "../services/planner-domain.js";
 
@@ -8,6 +8,7 @@ export type GoogleConnection = {
   refreshToken: string | null;
   expiresAt: string | null;
   calendarId: string;
+  plannerCalendarId: string;
   email: string;
 };
 
@@ -41,6 +42,54 @@ function getOAuthClient(connection: GoogleConnection) {
   return client;
 }
 
+function isNotFoundError(error: unknown) {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  const errorWithStatus = error as { code?: unknown; status?: unknown };
+  return errorWithStatus.code === 404 || errorWithStatus.status === 404;
+}
+
+async function resolveCalendarId(calendar: calendar_v3.Calendar, calendarIdOrName: string) {
+  const target = calendarIdOrName.trim();
+  if (!target || target === "primary") {
+    return "primary";
+  }
+
+  let pageToken: string | undefined;
+  do {
+    const response = await calendar.calendarList.list({ pageToken });
+    const match = (response.data.items ?? []).find((item) => item.id === target || item.summary === target);
+    if (match?.id) {
+      return match.id;
+    }
+    pageToken = response.data.nextPageToken ?? undefined;
+  } while (pageToken);
+
+  return target;
+}
+
+async function withCalendarFallback<T>(
+  calendarIds: string[],
+  operation: (calendarId: string) => Promise<T>,
+): Promise<T> {
+  let lastError: unknown;
+
+  for (const calendarId of [...new Set(calendarIds.filter(Boolean))]) {
+    try {
+      return await operation(calendarId);
+    } catch (error) {
+      if (!isNotFoundError(error)) {
+        throw error;
+      }
+      lastError = error;
+    }
+  }
+
+  throw lastError;
+}
+
 export async function syncGoogleCalendarWindow(
   connection: GoogleConnection | null,
   range: { timeMin: string; timeMax: string },
@@ -55,8 +104,9 @@ export async function syncGoogleCalendarWindow(
   }
 
   const calendar = google.calendar({ version: "v3", auth });
+  const calendarId = await resolveCalendarId(calendar, connection.calendarId);
   const response = await calendar.events.list({
-    calendarId: connection.calendarId,
+    calendarId,
     singleEvents: true,
     orderBy: "startTime",
     timeMin: range.timeMin,
@@ -93,18 +143,22 @@ export async function upsertGoogleScheduleBlock(params: {
 
   const calendar = google.calendar({ version: "v3", auth });
   const payload = buildGoogleEventPayload(params.task, params.block);
+  const plannerCalendarId = await resolveCalendarId(calendar, params.connection.plannerCalendarId);
+  const fallbackCalendarId = await resolveCalendarId(calendar, params.connection.calendarId);
 
   if (params.block.googleEventId) {
-    await calendar.events.update({
-      calendarId: params.connection.calendarId,
-      eventId: params.block.googleEventId,
-      requestBody: payload,
-    });
+    await withCalendarFallback([plannerCalendarId, fallbackCalendarId], (calendarId) =>
+      calendar.events.update({
+        calendarId,
+        eventId: params.block.googleEventId!,
+        requestBody: payload,
+      }),
+    );
     return params.block.googleEventId;
   }
 
   const response = await calendar.events.insert({
-    calendarId: params.connection.calendarId,
+    calendarId: plannerCalendarId,
     requestBody: payload,
   });
 
@@ -125,8 +179,12 @@ export async function deleteGoogleScheduleBlock(
   }
 
   const calendar = google.calendar({ version: "v3", auth });
-  await calendar.events.delete({
-    calendarId: connection.calendarId,
-    eventId: googleEventId,
-  });
+  const plannerCalendarId = await resolveCalendarId(calendar, connection.plannerCalendarId);
+  const fallbackCalendarId = await resolveCalendarId(calendar, connection.calendarId);
+  await withCalendarFallback([plannerCalendarId, fallbackCalendarId], (calendarId) =>
+    calendar.events.delete({
+      calendarId,
+      eventId: googleEventId,
+    }),
+  );
 }

@@ -1,7 +1,13 @@
 import { env } from "../config/env.js";
 import { pool } from "../db/pool.js";
+import { decryptSecret, encryptSecret, maskSecret } from "../integration/integration-crypto.js";
+import {
+  discoverTogglData,
+  type TogglConnection,
+  validateTogglConnection,
+} from "../integration/toggl-track.js";
+import type { TogglDiscoverResult, TogglIntegrationSettings } from "@timefraim/shared";
 import type { GoogleConnection } from "../integration/google-calendar.js";
-import type { TogglConnection } from "../integration/toggl-track.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
 
 export async function getGoogleConnection(repository: PlannerRepository): Promise<GoogleConnection | null> {
@@ -15,21 +21,58 @@ export async function getGoogleConnection(repository: PlannerRepository): Promis
     refreshToken: row.refresh_token,
     expiresAt: row.expires_at ? new Date(row.expires_at).toISOString() : null,
     calendarId: typeof row.metadata?.calendarId === "string" ? row.metadata.calendarId : env.GOOGLE_CALENDAR_ID,
+    plannerCalendarId:
+      typeof row.metadata?.plannerCalendarId === "string"
+        ? row.metadata.plannerCalendarId
+        : env.GOOGLE_PLANNER_CALENDAR_ID,
     email: typeof row.metadata?.email === "string" ? row.metadata.email : env.ALLOWED_EMAIL,
   };
 }
 
-export async function getTogglConnection(repository: PlannerRepository): Promise<TogglConnection | null> {
-  const row = await repository.getIntegrationToken("toggl", pool);
-  if (!row?.access_token) {
+export async function getTogglConnection(
+  repository: PlannerRepository,
+  userId: string | null | undefined,
+): Promise<TogglConnection | null> {
+  if (!userId) {
+    return null;
+  }
+
+  const row = await repository.getUserTogglConnection(userId, pool);
+  if (!row) {
     return null;
   }
 
   return {
-    apiToken: row.access_token,
-    workspaceId: typeof row.metadata?.workspaceId === "string" ? row.metadata.workspaceId : env.TOGGL_WORKSPACE_ID || "",
-    defaultProjectId: typeof row.metadata?.defaultProjectId === "string" ? row.metadata.defaultProjectId : null,
+    apiToken: decryptSecret(row.apiTokenCiphertext),
+    apiTokenHint: row.apiTokenHint,
+    workspaceId: row.workspaceId,
+    workspaceName: row.workspaceName,
+    defaultProjectId: row.defaultProjectId,
+    defaultProjectName: row.defaultProjectName,
+    availableWorkspaces: row.availableWorkspaces,
+    availableProjects: row.availableProjects,
+    lastValidatedAt: row.lastValidatedAt,
   };
+}
+
+export async function getTogglSettings(
+  repository: PlannerRepository,
+  userId: string,
+): Promise<TogglIntegrationSettings> {
+  const row = await repository.getUserTogglConnection(userId, pool);
+  return repository.getTogglSettings(row);
+}
+
+export async function discoverTogglConnection(input: {
+  apiToken: string;
+  workspaceId?: string | null;
+}): Promise<TogglDiscoverResult> {
+  const apiToken = input.apiToken.trim();
+  return discoverTogglData({
+    apiToken,
+    apiTokenHint: maskSecret(apiToken),
+    workspaceId: input.workspaceId ?? null,
+  });
 }
 
 export async function saveGoogleSession(
@@ -48,7 +91,11 @@ export async function saveGoogleSession(
       accessToken: input.accessToken,
       refreshToken: input.refreshToken,
       expiresAt: input.expiresAt,
-      metadata: { email: input.email, calendarId: input.calendarId },
+      metadata: {
+        email: input.email,
+        calendarId: input.calendarId,
+        plannerCalendarId: env.GOOGLE_PLANNER_CALENDAR_ID,
+      },
     },
     pool,
   );
@@ -56,16 +103,56 @@ export async function saveGoogleSession(
 
 export async function saveTogglConnection(
   repository: PlannerRepository,
-  input: { apiToken: string; workspaceId: string; defaultProjectId: string | null },
-) {
-  await repository.upsertIntegrationToken(
-    "toggl",
+  userId: string,
+  input: { apiToken?: string | null; workspaceId: string; defaultProjectId: string | null },
+): Promise<TogglIntegrationSettings> {
+  const existing = await repository.getUserTogglConnection(userId, pool);
+  const providedApiToken = input.apiToken?.trim() || null;
+  const apiToken = providedApiToken
+    ? providedApiToken
+    : existing
+      ? decryptSecret(existing.apiTokenCiphertext)
+      : null;
+
+  if (!apiToken) {
+    throw new Error("A Toggl API token is required before this connection can be saved");
+  }
+
+  const validated = await validateTogglConnection({
+    apiToken,
+    apiTokenHint: providedApiToken ? maskSecret(apiToken) : existing?.apiTokenHint ?? maskSecret(apiToken),
+    workspaceId: input.workspaceId,
+    defaultProjectId: input.defaultProjectId,
+  });
+
+  const saved = await repository.upsertUserTogglConnection(
+    userId,
     {
-      accessToken: input.apiToken,
-      refreshToken: null,
-      expiresAt: null,
-      metadata: { workspaceId: input.workspaceId, defaultProjectId: input.defaultProjectId },
+      apiTokenCiphertext: providedApiToken ? encryptSecret(apiToken) : existing!.apiTokenCiphertext,
+      apiTokenHint: validated.apiTokenHint,
+      workspaceId: validated.workspaceId,
+      workspaceName: validated.workspaceName,
+      defaultProjectId: validated.defaultProjectId,
+      defaultProjectName: validated.defaultProjectName,
+      availableWorkspaces: validated.availableWorkspaces,
+      availableProjects: validated.availableProjects,
+      lastValidatedAt: validated.lastValidatedAt,
     },
     pool,
   );
+
+  return repository.getTogglSettings(saved);
+}
+
+export async function deleteTogglConnection(repository: PlannerRepository, userId: string) {
+  await repository.deleteUserTogglConnection(userId, pool);
+}
+
+export async function getAllowedPlannerUserId(repository: PlannerRepository): Promise<string> {
+  const userId = await repository.findAuthUserIdByEmail(env.ALLOWED_EMAIL, pool);
+  if (!userId) {
+    throw new Error(`Could not resolve the allowed planner user for ${env.ALLOWED_EMAIL}`);
+  }
+
+  return userId;
 }

@@ -59,6 +59,7 @@ describe("planner-domain", () => {
     const payload = buildGoogleEventPayload(task, block);
 
     expect(payload.summary).toBe("Deep work");
+    expect(payload.transparency).toBe("transparent");
     expect(payload.extendedProperties.private.scheduleBlockId).toBe(block.id);
   });
 

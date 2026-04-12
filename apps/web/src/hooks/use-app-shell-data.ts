@@ -17,6 +17,7 @@ export function useAppShellData(session: Session | null) {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["auth-session", token] }),
       queryClient.invalidateQueries({ queryKey: ["day-plan", token] }),
+      queryClient.invalidateQueries({ queryKey: ["toggl-settings", token] }),
     ]);
   });
 
@@ -47,6 +48,12 @@ export function useAppShellData(session: Session | null) {
     queryFn: () => api.getDayPlan(token, date, getTimezoneOffsetForDate(date)),
     retry: false,
   });
+  const togglSettingsQuery = useQuery({
+    queryKey: ["toggl-settings", token],
+    enabled: Boolean(token),
+    queryFn: () => api.getTogglSettings(token),
+    retry: false,
+  });
 
   const plannerMutations = usePlannerMutations({
     date,
@@ -55,10 +62,10 @@ export function useAppShellData(session: Session | null) {
   });
 
   const loading = useMemo(
-    () => authQuery.isLoading || dayPlanQuery.isLoading,
-    [authQuery.isLoading, dayPlanQuery.isLoading],
+    () => authQuery.isLoading || dayPlanQuery.isLoading || togglSettingsQuery.isLoading,
+    [authQuery.isLoading, dayPlanQuery.isLoading, togglSettingsQuery.isLoading],
   );
-  const queryError = authQuery.error ?? dayPlanQuery.error;
+  const queryError = authQuery.error ?? dayPlanQuery.error ?? togglSettingsQuery.error;
   const queryErrorMessage = queryError instanceof Error ? queryError.message : "Unable to load planner data.";
 
   return {
@@ -70,5 +77,6 @@ export function useAppShellData(session: Session | null) {
     queryError,
     queryErrorMessage,
     setDate,
+    togglSettingsQuery,
   };
 }

@@ -28,15 +28,24 @@ Single-user scheduling app scaffolded as a local-first Sunsama-style planner wit
    supabase db reset
    ```
 
+   If you already have local data and just need the latest schema changes, run:
+
+   ```bash
+   supabase migration up
+   ```
+
 4. Copy values from local Supabase into `.env`:
 
-   - `SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `SUPABASE_JWT_SECRET`
+  - `SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `SUPABASE_JWT_SECRET`
+  - `INTEGRATION_ENCRYPTION_KEY` (generate a long random secret, for example with `openssl rand -base64 32`)
 
-5. Add Google OAuth credentials and optional Toggl workspace details to `.env`.
+5. Add Google OAuth credentials to `.env`.
 
-6. Run the web app and backend:
+6. Connect Toggl from Settings inside the app using a personal API token from <https://track.toggl.com/profile>. TimeFraim stores the token encrypted in the database and lets you choose a workspace, workspace default project, and per-task project overrides.
+
+7. Run the web app and backend:
 
    ```bash
    pnpm dev
