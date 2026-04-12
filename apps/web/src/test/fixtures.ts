@@ -1,4 +1,4 @@
-import type { AuthSession, DayPlan, Task } from "@timefraim/shared";
+import type { AuthSession, DayPlan, Task, TogglIntegrationSettings } from "@timefraim/shared";
 
 export function buildTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -38,6 +38,11 @@ export function buildDayPlan(overrides: Partial<DayPlan> = {}): DayPlan {
       googleCalendarId: "primary",
       togglConnected: true,
       togglWorkspaceId: "workspace-1",
+      togglWorkspaceName: "Personal",
+      togglDefaultProjectId: "project-1",
+      togglDefaultProjectName: "Deep Work",
+      togglHasSavedToken: true,
+      togglApiTokenHint: "••••7890",
       mcpFullAccessConfigured: true,
       mcpReadOnlyConfigured: true,
       tunnelBaseUrl: "https://example.ngrok.app",
@@ -46,9 +51,31 @@ export function buildDayPlan(overrides: Partial<DayPlan> = {}): DayPlan {
   };
 }
 
+export function buildTogglSettings(
+  overrides: Partial<TogglIntegrationSettings> = {},
+): TogglIntegrationSettings {
+  return {
+    connected: true,
+    hasSavedToken: true,
+    apiTokenHint: "••••7890",
+    workspaceId: "workspace-1",
+    workspaceName: "Personal",
+    defaultProjectId: "project-1",
+    defaultProjectName: "Deep Work",
+    availableWorkspaces: [{ id: "workspace-1", name: "Personal" }],
+    availableProjects: [
+      { id: "project-1", name: "Deep Work", workspaceId: "workspace-1", active: true },
+      { id: "project-2", name: "Client X / Bugfix", workspaceId: "workspace-1", active: true },
+    ],
+    lastValidatedAt: "2026-04-06T09:00:00.000Z",
+    ...overrides,
+  };
+}
+
 export function buildAuthSession(overrides: Partial<AuthSession> = {}): AuthSession {
   return {
     user: {
+      id: "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
       email: "allowed@example.com",
       displayName: "Allowed User",
       avatarUrl: "https://example.com/avatar.png",

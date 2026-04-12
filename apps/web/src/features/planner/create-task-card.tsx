@@ -1,3 +1,4 @@
+import type { TogglIntegrationSettings } from "@timefraim/shared";
 import { LoaderCircle, Sparkles } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +13,29 @@ type CreateTaskCardProps = {
   form: UseFormReturn<CreateTaskValues>;
   totalTasks: number;
   isMutating: boolean;
+  togglSettings: TogglIntegrationSettings;
   onSubmit: (values: CreateTaskValues) => Promise<unknown>;
 };
 
-export function CreateTaskCard({ form, totalTasks, isMutating, onSubmit }: CreateTaskCardProps) {
+function getDefaultProjectLabel(togglSettings: TogglIntegrationSettings) {
+  if (!togglSettings.connected) {
+    return "Connect Toggl in Settings to assign a project";
+  }
+
+  if (togglSettings.defaultProjectName) {
+    return `Use workspace default (${togglSettings.defaultProjectName})`;
+  }
+
+  return "No project override";
+}
+
+export function CreateTaskCard({
+  form,
+  totalTasks,
+  isMutating,
+  togglSettings,
+  onSubmit,
+}: CreateTaskCardProps) {
   return (
     <Card className="overflow-hidden">
       <div className="mb-4 flex items-center justify-between">
@@ -52,6 +72,28 @@ export function CreateTaskCard({ form, totalTasks, isMutating, onSubmit }: Creat
               </option>
             ))}
           </select>
+        </div>
+        <div className="space-y-2">
+          <select
+            aria-label="Task Toggl project"
+            className="h-11 w-full rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)]"
+            disabled={!togglSettings.connected}
+            {...form.register("togglProjectId")}
+          >
+            <option value="" className="bg-[var(--panel)]">
+              {getDefaultProjectLabel(togglSettings)}
+            </option>
+            {togglSettings.availableProjects.map((project) => (
+              <option key={project.id} value={project.id} className="bg-[var(--panel)]">
+                {project.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-[var(--muted)]">
+            {togglSettings.connected
+              ? `Timers for this task will run in ${togglSettings.workspaceName ?? "your saved Toggl workspace"}.`
+              : "Connect Toggl from Settings to choose a project per task."}
+          </p>
         </div>
         <Button type="submit" className="w-full" disabled={isMutating}>
           {isMutating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}

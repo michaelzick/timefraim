@@ -1,4 +1,4 @@
-import type { Task } from "@timefraim/shared";
+import type { Task, TogglIntegrationSettings } from "@timefraim/shared";
 import { Play, Square, Trash2 } from "lucide-react";
 import type { RefObject } from "react";
 import type { UseFormReturn } from "react-hook-form";
@@ -22,11 +22,28 @@ type TaskDetailCardProps = {
   selectedTask: Task | null;
   activeTimerTaskId: string | null;
   isMutating: boolean;
+  togglSettings: TogglIntegrationSettings;
   onDeleteTask: () => void;
   onSaveTask: (values: TaskFormValues) => Promise<unknown>;
   onStartTimer: (taskId: string) => void;
   onStopTimer: () => void;
 };
+
+function getProjectOptions(togglSettings: TogglIntegrationSettings, selectedTask: Task | null) {
+  const options = togglSettings.availableProjects.filter((project) =>
+    togglSettings.workspaceId ? project.workspaceId === togglSettings.workspaceId : true,
+  );
+  const currentProjectId = selectedTask?.togglProjectId ?? null;
+
+  if (currentProjectId && !options.some((project) => project.id === currentProjectId)) {
+    return [
+      { id: currentProjectId, name: `Missing project (ID ${currentProjectId})` },
+      ...options.map((project) => ({ id: project.id, name: project.name })),
+    ];
+  }
+
+  return options.map((project) => ({ id: project.id, name: project.name }));
+}
 
 export function TaskDetailCard({
   detailPanelRef,
@@ -34,11 +51,14 @@ export function TaskDetailCard({
   selectedTask,
   activeTimerTaskId,
   isMutating,
+  togglSettings,
   onDeleteTask,
   onSaveTask,
   onStartTimer,
   onStopTimer,
 }: TaskDetailCardProps) {
+  const projectOptions = getProjectOptions(togglSettings, selectedTask);
+
   return (
     <Card ref={detailPanelRef}>
       <div className="mb-4 flex items-center justify-between">
@@ -81,10 +101,38 @@ export function TaskDetailCard({
           >
             {TASK_LIFECYCLE_OPTIONS.map((value) => (
               <option key={value} value={value} className="bg-[var(--panel)]">
-                {formatTaskLifecycle(value)}
-              </option>
-            ))}
+              {formatTaskLifecycle(value)}
+            </option>
+          ))}
           </select>
+          <div className="space-y-2">
+            <select
+              aria-label="Detail Toggl project"
+              className="h-11 w-full rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={!togglSettings.connected}
+              {...form.register("togglProjectId")}
+            >
+              <option value="" className="bg-[var(--panel)]">
+                {togglSettings.defaultProjectName
+                  ? `Use workspace default (${togglSettings.defaultProjectName})`
+                  : togglSettings.connected
+                    ? "No project override"
+                    : "Connect Toggl in Settings to assign a project"}
+              </option>
+              {projectOptions.map((project) => (
+                <option key={project.id} value={project.id} className="bg-[var(--panel)]">
+                  {project.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-[var(--muted)]">
+              {!togglSettings.connected
+                ? "Connect Toggl in Settings to edit per-task project mapping."
+                : selectedTask?.togglProjectId && projectOptions[0]?.id === selectedTask.togglProjectId && projectOptions[0]?.name.startsWith("Missing project")
+                  ? "This task still references a Toggl project that is no longer in the current workspace catalog."
+                  : `This task will start timers in ${togglSettings.workspaceName ?? "your saved Toggl workspace"}.`}
+            </p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Button type="submit" disabled={isMutating}>
               Save

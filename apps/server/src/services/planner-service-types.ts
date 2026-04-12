@@ -11,6 +11,7 @@ export type SideEffect =
 
 export type DraftToApply = {
   id: string | null;
+  ownerUserId: string | null;
   kind: DraftKind;
   payload: Record<string, unknown>;
   diffSummary: string;

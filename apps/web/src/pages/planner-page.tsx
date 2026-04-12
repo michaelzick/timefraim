@@ -1,68 +1,20 @@
 import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import type { ScheduleBlock, Task } from "@timefraim/shared";
 import { startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { PlannerDetailColumn, PlannerQueueColumn, PlannerTimelineColumn } from "@/features/planner/planner-page-columns";
-import { EMPTY_CREATE_TASK_VALUES, getTaskFormValues, resolvePlannerTaskStatus, showActionError, type LocalPlannerScheduleBlockUpdateInput, type LocalPlannerTaskInput, type LocalPlannerTaskUpdateInput, type PlannerCreateTaskValues, type PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
-import { type CreateTaskValues, type PlannerPageProps, type TaskFormValues } from "@/features/planner/types";
-
-type SelectedTaskSource = "queue" | "timeline";
-
-function isVisibleQueueTask(task: Task) {
-  return task.scheduledBlockId === null && task.status !== "done" && task.status !== "archived";
-}
-
-function filterQueueTasks(tasks: Task[], search: string) {
-  const needle = search.trim().toLowerCase();
-  return tasks.filter((task) => {
-    if (!isVisibleQueueTask(task)) {
-      return false;
-    }
-
-    return !needle || [task.title, task.notes ?? ""].join(" ").toLowerCase().includes(needle);
-  });
-}
-
-function resolveTaskSelection({
-  tasks,
-  queueTasks,
-  selectedTaskId,
-  selectedTaskSource,
-}: {
-  tasks: Task[];
-  queueTasks: Task[];
-  selectedTaskId: string | null;
-  selectedTaskSource: SelectedTaskSource;
-}) {
-  const selectedTask = selectedTaskId ? tasks.find((task) => task.id === selectedTaskId) ?? null : null;
-
-  if (selectedTaskSource === "timeline" && selectedTask) {
-    return {
-      selectedTask,
-      selectedTaskId: selectedTask.id,
-      selectedTaskSource,
-    };
-  }
-
-  if (selectedTask && queueTasks.some((task) => task.id === selectedTask.id)) {
-    return {
-      selectedTask,
-      selectedTaskId: selectedTask.id,
-      selectedTaskSource: "queue" as const,
-    };
-  }
-
-  const fallbackTask = queueTasks[0] ?? null;
-  return {
-    selectedTask: fallbackTask,
-    selectedTaskId: fallbackTask?.id ?? null,
-    selectedTaskSource: "queue" as const,
-  };
-}
+import { filterQueueTasks, handlePlannerDragEnd, resolveTaskSelection, type SelectedTaskSource } from "@/features/planner/planner-page-selection";
+import { EMPTY_CREATE_TASK_VALUES, getTaskFormValues, showActionError, type LocalPlannerTaskInput, type LocalPlannerTaskUpdateInput, type PlannerCreateTaskValues, type PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
+import { type CreateTaskValues, type PlannerPageProps, type PlannerScheduleBlockUpdateInput, type TaskFormValues } from "@/features/planner/types";
+import {
+  buildPlannerCreateTaskInput,
+  buildPlannerTaskUpdateInput,
+  createPlannerMutationHandlers,
+} from "@/pages/planner-page-actions";
 
 export function PlannerPage({
   date,
   dayPlan,
+  togglSettings,
   onDateChange,
   onCreateTask,
   onUpdateTask,
@@ -81,7 +33,7 @@ export function PlannerPage({
 }: PlannerPageProps) {
   const createTask = onCreateTask as (values: LocalPlannerTaskInput) => Promise<unknown>;
   const updateTask = onUpdateTask as (taskId: string, values: LocalPlannerTaskUpdateInput) => Promise<unknown>;
-  const updateScheduleBlock = onUpdateScheduleBlock as (scheduleBlockId: string, values: LocalPlannerScheduleBlockUpdateInput) => Promise<unknown>;
+  const updateScheduleBlock = onUpdateScheduleBlock as (scheduleBlockId: string, values: PlannerScheduleBlockUpdateInput) => Promise<unknown>;
   const [selectedTaskState, setSelectedTaskState] = useState<{
     taskId: string | null;
     source: SelectedTaskSource;
@@ -109,6 +61,12 @@ export function PlannerPage({
     [dayPlan.tasks, filteredQueueTasks, selectedTaskState.taskId, selectedTaskState.source],
   );
   const selectedTask = resolvedTaskSelection.selectedTask;
+  const mutationHandlers = createPlannerMutationHandlers({
+    selectedTask,
+    onDeleteTask,
+    onDismissCalendarEvent,
+    onDeleteScheduleBlock,
+  });
   const detailFormValues = useMemo(() => getTaskFormValues(selectedTask), [selectedTask]);
   const detailForm = useForm<TaskFormValues>({ values: detailFormValues });
 
@@ -134,110 +92,22 @@ export function PlannerPage({
   ]);
 
   async function handleCreateTask(values: PlannerCreateTaskValues) {
-    const taskInput: LocalPlannerTaskInput = {
-      title: values.title,
-      notes: values.notes || undefined,
-      estimatedMinutes: Number(values.estimatedMinutes),
-      priority: values.priority,
-      status: "planned",
-      plannerDate: date,
-    };
-    await createTask(taskInput);
+    await createTask(buildPlannerCreateTaskInput(values, date));
     createTaskForm.reset(EMPTY_CREATE_TASK_VALUES);
   }
 
   async function handleDragEnd(event: DragEndEvent) {
-    const slotIso = event.over?.data.current?.slotIso as string | undefined;
-    const dragType = event.active.data.current?.dragType as "queue-task" | "schedule-block" | undefined;
-
-    if (!slotIso || !dragType) {
-      return;
-    }
-
-    if (dragType === "queue-task") {
-      const draggedTask = event.active.data.current?.task as Task | undefined;
-      if (!draggedTask) {
-        return;
-      }
-
-      const endAt = new Date(new Date(slotIso).getTime() + draggedTask.estimatedMinutes * 60000).toISOString();
-
-      try {
-        startTransition(() => {
-          setSelectedTaskState({
-            taskId: draggedTask.id,
-            source: "timeline",
-          });
-        });
-        await onCreateScheduleBlock({ taskId: draggedTask.id, startAt: slotIso, endAt, source: "manual" });
-      } catch (error) {
-        startTransition(() => {
-          setSelectedTaskState({
-            taskId: draggedTask.id,
-            source: "queue",
-          });
-        });
-        showActionError("Failed to schedule the task. Please try again.", error);
-      }
-      return;
-    }
-
-    const draggedBlock = event.active.data.current?.scheduleBlock as ScheduleBlock | undefined;
-    if (!draggedBlock) {
-      return;
-    }
-
-    const durationMs = new Date(draggedBlock.endAt).getTime() - new Date(draggedBlock.startAt).getTime();
-    const endAt = new Date(new Date(slotIso).getTime() + durationMs).toISOString();
-    if (slotIso === draggedBlock.startAt && endAt === draggedBlock.endAt) {
-      return;
-    }
-
-    try {
-      const scheduleBlockUpdate: LocalPlannerScheduleBlockUpdateInput = { startAt: slotIso, endAt };
-      await updateScheduleBlock(draggedBlock.id, scheduleBlockUpdate);
-    } catch (error) {
-      showActionError("Failed to move the scheduled task. Please try again.", error);
-    }
-  }
-
-  async function handleDeleteSelectedTask() {
-    if (!selectedTask || !window.confirm(`Delete "${selectedTask.title}" and remove any scheduled block?`)) {
-      return;
-    }
-
-    try {
-      await onDeleteTask(selectedTask.id);
-    } catch (error) {
-      showActionError("Failed to delete the task. Please try again.", error);
-    }
-  }
-
-  function handleQueueTaskDelete(taskId: string, title: string) {
-    if (!window.confirm(`Delete "${title}"?`)) {
-      return;
-    }
-
-    void onDeleteTask(taskId).catch((error) => showActionError("Failed to delete the task. Please try again.", error));
-  }
-
-  function handleDismissTimelineEvent(calendarEventId: string, title: string) {
-    if (!window.confirm(`Hide "${title}" from the planner timeline until it changes in Google Calendar?`)) {
-      return;
-    }
-
-    void onDismissCalendarEvent(calendarEventId).catch((error) => {
-      showActionError("Failed to dismiss the calendar event. Please try again.", error);
-    });
-  }
-
-  function handleDeleteTimelineBlock(blockId: string, title: string) {
-    if (!window.confirm(`Remove "${title}" from the timeline? The task will return to the queue.`)) {
-      return;
-    }
-
-    void onDeleteScheduleBlock(blockId).catch((error) => {
-      showActionError("Failed to remove the schedule block. Please try again.", error);
+    await handlePlannerDragEnd({
+      event,
+      onCreateScheduleBlock,
+      onUpdateScheduleBlock: updateScheduleBlock,
+      onQueueTaskSelected: (taskId) => {
+        setSelectedTaskState({ taskId, source: "timeline" });
+      },
+      onQueueTaskReset: (taskId) => {
+        setSelectedTaskState({ taskId, source: "queue" });
+      },
+      onError: showActionError,
     });
   }
 
@@ -265,17 +135,8 @@ export function PlannerPage({
       return;
     }
 
-    const status = resolvePlannerTaskStatus(selectedTask, values.lifecycle, dayPlan.activeTimer?.taskId ?? null);
-
     try {
-      const taskUpdate: LocalPlannerTaskUpdateInput = {
-        title: values.title,
-        notes: values.notes,
-        estimatedMinutes: values.estimatedMinutes,
-        priority: values.priority,
-        status,
-      };
-      await updateTask(selectedTask.id, taskUpdate);
+      await updateTask(selectedTask.id, buildPlannerTaskUpdateInput(selectedTask, values, dayPlan.activeTimer?.taskId ?? null));
     } catch (error) {
       showActionError("Failed to save the task. Please try again.", error);
     }
@@ -288,13 +149,14 @@ export function PlannerPage({
           createTaskForm={createTaskForm}
           totalTasks={dayPlan.tasks.length}
           isMutating={isMutating}
+          togglSettings={togglSettings}
           search={search}
           selectedTaskId={resolvedTaskSelection.selectedTaskSource === "queue" ? selectedTask?.id ?? null : null}
           tasks={filteredQueueTasks}
           onCreateTask={handleCreateTask}
           onSearchChange={setSearch}
           onSelectTask={handleSelectQueueTask}
-          onDeleteTask={handleQueueTaskDelete}
+          onDeleteTask={(taskId, title) => mutationHandlers.handleQueueTaskDelete(taskId, title)}
         />
         <PlannerTimelineColumn
           date={date}
@@ -303,8 +165,8 @@ export function PlannerPage({
           onDateChange={onDateChange}
           onSyncCalendar={() => void onSyncCalendar()}
           onSelectTask={handleSelectTimelineTask}
-          onDismissCalendarEvent={handleDismissTimelineEvent}
-          onDeleteScheduleBlock={handleDeleteTimelineBlock}
+          onDismissCalendarEvent={(calendarEventId, title) => mutationHandlers.handleDismissTimelineEvent(calendarEventId, title)}
+          onDeleteScheduleBlock={(blockId, title) => mutationHandlers.handleDeleteTimelineBlock(blockId, title)}
         />
         <PlannerDetailColumn
           detailPanelRef={detailPanelRef}
@@ -313,7 +175,8 @@ export function PlannerPage({
           dayPlan={dayPlan}
           activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
           isMutating={isMutating}
-          onDeleteTask={() => void handleDeleteSelectedTask()}
+          togglSettings={togglSettings}
+          onDeleteTask={() => void mutationHandlers.handleDeleteSelectedTask()}
           onSaveTask={handleSaveTask}
           onStartTimer={(taskId) => void onStartTimer(taskId)}
           onStopTimer={() => void onStopTimer()}

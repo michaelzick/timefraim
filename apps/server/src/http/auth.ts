@@ -3,6 +3,7 @@ import { z } from "zod";
 import { env } from "../config/env.js";
 
 const payloadSchema = z.object({
+  sub: z.string().uuid(),
   email: z.string().email(),
   user_metadata: z
     .object({
@@ -13,6 +14,7 @@ const payloadSchema = z.object({
 });
 
 export type AuthenticatedUser = {
+  id: string;
   email: string;
   displayName: string | null;
   avatarUrl: string | null;
@@ -51,6 +53,7 @@ export async function requireAuthenticatedUser(authorizationHeader: string | und
   }
 
   return {
+    id: parsed.sub,
     email: parsed.email,
     displayName: parsed.user_metadata?.full_name ?? null,
     avatarUrl: parsed.user_metadata?.avatar_url ?? null,

@@ -1,35 +1,32 @@
-import { useForm } from "react-hook-form";
-import type { AuthSession } from "@timefraim/shared";
-import { Bot, Cable, LockKeyhole, Orbit } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import type {
+  AuthSession,
+  TogglConnect,
+  TogglDiscoverInput,
+  TogglDiscoverResult,
+  TogglIntegrationSettings,
+} from "@timefraim/shared";
+import { Bot, LockKeyhole, Orbit } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { env } from "@/lib/env";
-
-type TogglFormValues = {
-  apiToken: string;
-  workspaceId: string;
-  defaultProjectId: string;
-};
+import { SettingsTogglCard } from "@/pages/settings-toggl-card";
 
 export function SettingsPage({
   authSession,
+  togglSettings,
+  onDiscoverToggl,
+  onDeleteToggl,
   onSaveToggl,
+  isDiscovering,
   isSaving,
 }: {
   authSession: AuthSession;
-  onSaveToggl: (values: TogglFormValues) => Promise<unknown>;
+  togglSettings: TogglIntegrationSettings;
+  onDiscoverToggl: (values: TogglDiscoverInput) => Promise<TogglDiscoverResult>;
+  onDeleteToggl: () => Promise<TogglIntegrationSettings>;
+  onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
+  isDiscovering: boolean;
   isSaving: boolean;
 }) {
-  const togglForm = useForm<TogglFormValues>({
-    defaultValues: {
-      apiToken: "",
-      workspaceId: authSession.integrationStatus.togglWorkspaceId ?? "",
-      defaultProjectId: "",
-    },
-  });
-
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-6">
@@ -61,36 +58,14 @@ export function SettingsPage({
           </div>
         </Card>
 
-        <Card>
-          <div className="mb-5 flex items-center gap-3">
-            <div className="rounded-2xl bg-[rgba(121,137,255,0.14)] p-3 text-[#9eadff]">
-              <Cable className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Toggl Track</p>
-              <h2 className="mt-1 text-2xl font-semibold text-white">Timer connection</h2>
-            </div>
-          </div>
-          <form
-            className="grid gap-4 md:grid-cols-2"
-            onSubmit={togglForm.handleSubmit(async (values) => {
-              await onSaveToggl(values);
-              togglForm.reset({ ...values, apiToken: "" });
-            })}
-          >
-            <Input placeholder="API token" type="password" {...togglForm.register("apiToken")} />
-            <Input placeholder="Workspace ID" {...togglForm.register("workspaceId")} />
-            <Input placeholder="Default project ID" {...togglForm.register("defaultProjectId")} />
-            <div className="flex items-center">
-              <Button disabled={isSaving}>
-                Save Toggl access
-              </Button>
-            </div>
-          </form>
-          <div className="mt-4">
-            <Badge>{authSession.integrationStatus.togglConnected ? "Connected" : "Awaiting token"}</Badge>
-          </div>
-        </Card>
+        <SettingsTogglCard
+          togglSettings={togglSettings}
+          onDiscoverToggl={onDiscoverToggl}
+          onDeleteToggl={onDeleteToggl}
+          onSaveToggl={onSaveToggl}
+          isDiscovering={isDiscovering}
+          isSaving={isSaving}
+        />
       </div>
 
       <div className="space-y-6">

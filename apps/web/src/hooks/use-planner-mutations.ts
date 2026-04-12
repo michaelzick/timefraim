@@ -1,5 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CalendarSyncResult, DayPlan, TaskInput, TaskUpdate, TogglConnect } from "@timefraim/shared";
+import type {
+  CalendarSyncResult,
+  DayPlan,
+  TaskInput,
+  TaskUpdate,
+  TogglConnect,
+  TogglDiscoverInput,
+} from "@timefraim/shared";
 import { api } from "@/lib/api";
 
 type UpdateTaskInput = Omit<TaskUpdate, "taskId">;
@@ -97,6 +104,13 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
     mutationFn: (values: TogglConnect) => api.saveTogglConnection(token, values),
     onSuccess,
   });
+  const discoverTogglMutation = useMutation({
+    mutationFn: (values: TogglDiscoverInput) => api.discoverTogglConnection(token, values),
+  });
+  const deleteTogglMutation = useMutation({
+    mutationFn: () => api.deleteTogglConnection(token),
+    onSuccess,
+  });
 
   return {
     isMutating: [
@@ -112,7 +126,8 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
       startTimerMutation,
       stopTimerMutation,
     ].some((mutation) => mutation.isPending),
-    isSavingToggl: saveTogglMutation.isPending,
+    isSavingToggl: saveTogglMutation.isPending || deleteTogglMutation.isPending,
+    isDiscoveringToggl: discoverTogglMutation.isPending,
     isSyncing: syncCalendarMutation.isPending,
     actions: {
       createTask: (values: TaskInput) => createTaskMutation.mutateAsync(values),
@@ -127,7 +142,9 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
       dismissCalendarEvent: (calendarEventId: string) => dismissCalendarEventMutation.mutateAsync(calendarEventId),
       confirmDraft: (draftId: string) => confirmDraftMutation.mutateAsync(draftId),
       rejectDraft: (draftId: string) => rejectDraftMutation.mutateAsync(draftId),
+      discoverToggl: (values: TogglDiscoverInput) => discoverTogglMutation.mutateAsync(values),
       saveToggl: (values: TogglConnect) => saveTogglMutation.mutateAsync(values),
+      deleteToggl: () => deleteTogglMutation.mutateAsync(),
       startTimer: (taskId: string) => startTimerMutation.mutateAsync(taskId),
       stopTimer: () => stopTimerMutation.mutateAsync(),
       syncCalendar: () => syncCalendarMutation.mutateAsync(),

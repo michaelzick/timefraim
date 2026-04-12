@@ -11,6 +11,9 @@ import {
   taskSchema,
   taskUpdateSchema,
   togglConnectSchema,
+  togglDiscoverInputSchema,
+  togglDiscoverResultSchema,
+  togglIntegrationSettingsSchema,
   type AuthSession,
   type CalendarSyncResult,
   type GoogleConnect,
@@ -24,6 +27,9 @@ import {
   type TaskUpdate,
   type TimerStart,
   type TogglConnect,
+  type TogglDiscoverInput,
+  type TogglDiscoverResult,
+  type TogglIntegrationSettings,
 } from "@timefraim/shared";
 import { env } from "@/lib/env";
 
@@ -152,11 +158,26 @@ export const api = {
       body: googleConnectSchema.parse(body),
       schema: integrationStatusSchema,
     }),
+  getTogglSettings: (token: string) =>
+    request<TogglIntegrationSettings>("/api/integrations/toggl", token, {
+      schema: togglIntegrationSettingsSchema,
+    }),
+  discoverTogglConnection: (token: string, body: TogglDiscoverInput) =>
+    request<TogglDiscoverResult, TogglDiscoverInput>("/api/integrations/toggl/discover", token, {
+      method: "POST",
+      body: togglDiscoverInputSchema.parse(body),
+      schema: togglDiscoverResultSchema,
+    }),
   saveTogglConnection: (token: string, body: TogglConnect) =>
-    request<IntegrationStatus, TogglConnect>("/api/integrations/toggl/connect", token, {
+    request<TogglIntegrationSettings, TogglConnect>("/api/integrations/toggl/connect", token, {
       method: "POST",
       body: togglConnectSchema.parse(body),
-      schema: integrationStatusSchema,
+      schema: togglIntegrationSettingsSchema,
+    }),
+  deleteTogglConnection: (token: string) =>
+    request<TogglIntegrationSettings>("/api/integrations/toggl/connect", token, {
+      method: "DELETE",
+      schema: togglIntegrationSettingsSchema,
     }),
   getIntegrationStatus: (token: string) =>
     request<IntegrationStatus>("/api/integrations/status", token, {

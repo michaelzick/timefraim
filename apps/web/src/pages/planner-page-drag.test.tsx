@@ -1,9 +1,9 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { PlannerPage } from "@/pages/planner-page";
-import { buildDayPlan, buildTask } from "@/test/fixtures";
+import { buildDayPlan, buildTask, buildTogglSettings } from "@/test/fixtures";
 
 vi.mock("@dnd-kit/core", () => ({
   DndContext: ({
@@ -97,32 +97,36 @@ vi.mock("@/components/timeline-board", () => ({
 
 const noopAsync = () => Promise.resolve(undefined);
 
+function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerPage>> = {}) {
+  return {
+    date: "2026-04-06",
+    dayPlan: buildDayPlan(),
+    isMutating: false,
+    isSyncing: false,
+    onDateChange: vi.fn(),
+    onCreateTask: noopAsync,
+    onUpdateTask: noopAsync,
+    onDeleteTask: noopAsync,
+    onCreateScheduleBlock: noopAsync,
+    onUpdateScheduleBlock: noopAsync,
+    onDeleteScheduleBlock: noopAsync,
+    onDismissCalendarEvent: noopAsync,
+    onConfirmDraft: noopAsync,
+    onRejectDraft: noopAsync,
+    onStartTimer: noopAsync,
+    onStopTimer: noopAsync,
+    onSyncCalendar: noopAsync,
+    togglSettings: buildTogglSettings(),
+    ...overrides,
+  };
+}
+
 describe("PlannerPage drag behavior", () => {
   it("creates a schedule block when a queue task drops on a quarter-hour slot", async () => {
     const user = userEvent.setup();
     const onCreateScheduleBlock = vi.fn().mockResolvedValue(undefined);
 
-    render(
-      <PlannerPage
-        date="2026-04-06"
-        dayPlan={buildDayPlan()}
-        isMutating={false}
-        isSyncing={false}
-        onDateChange={vi.fn()}
-        onCreateTask={noopAsync}
-        onUpdateTask={noopAsync}
-        onDeleteTask={noopAsync}
-        onCreateScheduleBlock={onCreateScheduleBlock}
-        onUpdateScheduleBlock={noopAsync}
-        onDeleteScheduleBlock={noopAsync}
-        onDismissCalendarEvent={noopAsync}
-        onConfirmDraft={noopAsync}
-        onRejectDraft={noopAsync}
-        onStartTimer={noopAsync}
-        onStopTimer={noopAsync}
-        onSyncCalendar={noopAsync}
-      />,
-    );
+    render(<PlannerPage {...buildPlannerPageProps({ onCreateScheduleBlock })} />);
 
     await user.click(screen.getByRole("button", { name: /trigger queue drag/i }));
 
@@ -162,27 +166,7 @@ describe("PlannerPage drag behavior", () => {
       ],
     });
 
-    render(
-      <PlannerPage
-        date="2026-04-06"
-        dayPlan={dayPlan}
-        isMutating={false}
-        isSyncing={false}
-        onDateChange={vi.fn()}
-        onCreateTask={noopAsync}
-        onUpdateTask={noopAsync}
-        onDeleteTask={noopAsync}
-        onCreateScheduleBlock={noopAsync}
-        onUpdateScheduleBlock={onUpdateScheduleBlock}
-        onDeleteScheduleBlock={noopAsync}
-        onDismissCalendarEvent={noopAsync}
-        onConfirmDraft={noopAsync}
-        onRejectDraft={noopAsync}
-        onStartTimer={noopAsync}
-        onStopTimer={noopAsync}
-        onSyncCalendar={noopAsync}
-      />,
-    );
+    render(<PlannerPage {...buildPlannerPageProps({ dayPlan, onUpdateScheduleBlock })} />);
 
     await user.click(screen.getByRole("button", { name: /trigger scheduled drag/i }));
 

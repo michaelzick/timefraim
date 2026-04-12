@@ -18,6 +18,8 @@ function createPlannerServiceMock() {
   return {
     applyChange: vi.fn().mockResolvedValue({ status: "applied", kind: "task.create", diffSummary: "Create task" }),
     confirmDraft: vi.fn().mockResolvedValue({ id: "draft-1" }),
+    deleteTogglConnection: vi.fn().mockResolvedValue({ connected: false }),
+    discoverTogglConnection: vi.fn().mockResolvedValue({ availableProjects: [], availableWorkspaces: [] }),
     getDayPlan: vi.fn().mockResolvedValue({ tasks: [] }),
     getIntegrationStatus: vi.fn().mockResolvedValue({
       googleConnected: true,
@@ -25,10 +27,16 @@ function createPlannerServiceMock() {
       googleCalendarId: "primary",
       togglConnected: true,
       togglWorkspaceId: "workspace-1",
+      togglWorkspaceName: "Personal",
+      togglDefaultProjectId: "project-1",
+      togglDefaultProjectName: "Deep Work",
+      togglHasSavedToken: true,
+      togglApiTokenHint: "••••7890",
       mcpFullAccessConfigured: true,
       mcpReadOnlyConfigured: true,
       tunnelBaseUrl: "https://example.ngrok.app",
     }),
+    getTogglSettings: vi.fn().mockResolvedValue({ connected: true }),
     rejectDraft: vi.fn().mockResolvedValue({ id: "draft-1" }),
     saveGoogleSession: vi.fn().mockResolvedValue({ ok: true }),
     saveTogglConnection: vi.fn().mockResolvedValue({ ok: true }),
@@ -66,6 +74,7 @@ describe("HTTP routes", () => {
   it("returns the signed-in auth session payload", async () => {
     const { app, plannerService } = await createApp(registerAuthRoutes);
     requireAuthenticatedUser.mockResolvedValueOnce({
+      id: "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
       email: "allowed@example.com",
       displayName: "Allowed User",
       avatarUrl: "https://example.com/avatar.png",
@@ -76,6 +85,7 @@ describe("HTTP routes", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
       user: {
+        id: "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
         email: "allowed@example.com",
         displayName: "Allowed User",
         avatarUrl: "https://example.com/avatar.png",
@@ -89,6 +99,7 @@ describe("HTTP routes", () => {
   it("rejects invalid integration payloads and accepts valid Toggl config", async () => {
     const { app, plannerService } = await createApp(registerIntegrationRoutes);
     requireAuthenticatedUser.mockResolvedValue({
+      id: "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
       email: "allowed@example.com",
       displayName: "Allowed User",
       avatarUrl: null,
@@ -111,7 +122,7 @@ describe("HTTP routes", () => {
 
     expect(invalidResponse.statusCode).toBe(400);
     expect(validResponse.statusCode).toBe(200);
-    expect(plannerService.saveTogglConnection).toHaveBeenCalledWith({
+    expect(plannerService.saveTogglConnection).toHaveBeenCalledWith("84a87ef5-f143-4b9b-9f6b-b7c608d72af0", {
       apiToken: "test-token",
       workspaceId: "workspace-2",
       defaultProjectId: "project-7",
@@ -123,6 +134,7 @@ describe("HTTP routes", () => {
   it("rejects invalid planner payloads and accepts task creation", async () => {
     const { app, plannerService } = await createApp(registerPlannerRoutes);
     requireAuthenticatedUser.mockResolvedValue({
+      id: "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
       email: "allowed@example.com",
       displayName: "Allowed User",
       avatarUrl: null,
@@ -157,6 +169,7 @@ describe("HTTP routes", () => {
         status: "planned",
       },
       "user",
+      "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
     );
 
     await app.close();

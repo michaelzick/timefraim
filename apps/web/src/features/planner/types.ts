@@ -1,4 +1,4 @@
-import type { DayPlan, TaskPriority, TaskStatus } from "@timefraim/shared";
+import type { DayPlan, TaskPriority, TaskStatus, TogglIntegrationSettings } from "@timefraim/shared";
 
 export type TaskLifecycleValue = "active" | "done" | "archived";
 
@@ -8,6 +8,7 @@ export type TaskFormValues = {
   estimatedMinutes: number;
   priority: TaskPriority;
   lifecycle: TaskLifecycleValue;
+  togglProjectId: string;
 };
 
 export type CreateTaskValues = Omit<TaskFormValues, "lifecycle">;
@@ -18,6 +19,7 @@ export type PlannerTaskInput = {
   estimatedMinutes: number;
   priority: TaskPriority;
   status: TaskStatus;
+  togglProjectId?: string | null;
   plannerDate?: string;
 };
 
@@ -53,4 +55,5 @@ export type PlannerPageProps = {
   onSyncCalendar: () => Promise<unknown>;
   isSyncing: boolean;
   isMutating: boolean;
+  togglSettings: TogglIntegrationSettings;
 };

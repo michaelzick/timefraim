@@ -11,7 +11,7 @@ export function registerAuthRoutes(app: FastifyInstance, plannerService: Planner
     withAuthenticatedRoute(async (_request, _reply, user) =>
       authSessionSchema.parse({
         user,
-        integrationStatus: await plannerService.getIntegrationStatus(),
+        integrationStatus: await plannerService.getIntegrationStatus(user.id),
       }),
     ),
   );

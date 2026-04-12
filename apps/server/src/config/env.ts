@@ -27,6 +27,7 @@ const envSchema = z.object({
   SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   SUPABASE_JWT_SECRET: z.string().min(1),
+  INTEGRATION_ENCRYPTION_KEY: z.string().min(1),
   ALLOWED_EMAIL: z.string().email(),
   MCP_BEARER_TOKEN: z.string().min(1),
   MCP_READ_ONLY_TOKEN: z.string().min(1),
@@ -34,7 +35,6 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional().default(""),
   GOOGLE_CALENDAR_ID: z.string().default("primary"),
   GOOGLE_PLANNER_CALENDAR_ID: z.string().default("Free Time Tasks"),
-  TOGGL_WORKSPACE_ID: z.string().optional().default(""),
   TUNNEL_PUBLIC_BASE_URL: z.string().optional().default(""),
 });
 

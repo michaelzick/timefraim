@@ -15,6 +15,7 @@ export type PlannerCreateTaskValues = {
   notes: string;
   estimatedMinutes: number;
   priority: PlannerPriority;
+  togglProjectId: string;
 };
 export type LocalPlannerTaskInput = {
   title: string;
@@ -22,6 +23,7 @@ export type LocalPlannerTaskInput = {
   estimatedMinutes: number;
   priority: PlannerPriority;
   status: PlannerStatus;
+  togglProjectId?: string | null;
   plannerDate?: string;
 };
 export type LocalPlannerTaskUpdateInput = {
@@ -30,6 +32,7 @@ export type LocalPlannerTaskUpdateInput = {
   estimatedMinutes: number;
   priority: PlannerPriority;
   status: PlannerStatus;
+  togglProjectId?: string | null;
 };
 export type LocalPlannerScheduleBlockUpdateInput = { startAt: string; endAt: string };
 export type PlannerSaveTaskValues = {
@@ -38,6 +41,7 @@ export type PlannerSaveTaskValues = {
   estimatedMinutes: number;
   priority: PlannerPriority;
   lifecycle: "active" | "done" | "archived";
+  togglProjectId: string;
 };
 
 export const EMPTY_CREATE_TASK_VALUES: CreateTaskValues = {
@@ -45,6 +49,7 @@ export const EMPTY_CREATE_TASK_VALUES: CreateTaskValues = {
   notes: "",
   estimatedMinutes: 30,
   priority: "low",
+  togglProjectId: "",
 };
 
 const EMPTY_TASK_FORM_VALUES: TaskFormValues = {
@@ -53,6 +58,7 @@ const EMPTY_TASK_FORM_VALUES: TaskFormValues = {
   estimatedMinutes: 30,
   priority: "low",
   lifecycle: "active",
+  togglProjectId: "",
 };
 
 export type CreateTaskInput = PlannerTaskInput;
@@ -70,6 +76,7 @@ export function getTaskFormValues(selectedTask: Task | null): TaskFormValues {
     estimatedMinutes: selectedTask.estimatedMinutes,
     priority: selectedTask.priority,
     lifecycle: getTaskLifecycleValue(selectedTask),
+    togglProjectId: selectedTask.togglProjectId ?? "",
   };
 }
 
