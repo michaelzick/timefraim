@@ -27,7 +27,7 @@ const envSchema = z.object({
   SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   SUPABASE_JWT_SECRET: z.string().min(1),
-  INTEGRATION_ENCRYPTION_KEY: z.string().min(1),
+  INTEGRATION_ENCRYPTION_KEY: z.string().optional(),
   ALLOWED_EMAIL: z.string().email(),
   MCP_BEARER_TOKEN: z.string().min(1),
   MCP_READ_ONLY_TOKEN: z.string().min(1),
