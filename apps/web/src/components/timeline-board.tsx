@@ -18,43 +18,9 @@ import {
 } from "@/features/planner/task-presentation";
 import { cn, formatTime } from "@/lib/utils";
 
-function hexToRgb(color: string) {
-  const normalized = color.trim().replace("#", "");
-  const expanded = normalized.length === 3
-    ? normalized
-        .split("")
-        .map((segment) => `${segment}${segment}`)
-        .join("")
-    : normalized;
-
-  if (!/^[0-9a-f]{6}$/i.test(expanded)) {
-    return null;
-  }
-
-  const value = Number.parseInt(expanded, 16);
-  return {
-    r: (value >> 16) & 255,
-    g: (value >> 8) & 255,
-    b: value & 255,
-  };
-}
-
-function toRgba(color: string, alpha: number) {
-  const rgb = hexToRgb(color);
-  return rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})` : null;
-}
-
-const TIMELINE_EVENT_BACKGROUND_ALPHA = 0.22;
-const TIMELINE_EVENT_BORDER_ALPHA = 0.38;
-const TIMELINE_EVENT_SHADOW_ALPHA = 0.18;
-const FALLBACK_TIMELINE_EVENT_BACKGROUND = "#37446d";
 const FALLBACK_TIMELINE_EVENT_BORDER = "#6374ad";
 
-function withAlpha(color: string, alpha: number) {
-  return toRgba(color, alpha) ?? color;
-}
-
-function getCalendarEventForegroundColor(event: CalendarEventView) {
+function getCalendarEventForegroundColor() {
   return "#ffffff";
 }
 
@@ -194,35 +160,27 @@ export function TimelineBoard({
             return null;
           }
 
-          const foregroundColor = getCalendarEventForegroundColor(event);
-          const hasResolvedColors = Boolean(event.backgroundColor);
-          const backgroundColorSource = event.backgroundColor ?? FALLBACK_TIMELINE_EVENT_BACKGROUND;
+          const foregroundColor = getCalendarEventForegroundColor();
           const borderColorSource = event.backgroundColor ?? FALLBACK_TIMELINE_EVENT_BORDER;
           const cardStyle: CSSProperties = {
             top: placement.top,
             height: placement.height,
-            backgroundColor: withAlpha(backgroundColorSource, TIMELINE_EVENT_BACKGROUND_ALPHA),
-            borderColor: withAlpha(borderColorSource, TIMELINE_EVENT_BORDER_ALPHA),
-            color: foregroundColor ?? undefined,
-            boxShadow: `0 18px 44px ${withAlpha(backgroundColorSource, TIMELINE_EVENT_SHADOW_ALPHA)}`,
+            backgroundColor: "transparent",
+            borderColor: borderColorSource,
+            borderWidth: "3px",
+            color: foregroundColor,
           };
-          const badgeStyle =
-            hasResolvedColors && foregroundColor
-              ? {
-                  color: foregroundColor,
-                  borderColor: toRgba(foregroundColor, 0.24) ?? foregroundColor,
-                  backgroundColor: toRgba(foregroundColor, 0.12) ?? "transparent",
-                }
-              : undefined;
-          const buttonStyle = hasResolvedColors && foregroundColor ? { color: foregroundColor } : undefined;
+          const badgeStyle = {
+            color: foregroundColor,
+            borderColor: borderColorSource,
+            backgroundColor: "transparent",
+          };
+          const buttonStyle = { color: foregroundColor };
 
           return (
             <div
               key={event.id}
-              className={cn(
-                "absolute left-3 right-3 rounded-[24px] border p-4 text-sm backdrop-blur",
-                !hasResolvedColors && "text-[var(--muted-strong)]",
-              )}
+              className="absolute left-3 right-3 rounded-[24px] border p-4 text-sm"
               style={cardStyle}
             >
               <div className="flex items-start justify-between gap-3">
@@ -242,7 +200,7 @@ export function TimelineBoard({
                     size="sm"
                     className={cn(
                       "h-8 px-2",
-                      hasResolvedColors ? "hover:bg-white/10" : "text-[var(--muted-strong)] hover:bg-white/10 hover:text-white",
+                      "hover:bg-white/10",
                     )}
                     style={buttonStyle}
                     onClick={() => onDismissCalendarEvent(event.id, event.title)}
