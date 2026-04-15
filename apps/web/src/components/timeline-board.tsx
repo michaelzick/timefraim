@@ -2,13 +2,13 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
 import { X } from "lucide-react";
-import type { CSSProperties } from "react";
 import {
   buildTimelineSlots,
   getTimelineContainerHeight,
   getTimelinePlacement,
   SLOT_HEIGHT,
 } from "@/components/timeline-geometry";
+import { TimelineBoardCalendarEvent } from "@/components/timeline-board-calendar-event";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,12 +17,6 @@ import {
   getTaskPriorityTimelineBlockClass,
 } from "@/features/planner/task-presentation";
 import { cn, formatTime } from "@/lib/utils";
-
-const FALLBACK_TIMELINE_EVENT_BORDER = "#6374ad";
-
-function getCalendarEventForegroundColor() {
-  return "#ffffff";
-}
 
 function TimelineSlot({
   slot,
@@ -154,65 +148,14 @@ export function TimelineBoard({
           <TimelineSlot key={slot.id} slot={slot} label={slot.label} />
         ))}
 
-        {calendarEvents.map((event) => {
-          const placement = getTimelinePlacement(date, event.startAt, event.endAt);
-          if (!placement) {
-            return null;
-          }
-
-          const foregroundColor = getCalendarEventForegroundColor();
-          const borderColorSource = event.backgroundColor ?? FALLBACK_TIMELINE_EVENT_BORDER;
-          const cardStyle: CSSProperties = {
-            top: placement.top,
-            height: placement.height,
-            backgroundColor: "transparent",
-            borderColor: borderColorSource,
-            borderWidth: "3px",
-            color: foregroundColor,
-          };
-          const badgeStyle = {
-            color: foregroundColor,
-            borderColor: borderColorSource,
-            backgroundColor: "transparent",
-          };
-          const buttonStyle = { color: foregroundColor };
-
-          return (
-            <div
-              key={event.id}
-              className="absolute left-3 right-3 rounded-[24px] border p-4 text-sm"
-              style={cardStyle}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{event.title}</p>
-                  <p className="mt-1 text-xs opacity-80">
-                    {formatTime(event.startAt)} to {formatTime(event.endAt)}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Badge className="normal-case tracking-[0.08em]" style={badgeStyle}>
-                    Google Calendar
-                  </Badge>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-8 px-2",
-                      "hover:bg-white/10",
-                    )}
-                    style={buttonStyle}
-                    onClick={() => onDismissCalendarEvent(event.id, event.title)}
-                  >
-                    <X className="h-4 w-4" />
-                    Hide
-                  </Button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {calendarEvents.map((event) => (
+          <TimelineBoardCalendarEvent
+            key={event.id}
+            date={date}
+            event={event}
+            onDismissCalendarEvent={onDismissCalendarEvent}
+          />
+        ))}
 
         {scheduleBlocks.map((block) => (
           <TimelineScheduleBlock

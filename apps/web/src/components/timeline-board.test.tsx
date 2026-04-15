@@ -20,7 +20,7 @@ vi.mock("@dnd-kit/core", () => ({
 function getTimelineItem(title: string) {
   const item = screen.getByText(title).parentElement?.parentElement?.parentElement;
   expect(item).not.toBeNull();
-  return item;
+  return item as HTMLElement;
 }
 
 describe("TimelineBoard", () => {
