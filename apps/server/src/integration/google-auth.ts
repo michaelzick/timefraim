@@ -2,7 +2,9 @@ import { google } from "googleapis";
 import { env } from "../config/env.js";
 import type { GoogleConnection } from "./google-calendar.js";
 
-export function getGoogleOAuthClient(connection: GoogleConnection) {
+type GoogleOAuthClient = InstanceType<typeof google.auth.OAuth2>;
+
+export function getGoogleOAuthClient(connection: GoogleConnection): GoogleOAuthClient | null {
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
     return null;
   }
