@@ -43,25 +43,29 @@ export class PlannerRepositoryCalendarStore extends PlannerRepositoryTaskStore {
 
   async upsertCalendarEvent(input: UpsertCalendarEventInput, db: Queryable) {
     const result = await db.query(
-      `insert into public.calendar_events (
+       `insert into public.calendar_events (
          provider,
          external_event_id,
          title,
          start_at,
          end_at,
          is_app_managed,
+         background_color,
+         foreground_color,
          schedule_block_id,
          raw_payload,
          external_updated_at,
          dismissed_external_updated_at
        )
-       values ('google', $1, $2, $3, $4, $5, $6, $7, $8, $9)
+       values ('google', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        on conflict (provider, external_event_id)
        do update
          set title = excluded.title,
              start_at = excluded.start_at,
              end_at = excluded.end_at,
              is_app_managed = excluded.is_app_managed,
+             background_color = excluded.background_color,
+             foreground_color = excluded.foreground_color,
              schedule_block_id = excluded.schedule_block_id,
              raw_payload = excluded.raw_payload,
              external_updated_at = excluded.external_updated_at,
@@ -73,6 +77,8 @@ export class PlannerRepositoryCalendarStore extends PlannerRepositoryTaskStore {
         input.startAt,
         input.endAt,
         input.isAppManaged,
+        input.backgroundColor,
+        input.foregroundColor,
         input.scheduleBlockId,
         input.rawPayload,
         input.externalUpdatedAt,

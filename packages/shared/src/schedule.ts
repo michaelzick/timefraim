@@ -47,6 +47,8 @@ export const calendarEventViewSchema = z.object({
   startAt: z.string().datetime(),
   endAt: z.string().datetime(),
   isAppManaged: z.boolean(),
+  backgroundColor: z.string().nullable().default(null),
+  foregroundColor: z.string().nullable().default(null),
 });
 
 export const timerSessionSchema = z.object({

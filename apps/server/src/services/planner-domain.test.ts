@@ -23,6 +23,8 @@ describe("planner-domain", () => {
           startAt: "2026-04-04T10:30:00.000Z",
           endAt: "2026-04-04T11:00:00.000Z",
           isAppManaged: false,
+          backgroundColor: null,
+          foregroundColor: null,
         } satisfies CalendarEventView,
       ],
     });

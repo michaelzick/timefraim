@@ -49,6 +49,8 @@ export function mapCalendarEventView(row: QueryResultRow) {
     startAt: asIso(row.start_at),
     endAt: asIso(row.end_at),
     isAppManaged: row.is_app_managed,
+    backgroundColor: row.background_color ?? null,
+    foregroundColor: row.foreground_color ?? null,
   });
 }
 
@@ -60,6 +62,8 @@ export function mapCalendarEventRecord(row: QueryResultRow): CalendarEventRecord
     startAt: asIso(row.start_at)!,
     endAt: asIso(row.end_at)!,
     isAppManaged: row.is_app_managed,
+    backgroundColor: row.background_color ?? null,
+    foregroundColor: row.foreground_color ?? null,
     scheduleBlockId: row.schedule_block_id,
     rawPayload: (row.raw_payload ?? {}) as Record<string, unknown>,
     externalUpdatedAt: asIso(row.external_updated_at),

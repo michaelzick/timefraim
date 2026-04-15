@@ -8,6 +8,7 @@ import {
   getTimelinePlacement,
   SLOT_HEIGHT,
 } from "@/components/timeline-geometry";
+import { TimelineBoardCalendarEvent } from "@/components/timeline-board-calendar-event";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -147,42 +148,14 @@ export function TimelineBoard({
           <TimelineSlot key={slot.id} slot={slot} label={slot.label} />
         ))}
 
-        {calendarEvents.map((event) => {
-          const placement = getTimelinePlacement(date, event.startAt, event.endAt);
-          if (!placement) {
-            return null;
-          }
-
-          return (
-            <div
-              key={event.id}
-              className="absolute left-3 right-3 rounded-[24px] border border-[rgba(99,116,173,0.35)] bg-[rgba(55,68,109,0.42)] p-4 text-sm text-[var(--muted-strong)] shadow-lg backdrop-blur"
-              style={{ top: placement.top, height: placement.height }}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{event.title}</p>
-                  <p className="mt-1 text-xs opacity-80">
-                    {formatTime(event.startAt)} to {formatTime(event.endAt)}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Badge className="normal-case tracking-[0.08em]">Google Calendar</Badge>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-[var(--muted-strong)] hover:bg-white/10 hover:text-white"
-                    onClick={() => onDismissCalendarEvent(event.id, event.title)}
-                  >
-                    <X className="h-4 w-4" />
-                    Hide
-                  </Button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {calendarEvents.map((event) => (
+          <TimelineBoardCalendarEvent
+            key={event.id}
+            date={date}
+            event={event}
+            onDismissCalendarEvent={onDismissCalendarEvent}
+          />
+        ))}
 
         {scheduleBlocks.map((block) => (
           <TimelineScheduleBlock

@@ -24,6 +24,8 @@ export async function syncPlannerGoogleCalendar(
         startAt: record.startAt,
         endAt: record.endAt,
         isAppManaged: record.isAppManaged,
+        backgroundColor: record.backgroundColor,
+        foregroundColor: record.foregroundColor,
         scheduleBlockId: record.scheduleBlockId,
         rawPayload: record.rawPayload,
         externalUpdatedAt: record.externalUpdatedAt,

@@ -74,6 +74,8 @@ describe("usePlannerMutations", () => {
             startAt: "2026-04-06T15:00:00.000Z",
             endAt: "2026-04-06T15:30:00.000Z",
             isAppManaged: false,
+            backgroundColor: null,
+            foregroundColor: null,
           },
         ],
       }),
@@ -113,6 +115,8 @@ describe("usePlannerMutations", () => {
       startAt: "2026-04-06T15:00:00.000Z",
       endAt: "2026-04-06T15:30:00.000Z",
       isAppManaged: false,
+      backgroundColor: "#d50000",
+      foregroundColor: "#ffffff",
     };
 
     queryClient.setQueryData<DayPlan>(key, buildDayPlan({ calendarEvents: [] }));

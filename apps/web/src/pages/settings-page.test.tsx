@@ -1,10 +1,14 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { SettingsPage } from "@/pages/settings-page";
 import { buildAuthSession, buildTogglSettings } from "@/test/fixtures";
 
 describe("SettingsPage", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("submits Toggl settings and clears the API token field", async () => {
     const user = userEvent.setup();
     const togglSettings = buildTogglSettings({ connected: false, hasSavedToken: false, apiTokenHint: null, workspaceId: null, workspaceName: null, defaultProjectId: null, defaultProjectName: null, availableWorkspaces: [], availableProjects: [], lastValidatedAt: null });
@@ -53,5 +57,53 @@ describe("SettingsPage", () => {
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/paste toggl api token/i)).toHaveValue("");
     });
+  });
+
+  it("shows an alert when saving Toggl settings fails", async () => {
+    const user = userEvent.setup();
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => undefined);
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const onSaveToggl = vi.fn().mockRejectedValue(new Error("invalid input syntax for type json"));
+    const togglSettings = buildTogglSettings({
+      connected: false,
+      hasSavedToken: false,
+      apiTokenHint: null,
+      workspaceId: null,
+      workspaceName: null,
+      defaultProjectId: null,
+      defaultProjectName: null,
+      availableWorkspaces: [{ id: "workspace-2", name: "Personal" }],
+      availableProjects: [],
+      lastValidatedAt: null,
+    });
+
+    render(
+      <SettingsPage
+        authSession={buildAuthSession()}
+        togglSettings={togglSettings}
+        onDiscoverToggl={vi.fn()}
+        onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
+        onSaveToggl={onSaveToggl}
+        isDiscovering={false}
+        isSaving={false}
+      />,
+    );
+
+    await user.type(screen.getByPlaceholderText(/paste toggl api token/i), "test-token");
+    await user.selectOptions(screen.getByLabelText("Toggl workspace"), "workspace-2");
+    await user.click(screen.getByRole("button", { name: /save toggl setup/i }));
+
+    await waitFor(() => {
+      expect(onSaveToggl).toHaveBeenCalledWith({
+        apiToken: "test-token",
+        workspaceId: "workspace-2",
+        defaultProjectId: null,
+      });
+    });
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith("Failed to save the Toggl setup. Please try again.");
+    });
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(screen.getByPlaceholderText(/paste toggl api token/i)).toHaveValue("test-token");
   });
 });
