@@ -4,6 +4,7 @@ import type { ScheduleBlock, Task } from "@timefraim/shared";
 const {
   calendarFactory,
   calendarListList,
+  colorsGet,
   eventsDelete,
   eventsInsert,
   eventsList,
@@ -12,6 +13,7 @@ const {
 } = vi.hoisted(() => ({
   calendarFactory: vi.fn(),
   calendarListList: vi.fn(),
+  colorsGet: vi.fn(),
   eventsDelete: vi.fn(),
   eventsInsert: vi.fn(),
   eventsList: vi.fn(),
@@ -85,6 +87,7 @@ describe("google-calendar integration", () => {
     vi.clearAllMocks();
     calendarFactory.mockReturnValue({
       calendarList: { list: calendarListList },
+      colors: { get: colorsGet },
       events: {
         list: eventsList,
         insert: eventsInsert,
@@ -94,19 +97,49 @@ describe("google-calendar integration", () => {
     });
     calendarListList.mockResolvedValue({
       data: {
-        items: [{ id: "free-time-tasks-id@group.calendar.google.com", summary: "Free Time Tasks" }],
+        items: [
+          {
+            id: "allowed@example.com",
+            summary: "Primary",
+            primary: true,
+            backgroundColor: "#9fe1e7",
+            foregroundColor: "#1d1d1d",
+            colorId: "14",
+          },
+          {
+            id: "free-time-tasks-id@group.calendar.google.com",
+            summary: "Free Time Tasks",
+          },
+        ],
         nextPageToken: undefined,
+      },
+    });
+    colorsGet.mockResolvedValue({
+      data: {
+        calendar: {
+          "14": {
+            background: "#9fe1e7",
+            foreground: "#1d1d1d",
+          },
+        },
+        event: {
+          "11": {
+            background: "#d50000",
+            foreground: "#ffffff",
+          },
+        },
       },
     });
   });
 
-  it("reads blocker events from the synced calendar", async () => {
+  it("reads blocker events with explicit Google event colors", async () => {
     eventsList.mockResolvedValue({
       data: {
         items: [
           {
             id: "evt-1",
             summary: "Investor breakfast",
+            colorId: "11",
             start: { dateTime: "2026-04-06T15:00:00.000Z" },
             end: { dateTime: "2026-04-06T16:00:00.000Z" },
             updated: "2026-04-06T07:30:00.000Z",
@@ -131,6 +164,71 @@ describe("google-calendar integration", () => {
       expect.objectContaining({
         externalEventId: "evt-1",
         title: "Investor breakfast",
+        backgroundColor: "#d50000",
+        foregroundColor: "#ffffff",
+      }),
+    ]);
+  });
+
+  it("falls back to the synced calendar color when an event has no explicit color", async () => {
+    eventsList.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: "evt-1",
+            summary: "Investor breakfast",
+            start: { dateTime: "2026-04-06T15:00:00.000Z" },
+            end: { dateTime: "2026-04-06T16:00:00.000Z" },
+            updated: "2026-04-06T07:30:00.000Z",
+          },
+        ],
+      },
+    });
+
+    const records = await syncGoogleCalendarWindow(connection, {
+      timeMin: "2026-04-06T00:00:00.000Z",
+      timeMax: "2026-04-07T00:00:00.000Z",
+    });
+
+    expect(records).toEqual([
+      expect.objectContaining({
+        backgroundColor: "#9fe1e7",
+        foregroundColor: "#1d1d1d",
+      }),
+    ]);
+  });
+
+  it("returns null colors when neither event nor calendar colors can be resolved", async () => {
+    calendarListList.mockResolvedValue({
+      data: {
+        items: [{ id: "allowed@example.com", summary: "Primary", primary: true }],
+        nextPageToken: undefined,
+      },
+    });
+    colorsGet.mockResolvedValue({ data: { calendar: {}, event: {} } });
+    eventsList.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: "evt-1",
+            summary: "Investor breakfast",
+            start: { dateTime: "2026-04-06T15:00:00.000Z" },
+            end: { dateTime: "2026-04-06T16:00:00.000Z" },
+            updated: "2026-04-06T07:30:00.000Z",
+          },
+        ],
+      },
+    });
+
+    const records = await syncGoogleCalendarWindow(connection, {
+      timeMin: "2026-04-06T00:00:00.000Z",
+      timeMax: "2026-04-07T00:00:00.000Z",
+    });
+
+    expect(records).toEqual([
+      expect.objectContaining({
+        backgroundColor: null,
+        foregroundColor: null,
       }),
     ]);
   });

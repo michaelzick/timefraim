@@ -25,6 +25,8 @@ export type CalendarEventRecord = {
   startAt: string;
   endAt: string;
   isAppManaged: boolean;
+  backgroundColor: string | null;
+  foregroundColor: string | null;
   scheduleBlockId: string | null;
   rawPayload: Record<string, unknown>;
   externalUpdatedAt: string | null;
@@ -89,6 +91,8 @@ export type UpsertCalendarEventInput = {
   startAt: string;
   endAt: string;
   isAppManaged: boolean;
+  backgroundColor: string | null;
+  foregroundColor: string | null;
   scheduleBlockId: string | null;
   rawPayload: Record<string, unknown>;
   externalUpdatedAt: string | null;

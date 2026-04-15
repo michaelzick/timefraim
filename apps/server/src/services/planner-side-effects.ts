@@ -35,6 +35,8 @@ export async function runPlannerSideEffects(
             startAt: block.startAt,
             endAt: block.endAt,
             isAppManaged: true,
+            backgroundColor: null,
+            foregroundColor: null,
             scheduleBlockId: block.id,
             rawPayload: { source: "timefraim", pendingSync: !googleEventId },
             externalUpdatedAt: null,

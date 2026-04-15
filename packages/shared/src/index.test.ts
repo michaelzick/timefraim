@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calendarSyncResultSchema, plannerMutationResultSchema, taskSchema } from "./index.js";
+import { calendarEventViewSchema, calendarSyncResultSchema, plannerMutationResultSchema, taskSchema } from "./index.js";
 
 describe("shared barrel exports", () => {
   it("exposes core schemas through the package root", () => {
@@ -32,5 +32,18 @@ describe("shared barrel exports", () => {
         events: [],
       }).date,
     ).toBe("2026-04-06");
+
+    expect(
+      calendarEventViewSchema.parse({
+        id: "calendar-1",
+        externalEventId: "google-1",
+        title: "Team sync",
+        startAt: "2026-04-06T15:00:00.000Z",
+        endAt: "2026-04-06T15:30:00.000Z",
+        isAppManaged: false,
+        backgroundColor: "#d50000",
+        foregroundColor: null,
+      }).backgroundColor,
+    ).toBe("#d50000");
   });
 });

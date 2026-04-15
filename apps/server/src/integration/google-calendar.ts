@@ -18,9 +18,31 @@ export type GoogleEventRecord = {
   startAt: string;
   endAt: string;
   isAppManaged: boolean;
+  backgroundColor: string | null;
+  foregroundColor: string | null;
   rawPayload: Record<string, unknown>;
   scheduleBlockId: string | null;
   externalUpdatedAt: string | null;
+};
+
+type GoogleColorValues = {
+  backgroundColor: string | null;
+  foregroundColor: string | null;
+};
+
+type GoogleColorPalette = {
+  calendar: Record<string, GoogleColorValues>;
+  event: Record<string, GoogleColorValues>;
+};
+
+const EMPTY_GOOGLE_COLORS: GoogleColorValues = {
+  backgroundColor: null,
+  foregroundColor: null,
+};
+
+const EMPTY_GOOGLE_COLOR_PALETTE: GoogleColorPalette = {
+  calendar: {},
+  event: {},
 };
 
 function getOAuthClient(connection: GoogleConnection) {
@@ -70,6 +92,106 @@ async function resolveCalendarId(calendar: calendar_v3.Calendar, calendarIdOrNam
   return target;
 }
 
+async function resolveCalendarListEntry(
+  calendar: calendar_v3.Calendar,
+  calendarIdOrName: string,
+): Promise<calendar_v3.Schema$CalendarListEntry | null> {
+  const target = calendarIdOrName.trim();
+  const matchPrimary = !target || target === "primary";
+  let pageToken: string | undefined;
+
+  do {
+    const response = await calendar.calendarList.list({ pageToken });
+    const match = (response.data.items ?? []).find((item) => {
+      if (matchPrimary) {
+        return item.primary === true || item.id === "primary";
+      }
+
+      return item.id === target || item.summary === target;
+    });
+
+    if (match) {
+      return match;
+    }
+
+    pageToken = response.data.nextPageToken ?? undefined;
+  } while (pageToken);
+
+  return null;
+}
+
+function mapGoogleColorEntries(
+  entries: Record<string, { background?: string | null; foreground?: string | null }> | null | undefined,
+): Record<string, GoogleColorValues> {
+  return Object.fromEntries(
+    Object.entries(entries ?? {}).map(([key, value]) => [
+      key,
+      {
+        backgroundColor: value.background ?? null,
+        foregroundColor: value.foreground ?? null,
+      },
+    ]),
+  );
+}
+
+async function loadGoogleColorPalette(calendar: calendar_v3.Calendar): Promise<GoogleColorPalette> {
+  try {
+    const response = await calendar.colors.get();
+    return {
+      calendar: mapGoogleColorEntries(response.data.calendar as Record<
+        string,
+        { background?: string | null; foreground?: string | null }
+      > | null),
+      event: mapGoogleColorEntries(response.data.event as Record<
+        string,
+        { background?: string | null; foreground?: string | null }
+      > | null),
+    };
+  } catch {
+    return EMPTY_GOOGLE_COLOR_PALETTE;
+  }
+}
+
+function resolveCalendarColorsFromEntry(
+  entry: calendar_v3.Schema$CalendarListEntry | null,
+  palette: GoogleColorPalette,
+): GoogleColorValues {
+  if (!entry) {
+    return EMPTY_GOOGLE_COLORS;
+  }
+
+  const paletteColors = entry.colorId ? palette.calendar[entry.colorId] : undefined;
+  return {
+    backgroundColor: entry.backgroundColor ?? paletteColors?.backgroundColor ?? null,
+    foregroundColor: entry.foregroundColor ?? paletteColors?.foregroundColor ?? null,
+  };
+}
+
+async function resolveCalendarColors(
+  calendar: calendar_v3.Calendar,
+  calendarIdOrName: string,
+  palette: GoogleColorPalette,
+): Promise<GoogleColorValues> {
+  try {
+    const entry = await resolveCalendarListEntry(calendar, calendarIdOrName);
+    return resolveCalendarColorsFromEntry(entry, palette);
+  } catch {
+    return EMPTY_GOOGLE_COLORS;
+  }
+}
+
+function resolveEventColors(
+  event: calendar_v3.Schema$Event,
+  calendarColors: GoogleColorValues,
+  palette: GoogleColorPalette,
+): GoogleColorValues {
+  const paletteColors = event.colorId ? palette.event[event.colorId] : undefined;
+  return {
+    backgroundColor: paletteColors?.backgroundColor ?? calendarColors.backgroundColor,
+    foregroundColor: paletteColors?.foregroundColor ?? calendarColors.foregroundColor,
+  };
+}
+
 async function withCalendarFallback<T>(
   calendarIds: string[],
   operation: (calendarId: string) => Promise<T>,
@@ -104,7 +226,11 @@ export async function syncGoogleCalendarWindow(
   }
 
   const calendar = google.calendar({ version: "v3", auth });
-  const calendarId = await resolveCalendarId(calendar, connection.calendarId);
+  const [calendarId, colorPalette] = await Promise.all([
+    resolveCalendarId(calendar, connection.calendarId),
+    loadGoogleColorPalette(calendar),
+  ]);
+  const calendarColors = await resolveCalendarColors(calendar, connection.calendarId, colorPalette);
   const response = await calendar.events.list({
     calendarId,
     singleEvents: true,
@@ -115,16 +241,21 @@ export async function syncGoogleCalendarWindow(
 
   return (response.data.items ?? [])
     .filter((event) => event.id && event.start?.dateTime && event.end?.dateTime)
-    .map((event) => ({
-      externalEventId: event.id!,
-      title: event.summary ?? "Busy",
-      startAt: event.start!.dateTime!,
-      endAt: event.end!.dateTime!,
-      isAppManaged: event.extendedProperties?.private?.origin === "timefraim",
-      rawPayload: event as unknown as Record<string, unknown>,
-      scheduleBlockId: event.extendedProperties?.private?.scheduleBlockId ?? null,
-      externalUpdatedAt: event.updated ?? null,
-    }));
+    .map((event) => {
+      const eventColors = resolveEventColors(event, calendarColors, colorPalette);
+      return {
+        externalEventId: event.id!,
+        title: event.summary ?? "Busy",
+        startAt: event.start!.dateTime!,
+        endAt: event.end!.dateTime!,
+        isAppManaged: event.extendedProperties?.private?.origin === "timefraim",
+        backgroundColor: eventColors.backgroundColor,
+        foregroundColor: eventColors.foregroundColor,
+        rawPayload: event as unknown as Record<string, unknown>,
+        scheduleBlockId: event.extendedProperties?.private?.scheduleBlockId ?? null,
+        externalUpdatedAt: event.updated ?? null,
+      };
+    });
 }
 
 export async function upsertGoogleScheduleBlock(params: {

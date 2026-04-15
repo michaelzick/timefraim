@@ -2,6 +2,7 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
 import { X } from "lucide-react";
+import type { CSSProperties } from "react";
 import {
   buildTimelineSlots,
   getTimelineContainerHeight,
@@ -16,6 +17,62 @@ import {
   getTaskPriorityTimelineBlockClass,
 } from "@/features/planner/task-presentation";
 import { cn, formatTime } from "@/lib/utils";
+
+function hexToRgb(color: string) {
+  const normalized = color.trim().replace("#", "");
+  const expanded = normalized.length === 3
+    ? normalized
+        .split("")
+        .map((segment) => `${segment}${segment}`)
+        .join("")
+    : normalized;
+
+  if (!/^[0-9a-f]{6}$/i.test(expanded)) {
+    return null;
+  }
+
+  const value = Number.parseInt(expanded, 16);
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+}
+
+function toRgba(color: string, alpha: number) {
+  const rgb = hexToRgb(color);
+  return rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})` : null;
+}
+
+function getColorLuminance(color: string) {
+  const rgb = hexToRgb(color);
+  if (!rgb) {
+    return null;
+  }
+
+  return (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+}
+
+function getReadableForegroundColor(backgroundColor: string) {
+  const luminance = getColorLuminance(backgroundColor);
+  if (luminance === null) {
+    return "#ffffff";
+  }
+
+  return luminance > 0.62 ? "#18181b" : "#ffffff";
+}
+
+function getCalendarEventForegroundColor(event: CalendarEventView) {
+  if (event.foregroundColor) {
+    return event.foregroundColor;
+  }
+
+  if (event.backgroundColor) {
+    return getReadableForegroundColor(event.backgroundColor);
+  }
+
+  return null;
+}
 
 function TimelineSlot({
   slot,
@@ -153,11 +210,45 @@ export function TimelineBoard({
             return null;
           }
 
+          const foregroundColor = getCalendarEventForegroundColor(event);
+          const hasResolvedColors = Boolean(event.backgroundColor);
+          const hoverBackgroundClass =
+            foregroundColor && (getColorLuminance(foregroundColor) ?? 0) > 0.6
+              ? "hover:bg-white/10"
+              : "hover:bg-black/10";
+          const cardStyle: CSSProperties = {
+            top: placement.top,
+            height: placement.height,
+            ...(hasResolvedColors
+              ? {
+                  backgroundColor: event.backgroundColor ?? undefined,
+                  borderColor:
+                    (event.backgroundColor && toRgba(event.backgroundColor, 0.68)) ?? event.backgroundColor ?? undefined,
+                  color: foregroundColor ?? undefined,
+                  boxShadow:
+                    (event.backgroundColor && `0 18px 44px ${toRgba(event.backgroundColor, 0.28) ?? event.backgroundColor}`)
+                    ?? undefined,
+                }
+              : {}),
+          };
+          const badgeStyle =
+            hasResolvedColors && foregroundColor
+              ? {
+                  color: foregroundColor,
+                  borderColor: toRgba(foregroundColor, 0.24) ?? foregroundColor,
+                  backgroundColor: toRgba(foregroundColor, 0.12) ?? "transparent",
+                }
+              : undefined;
+          const buttonStyle = hasResolvedColors && foregroundColor ? { color: foregroundColor } : undefined;
+
           return (
             <div
               key={event.id}
-              className="absolute left-3 right-3 rounded-[24px] border border-[rgba(99,116,173,0.35)] bg-[rgba(55,68,109,0.42)] p-4 text-sm text-[var(--muted-strong)] shadow-lg backdrop-blur"
-              style={{ top: placement.top, height: placement.height }}
+              className={cn(
+                "absolute left-3 right-3 rounded-[24px] border p-4 text-sm shadow-lg backdrop-blur",
+                !hasResolvedColors && "border-[rgba(99,116,173,0.35)] bg-[rgba(55,68,109,0.42)] text-[var(--muted-strong)]",
+              )}
+              style={cardStyle}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -167,12 +258,18 @@ export function TimelineBoard({
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Badge className="normal-case tracking-[0.08em]">Google Calendar</Badge>
+                  <Badge className="normal-case tracking-[0.08em]" style={badgeStyle}>
+                    Google Calendar
+                  </Badge>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-2 text-[var(--muted-strong)] hover:bg-white/10 hover:text-white"
+                    className={cn(
+                      "h-8 px-2",
+                      hasResolvedColors ? hoverBackgroundClass : "text-[var(--muted-strong)] hover:bg-white/10 hover:text-white",
+                    )}
+                    style={buttonStyle}
                     onClick={() => onDismissCalendarEvent(event.id, event.title)}
                   >
                     <X className="h-4 w-4" />
