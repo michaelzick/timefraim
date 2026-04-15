@@ -68,7 +68,7 @@ export class PlannerRepositoryIntegrationStore extends PlannerRepositoryCalendar
          available_projects,
          last_validated_at
        )
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       values ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb, $10)
        on conflict (user_id)
        do update
          set api_token_ciphertext = excluded.api_token_ciphertext,
@@ -89,8 +89,8 @@ export class PlannerRepositoryIntegrationStore extends PlannerRepositoryCalendar
         input.workspaceName,
         input.defaultProjectId,
         input.defaultProjectName,
-        input.availableWorkspaces,
-        input.availableProjects,
+        JSON.stringify(input.availableWorkspaces ?? []),
+        JSON.stringify(input.availableProjects ?? []),
         input.lastValidatedAt,
       ],
     );

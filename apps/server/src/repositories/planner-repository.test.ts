@@ -91,4 +91,65 @@ describe("planner-repository", () => {
       updatedAt: "2026-04-06T08:00:00.000Z",
     });
   });
+
+  it("stores Toggl catalogs as jsonb strings and maps the saved row", async () => {
+    const availableWorkspaces = [{ id: "workspace-1", name: "Personal" }];
+    const availableProjects = [{ id: "project-1", name: "Deep Work", workspaceId: "workspace-1", active: true }];
+    const db = {
+      query: vi.fn().mockResolvedValue({
+        rows: [
+          {
+            user_id: "user-1",
+            api_token_ciphertext: "ciphertext",
+            api_token_hint: "••••7890",
+            workspace_id: "workspace-1",
+            workspace_name: "Personal",
+            default_project_id: "project-1",
+            default_project_name: "Deep Work",
+            available_workspaces: availableWorkspaces,
+            available_projects: availableProjects,
+            last_validated_at: "2026-04-15T12:00:00.000Z",
+            created_at: "2026-04-15T12:00:00.000Z",
+            updated_at: "2026-04-15T12:00:00.000Z",
+          },
+        ],
+      }),
+    };
+    const repository = new PlannerRepository();
+
+    const saved = await repository.upsertUserTogglConnection(
+      "user-1",
+      {
+        apiTokenCiphertext: "ciphertext",
+        apiTokenHint: "••••7890",
+        workspaceId: "workspace-1",
+        workspaceName: "Personal",
+        defaultProjectId: "project-1",
+        defaultProjectName: "Deep Work",
+        availableWorkspaces,
+        availableProjects,
+        lastValidatedAt: "2026-04-15T12:00:00.000Z",
+      },
+      db as never,
+    );
+
+    const [sql, params] = db.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("values ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb, $10)");
+    expect(params[7]).toBe(JSON.stringify(availableWorkspaces));
+    expect(params[8]).toBe(JSON.stringify(availableProjects));
+    expect(saved).toEqual({
+      userId: "user-1",
+      apiTokenCiphertext: "ciphertext",
+      apiTokenHint: "••••7890",
+      workspaceId: "workspace-1",
+      workspaceName: "Personal",
+      defaultProjectId: "project-1",
+      defaultProjectName: "Deep Work",
+      availableWorkspaces,
+      availableProjects,
+      lastValidatedAt: "2026-04-15T12:00:00.000Z",
+      createdAt: "2026-04-15T12:00:00.000Z",
+      updatedAt: "2026-04-15T12:00:00.000Z",
+    });
+  });
 });
