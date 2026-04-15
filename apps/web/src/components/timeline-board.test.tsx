@@ -17,6 +17,12 @@ vi.mock("@dnd-kit/core", () => ({
   }),
 }));
 
+function getTimelineItem(title: string) {
+  const item = screen.getByText(title).parentElement?.parentElement?.parentElement;
+  expect(item).not.toBeNull();
+  return item;
+}
+
 describe("TimelineBoard", () => {
   it("shows Google Calendar blockers and priority labels on scheduled tasks", () => {
     render(
@@ -66,6 +72,15 @@ describe("TimelineBoard", () => {
     expect(screen.getByText("High")).toBeInTheDocument();
     expect(screen.getByText("Drop a task onto the timeline")).toBeInTheDocument();
     expect(screen.queryByText(/synced/i)).not.toBeInTheDocument();
+
+    expect(getTimelineItem("Team sync")).toHaveStyle({
+      backgroundColor: "rgba(55, 68, 109, 0.22)",
+      color: "rgb(255, 255, 255)",
+    });
+    expect(getTimelineItem("Ship planner polish")).toHaveClass(
+      "bg-[var(--priority-high-block)]",
+      "shadow-[0_22px_54px_rgba(255,111,59,0.26)]",
+    );
   });
 
   it("uses resolved Google colors when present", () => {
@@ -92,15 +107,13 @@ describe("TimelineBoard", () => {
       />,
     );
 
-    const card = screen.getByText("Team sync").parentElement?.parentElement?.parentElement;
-    expect(card).not.toBeNull();
-    expect(card).toHaveStyle({
-      backgroundColor: "rgb(213, 0, 0)",
+    expect(getTimelineItem("Team sync")).toHaveStyle({
+      backgroundColor: "rgba(213, 0, 0, 0.22)",
       color: "rgb(255, 255, 255)",
     });
   });
 
-  it("derives a readable foreground color when Google only provides a light background", () => {
+  it("uses white text even when Google only provides a light background", () => {
     render(
       <TimelineBoard
         date="2026-04-06"
@@ -124,11 +137,9 @@ describe("TimelineBoard", () => {
       />,
     );
 
-    const card = screen.getByText("Team sync").parentElement?.parentElement?.parentElement;
-    expect(card).not.toBeNull();
-    expect(card).toHaveStyle({
-      backgroundColor: "rgb(246, 192, 38)",
-      color: "rgb(24, 24, 27)",
+    expect(getTimelineItem("Team sync")).toHaveStyle({
+      backgroundColor: "rgba(246, 192, 38, 0.22)",
+      color: "rgb(255, 255, 255)",
     });
   });
 });
