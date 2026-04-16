@@ -15,7 +15,6 @@ export class PlannerRepositoryTaskStore {
     const result = await db.query(
       `select *
        from public.tasks
-       where status <> 'archived'
        order by
          case status
            when 'in_progress' then 0

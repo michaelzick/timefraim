@@ -2,7 +2,7 @@ import type { Task } from "@timefraim/shared";
 import type { TaskLifecycleValue } from "@/features/planner/types";
 
 export const PRIORITY_OPTIONS: Task["priority"][] = ["low", "medium", "high", "urgent"];
-export const TASK_LIFECYCLE_OPTIONS: TaskLifecycleValue[] = ["active", "done", "archived"];
+export const TASK_LIFECYCLE_OPTIONS: TaskLifecycleValue[] = ["active", "done"];
 
 const PRIORITY_LABELS: Record<Task["priority"], string> = {
   low: "Low",
@@ -14,7 +14,6 @@ const PRIORITY_LABELS: Record<Task["priority"], string> = {
 const LIFECYCLE_LABELS: Record<TaskLifecycleValue, string> = {
   active: "Active",
   done: "Done",
-  archived: "Archived",
 };
 
 const PRIORITY_BADGE_CLASSES: Record<Task["priority"], string> = {
@@ -67,10 +66,6 @@ export function getTaskLifecycleValue(task: Pick<Task, "status"> | null): TaskLi
 
   if (task.status === "done") {
     return "done";
-  }
-
-  if (task.status === "archived") {
-    return "archived";
   }
 
   return "active";

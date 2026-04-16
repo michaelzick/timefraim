@@ -14,7 +14,7 @@ export type PlannerSelection =
 export function filterQueueTasks(tasks: Task[], search: string) {
   const needle = search.trim().toLowerCase();
   return tasks.filter((task) => {
-    if (task.scheduledBlockId !== null || task.status === "done" || task.status === "archived") {
+    if (task.scheduledBlockId !== null || task.status === "done") {
       return false;
     }
 

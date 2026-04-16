@@ -1,6 +1,6 @@
 import type { DayPlan, TaskPriority, TaskStatus, TogglIntegrationSettings } from "@timefraim/shared";
 
-export type TaskLifecycleValue = "active" | "done" | "archived";
+export type TaskLifecycleValue = "active" | "done";
 
 export type TaskFormValues = {
   title: string;

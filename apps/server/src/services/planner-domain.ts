@@ -120,7 +120,7 @@ export function finalizeTimerSession(activeTimer: TimerSession, endedAt: string)
 }
 
 export function resolveIdleTaskStatus(task: Task): TaskStatus {
-  if (task.status === "done" || task.status === "archived") {
+  if (task.status === "done") {
     return task.status;
   }
 

@@ -85,7 +85,7 @@ describe("TimelineBoard", () => {
     expect(item.style.color).toBe("rgb(255, 255, 255)");
     expect(getTimelineItem("Ship planner polish")).toHaveClass(
       "bg-[var(--priority-high-block)]",
-      "shadow-[0_22px_54px_rgba(255,111,59,0.26)]",
+      "shadow-[0_22px_54px_rgba(230,60,60,0.26)]",
     );
   });
 
