@@ -43,6 +43,8 @@ describe("planner-repository", () => {
         isAppManaged: false,
         backgroundColor: "#dc2127",
         foregroundColor: "#ffffff",
+        sourceCalendarId: null,
+        sourceCalendarName: null,
       },
     ]);
   });
@@ -87,6 +89,8 @@ describe("planner-repository", () => {
       rawPayload: { source: "timefraim" },
       externalUpdatedAt: null,
       dismissedExternalUpdatedAt: null,
+      sourceCalendarId: null,
+      sourceCalendarName: null,
       createdAt: "2026-04-06T08:00:00.000Z",
       updatedAt: "2026-04-06T08:00:00.000Z",
     });

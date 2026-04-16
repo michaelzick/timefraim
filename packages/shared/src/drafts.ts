@@ -10,6 +10,7 @@ export const draftKindSchema = z.enum([
   "schedule_block.delete",
   "calendar_event.dismiss",
   "timer.start",
+  "timer.start_event",
   "timer.stop",
 ]);
 export const actorRoleSchema = z.enum(["user", "assistant", "system"]);
@@ -55,6 +56,8 @@ export function formatDraftSummary(kind: DraftKind, payload: Record<string, unkn
       return `Hide calendar event ${getPayloadString(payload.calendarEventId)}`.trim();
     case "timer.start":
       return `Start timer for task ${getPayloadString(payload.taskId)}`;
+    case "timer.start_event":
+      return `Start timer for calendar event ${getPayloadString(payload.calendarEventId)}`;
     case "timer.stop":
       return "Stop active timer";
     default:

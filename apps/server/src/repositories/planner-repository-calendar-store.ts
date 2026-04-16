@@ -55,9 +55,11 @@ export class PlannerRepositoryCalendarStore extends PlannerRepositoryTaskStore {
          schedule_block_id,
          raw_payload,
          external_updated_at,
-         dismissed_external_updated_at
+         dismissed_external_updated_at,
+         source_calendar_id,
+         source_calendar_name
        )
-       values ('google', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       values ('google', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        on conflict (provider, external_event_id)
        do update
          set title = excluded.title,
@@ -69,7 +71,9 @@ export class PlannerRepositoryCalendarStore extends PlannerRepositoryTaskStore {
              schedule_block_id = excluded.schedule_block_id,
              raw_payload = excluded.raw_payload,
              external_updated_at = excluded.external_updated_at,
-             dismissed_external_updated_at = excluded.dismissed_external_updated_at
+             dismissed_external_updated_at = excluded.dismissed_external_updated_at,
+             source_calendar_id = excluded.source_calendar_id,
+             source_calendar_name = excluded.source_calendar_name
        returning *`,
       [
         input.externalEventId,
@@ -83,6 +87,8 @@ export class PlannerRepositoryCalendarStore extends PlannerRepositoryTaskStore {
         input.rawPayload,
         input.externalUpdatedAt,
         input.dismissedExternalUpdatedAt,
+        input.sourceCalendarId,
+        input.sourceCalendarName,
       ],
     );
     return mapCalendarEventRecord(result.rows[0]);
@@ -90,6 +96,25 @@ export class PlannerRepositoryCalendarStore extends PlannerRepositoryTaskStore {
 
   async deleteCalendarEventByScheduleBlockId(scheduleBlockId: string, db: Queryable) {
     await db.query(`delete from public.calendar_events where schedule_block_id = $1`, [scheduleBlockId]);
+  }
+
+  async deleteStaleCalendarEvents(
+    range: { startAt: string; endAt: string },
+    keepExternalEventIds: string[],
+    keepSourceCalendarIds: string[],
+    db: Queryable,
+  ) {
+    await db.query(
+      `delete from public.calendar_events
+       where start_at < $2 and end_at > $1
+         and is_app_managed = false
+         and (
+           source_calendar_id is null
+           or not (source_calendar_id = any($4::text[]))
+           or not (external_event_id = any($3::text[]))
+         )`,
+      [range.startAt, range.endAt, keepExternalEventIds, keepSourceCalendarIds],
+    );
   }
 
   async dismissCalendarEvent(calendarEventId: string, db: Queryable) {

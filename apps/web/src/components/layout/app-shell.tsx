@@ -1,6 +1,7 @@
 import type {
   AuthSession,
   DayPlan,
+  GoogleCalendarSettings,
   TogglConnect,
   TogglDiscoverInput,
   TogglDiscoverResult,
@@ -25,12 +26,16 @@ type AppShellProps = {
   date: string;
   dayPlan: DayPlan;
   togglSettings: TogglIntegrationSettings;
+  googleCalendarSettings: GoogleCalendarSettings | null;
   isDiscoveringToggl: boolean;
   isSavingToggl: boolean;
+  isLoadingGoogleCalendars: boolean;
+  isSavingGoogleCalendars: boolean;
   onDateChange: (nextDate: string) => void;
   onDiscoverToggl: (values: TogglDiscoverInput) => Promise<TogglDiscoverResult>;
   onDeleteToggl: () => Promise<TogglIntegrationSettings>;
   onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
+  onSaveGoogleCalendars: (syncCalendarIds: string[]) => Promise<unknown>;
   onSignOut: () => void;
   plannerPageProps: Omit<PlannerPageProps, "date" | "dayPlan" | "onDateChange">;
 };
@@ -48,12 +53,16 @@ export function AppShell({
   date,
   dayPlan,
   togglSettings,
+  googleCalendarSettings,
   isDiscoveringToggl,
   isSavingToggl,
+  isLoadingGoogleCalendars,
+  isSavingGoogleCalendars,
   onDateChange,
   onDiscoverToggl,
   onDeleteToggl,
   onSaveToggl,
+  onSaveGoogleCalendars,
   onSignOut,
   plannerPageProps,
 }: AppShellProps) {
@@ -80,10 +89,14 @@ export function AppShell({
                 <SettingsPage
                   authSession={authSession}
                   togglSettings={togglSettings}
+                  googleCalendarSettings={googleCalendarSettings}
+                  isLoadingGoogleCalendars={isLoadingGoogleCalendars}
+                  isSavingGoogleCalendars={isSavingGoogleCalendars}
                   isDiscovering={isDiscoveringToggl}
                   onSaveToggl={onSaveToggl}
                   onDiscoverToggl={onDiscoverToggl}
                   onDeleteToggl={onDeleteToggl}
+                  onSaveGoogleCalendars={onSaveGoogleCalendars}
                   isSaving={isSavingToggl}
                 />
               }

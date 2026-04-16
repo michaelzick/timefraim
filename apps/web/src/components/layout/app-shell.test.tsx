@@ -41,6 +41,10 @@ describe("AppShell", () => {
           onDeleteToggl={noopTogglSettings}
           onSaveToggl={noopTogglSettings}
           onSignOut={vi.fn()}
+          googleCalendarSettings={null}
+          isLoadingGoogleCalendars={false}
+          isSavingGoogleCalendars={false}
+          onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
           plannerPageProps={{
             isMutating: false,
             isSyncing: false,
@@ -52,6 +56,7 @@ describe("AppShell", () => {
             onDismissCalendarEvent: noopAsync,
             onRejectDraft: noopAsync,
             onStartTimer: noopAsync,
+            onStartEventTimer: noopAsync,
             onStopTimer: noopAsync,
             onSyncCalendar: noopAsync,
             onUpdateScheduleBlock: noopAsync,

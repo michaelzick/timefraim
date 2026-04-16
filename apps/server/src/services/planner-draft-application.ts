@@ -10,7 +10,7 @@ import {
   applyTaskDeleteDraft,
   applyTaskUpdateDraft,
 } from "./planner-task-changes.js";
-import { applyTimerStartDraft, applyTimerStopDraft } from "./planner-timer-changes.js";
+import { applyTimerStartDraft, applyTimerStartEventDraft, applyTimerStopDraft } from "./planner-timer-changes.js";
 import type { DraftHandlerContext } from "./planner-service-types.js";
 
 export async function applyDraftChange(context: DraftHandlerContext): Promise<SyncDraft | null> {
@@ -31,6 +31,8 @@ export async function applyDraftChange(context: DraftHandlerContext): Promise<Sy
       return applyCalendarEventDismissDraft(context);
     case "timer.start":
       return applyTimerStartDraft(context);
+    case "timer.start_event":
+      return applyTimerStartEventDraft(context);
     case "timer.stop":
       return applyTimerStopDraft(context);
   }

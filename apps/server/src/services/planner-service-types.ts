@@ -7,6 +7,7 @@ export type SideEffect =
   | { type: "google.delete"; googleEventId: string | null; scheduleBlockId: string }
   | { type: "google.task.create"; taskId: string; plannerDate: string | null }
   | { type: "toggl.start"; taskId: string; timerSessionId: string; source: "manual" | "ai" | "sync" }
+  | { type: "toggl.start_event"; calendarEventId: string; eventTitle: string; timerSessionId: string; source: "manual" | "ai" | "sync" }
   | { type: "toggl.stop"; togglEntryId: string | null | undefined };
 
 export type DraftToApply = {

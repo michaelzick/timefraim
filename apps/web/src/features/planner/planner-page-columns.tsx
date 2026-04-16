@@ -1,7 +1,8 @@
-import type { DayPlan, Task, TogglIntegrationSettings } from "@timefraim/shared";
+import type { CalendarEventView, DayPlan, Task, TogglIntegrationSettings } from "@timefraim/shared";
 import type { RefObject } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { TimelineBoard } from "@/components/timeline-board";
+import { CalendarEventDetailCard } from "@/features/planner/calendar-event-detail-card";
 import { CreateTaskCard } from "@/features/planner/create-task-card";
 import { PlannerActivityCard } from "@/features/planner/planner-activity-card";
 import { PlannerSummaryCard } from "@/features/planner/planner-summary-card";
@@ -61,9 +62,12 @@ type PlannerTimelineColumnProps = {
   date: string;
   dayPlan: DayPlan;
   isSyncing: boolean;
+  selectedTimelineTaskId: string | null;
+  selectedTimelineCalendarEventId: string | null;
   onDateChange: (nextDate: string) => void;
   onSyncCalendar: () => void;
   onSelectTask: (taskId: string) => void;
+  onSelectCalendarEvent: (calendarEventId: string) => void;
   onDismissCalendarEvent: (calendarEventId: string, title: string) => void;
   onDeleteScheduleBlock: (scheduleBlockId: string, title: string) => void;
 };
@@ -72,9 +76,12 @@ export function PlannerTimelineColumn({
   date,
   dayPlan,
   isSyncing,
+  selectedTimelineTaskId,
+  selectedTimelineCalendarEventId,
   onDateChange,
   onSyncCalendar,
   onSelectTask,
+  onSelectCalendarEvent,
   onDismissCalendarEvent,
   onDeleteScheduleBlock,
 }: PlannerTimelineColumnProps) {
@@ -92,7 +99,10 @@ export function PlannerTimelineColumn({
         tasks={dayPlan.tasks}
         scheduleBlocks={dayPlan.scheduleBlocks}
         calendarEvents={dayPlan.calendarEvents}
+        selectedTaskId={selectedTimelineTaskId}
+        selectedCalendarEventId={selectedTimelineCalendarEventId}
         onSelectTask={onSelectTask}
+        onSelectCalendarEvent={onSelectCalendarEvent}
         onDismissCalendarEvent={onDismissCalendarEvent}
         onDeleteScheduleBlock={onDeleteScheduleBlock}
       />
@@ -104,13 +114,16 @@ type PlannerDetailColumnProps = {
   detailPanelRef: RefObject<HTMLDivElement | null>;
   detailForm: UseFormReturn<TaskFormValues>;
   selectedTask: Task | null;
+  selectedCalendarEvent: CalendarEventView | null;
   dayPlan: DayPlan;
   activeTimerTaskId: string | null;
+  activeTimerCalendarEventId: string | null;
   isMutating: boolean;
   togglSettings: TogglIntegrationSettings;
   onDeleteTask: () => void;
   onSaveTask: (values: TaskFormValues) => Promise<void>;
   onStartTimer: (taskId: string) => void;
+  onStartEventTimer: (calendarEventId: string) => void;
   onStopTimer: () => void;
   onConfirmDraft: (draftId: string) => void;
   onRejectDraft: (draftId: string) => void;
@@ -120,31 +133,45 @@ export function PlannerDetailColumn({
   detailPanelRef,
   detailForm,
   selectedTask,
+  selectedCalendarEvent,
   dayPlan,
   activeTimerTaskId,
+  activeTimerCalendarEventId,
   isMutating,
   togglSettings,
   onDeleteTask,
   onSaveTask,
   onStartTimer,
+  onStartEventTimer,
   onStopTimer,
   onConfirmDraft,
   onRejectDraft,
 }: PlannerDetailColumnProps) {
   return (
     <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
-      <TaskDetailCard
-        detailPanelRef={detailPanelRef}
-        form={detailForm}
-        selectedTask={selectedTask}
-        activeTimerTaskId={activeTimerTaskId}
-        isMutating={isMutating}
-        togglSettings={togglSettings}
-        onDeleteTask={onDeleteTask}
-        onSaveTask={onSaveTask}
-        onStartTimer={onStartTimer}
-        onStopTimer={onStopTimer}
-      />
+      {selectedCalendarEvent ? (
+        <CalendarEventDetailCard
+          detailPanelRef={detailPanelRef}
+          event={selectedCalendarEvent}
+          activeTimerCalendarEventId={activeTimerCalendarEventId}
+          isMutating={isMutating}
+          onStartEventTimer={onStartEventTimer}
+          onStopTimer={onStopTimer}
+        />
+      ) : (
+        <TaskDetailCard
+          detailPanelRef={detailPanelRef}
+          form={detailForm}
+          selectedTask={selectedTask}
+          activeTimerTaskId={activeTimerTaskId}
+          isMutating={isMutating}
+          togglSettings={togglSettings}
+          onDeleteTask={onDeleteTask}
+          onSaveTask={onSaveTask}
+          onStartTimer={onStartTimer}
+          onStopTimer={onStopTimer}
+        />
+      )}
       <PlannerActivityCard
         dayPlan={dayPlan}
         onConfirmDraft={onConfirmDraft}

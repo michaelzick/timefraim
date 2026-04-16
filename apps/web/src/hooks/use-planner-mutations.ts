@@ -82,6 +82,10 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
     mutationFn: (taskId: string) => api.startTimer(token, { taskId, source: "manual" }),
     onSuccess,
   });
+  const startEventTimerMutation = useMutation({
+    mutationFn: (calendarEventId: string) => api.startEventTimer(token, { calendarEventId, source: "manual" }),
+    onSuccess,
+  });
   const stopTimerMutation = useMutation({
     mutationFn: () => api.stopTimer(token),
     onSuccess,
@@ -124,6 +128,7 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
       confirmDraftMutation,
       rejectDraftMutation,
       startTimerMutation,
+      startEventTimerMutation,
       stopTimerMutation,
     ].some((mutation) => mutation.isPending),
     isSavingToggl: saveTogglMutation.isPending || deleteTogglMutation.isPending,
@@ -146,6 +151,7 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
       saveToggl: (values: TogglConnect) => saveTogglMutation.mutateAsync(values),
       deleteToggl: () => deleteTogglMutation.mutateAsync(),
       startTimer: (taskId: string) => startTimerMutation.mutateAsync(taskId),
+      startEventTimer: (calendarEventId: string) => startEventTimerMutation.mutateAsync(calendarEventId),
       stopTimer: () => stopTimerMutation.mutateAsync(),
       syncCalendar: () => syncCalendarMutation.mutateAsync(),
     },

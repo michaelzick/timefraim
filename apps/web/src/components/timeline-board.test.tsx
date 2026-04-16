@@ -60,10 +60,15 @@ describe("TimelineBoard", () => {
             isAppManaged: false,
             backgroundColor: null,
             foregroundColor: null,
+            sourceCalendarId: null,
+            sourceCalendarName: null,
           },
         ]}
+        selectedTaskId={null}
+        selectedCalendarEventId={null}
         onDismissCalendarEvent={vi.fn()}
         onSelectTask={vi.fn()}
+        onSelectCalendarEvent={vi.fn()}
         onDeleteScheduleBlock={vi.fn()}
       />,
     );
@@ -100,10 +105,15 @@ describe("TimelineBoard", () => {
             isAppManaged: false,
             backgroundColor: "#9fe1e7",
             foregroundColor: "#1d1d1d",
+            sourceCalendarId: null,
+            sourceCalendarName: null,
           },
         ]}
+        selectedTaskId={null}
+        selectedCalendarEventId={null}
         onDismissCalendarEvent={vi.fn()}
         onSelectTask={vi.fn()}
+        onSelectCalendarEvent={vi.fn()}
         onDeleteScheduleBlock={vi.fn()}
       />,
     );
@@ -133,10 +143,15 @@ describe("TimelineBoard", () => {
             isAppManaged: false,
             backgroundColor: "#f6c026",
             foregroundColor: null,
+            sourceCalendarId: null,
+            sourceCalendarName: null,
           },
         ]}
+        selectedTaskId={null}
+        selectedCalendarEventId={null}
         onDismissCalendarEvent={vi.fn()}
         onSelectTask={vi.fn()}
+        onSelectCalendarEvent={vi.fn()}
         onDeleteScheduleBlock={vi.fn()}
       />,
     );

@@ -15,10 +15,14 @@ function getCalendarEventForegroundColor() {
 export function TimelineBoardCalendarEvent({
   date,
   event,
+  isSelected,
+  onSelectCalendarEvent,
   onDismissCalendarEvent,
 }: {
   date: string;
   event: CalendarEventView;
+  isSelected: boolean;
+  onSelectCalendarEvent: (calendarEventId: string) => void;
   onDismissCalendarEvent: (calendarEventId: string, title: string) => void;
 }) {
   const placement = getTimelinePlacement(date, event.startAt, event.endAt);
@@ -43,7 +47,12 @@ export function TimelineBoardCalendarEvent({
   };
 
   return (
-    <div key={event.id} className="absolute left-3 right-3 rounded-[24px] border p-4 text-sm" style={cardStyle}>
+    <div
+      key={event.id}
+      className={cn("absolute left-3 right-3 cursor-pointer rounded-[24px] border p-4 text-sm", isSelected && "ring-2 ring-white")}
+      style={cardStyle}
+      onClick={() => onSelectCalendarEvent(event.id)}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate font-medium">{event.title}</p>
@@ -53,7 +62,7 @@ export function TimelineBoardCalendarEvent({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Badge className="normal-case tracking-[0.08em]" style={badgeStyle}>
-            Google Calendar
+            {event.sourceCalendarName ?? "Google Calendar"}
           </Badge>
           <Button
             type="button"

@@ -6,8 +6,8 @@ import {
   type TogglConnection,
   validateTogglConnection,
 } from "../integration/toggl-track.js";
-import type { TogglDiscoverResult, TogglIntegrationSettings } from "@timefraim/shared";
-import type { GoogleConnection } from "../integration/google-calendar.js";
+import type { GoogleCalendarSettings, TogglDiscoverResult, TogglIntegrationSettings } from "@timefraim/shared";
+import { listGoogleCalendars, type GoogleConnection } from "../integration/google-calendar.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
 
 export async function getGoogleConnection(repository: PlannerRepository): Promise<GoogleConnection | null> {
@@ -85,6 +85,11 @@ export async function saveGoogleSession(
     calendarId: string;
   },
 ) {
+  const existing = await repository.getIntegrationToken("google", pool);
+  const previousSyncCalendarIds = Array.isArray(existing?.metadata?.syncCalendarIds)
+    ? existing.metadata.syncCalendarIds as string[]
+    : undefined;
+
   await repository.upsertIntegrationToken(
     "google",
     {
@@ -95,6 +100,70 @@ export async function saveGoogleSession(
         email: input.email,
         calendarId: input.calendarId,
         plannerCalendarId: env.GOOGLE_PLANNER_CALENDAR_ID,
+        ...(previousSyncCalendarIds ? { syncCalendarIds: previousSyncCalendarIds } : {}),
+      },
+    },
+    pool,
+  );
+}
+
+export async function getGoogleCalendarSettings(
+  repository: PlannerRepository,
+): Promise<GoogleCalendarSettings> {
+  const connection = await getGoogleConnection(repository);
+  const row = await repository.getIntegrationToken("google", pool);
+  const plannerCalendarId = connection?.plannerCalendarId ?? env.GOOGLE_PLANNER_CALENDAR_ID;
+
+  const savedSyncIds = Array.isArray(row?.metadata?.syncCalendarIds)
+    ? row.metadata.syncCalendarIds as string[]
+    : null;
+
+  const allCalendars = await listGoogleCalendars(connection);
+
+  const filteredCalendars = allCalendars.filter((cal) => cal.id !== plannerCalendarId);
+
+  filteredCalendars.sort((a, b) => {
+    if (a.primary && !b.primary) return -1;
+    if (!a.primary && b.primary) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const syncCalendarIds = savedSyncIds ?? (
+    filteredCalendars.some((c) => c.primary)
+      ? [filteredCalendars.find((c) => c.primary)!.id]
+      : ["primary"]
+  );
+
+  return {
+    availableCalendars: filteredCalendars.map((cal) => ({
+      id: cal.id,
+      name: cal.name,
+      primary: cal.primary,
+      backgroundColor: cal.backgroundColor,
+    })),
+    syncCalendarIds,
+    plannerCalendarId,
+  };
+}
+
+export async function saveGoogleCalendarSettings(
+  repository: PlannerRepository,
+  syncCalendarIds: string[],
+) {
+  const row = await repository.getIntegrationToken("google", pool);
+  if (!row) {
+    throw new Error("Google integration not connected");
+  }
+
+  await repository.upsertIntegrationToken(
+    "google",
+    {
+      accessToken: row.access_token,
+      refreshToken: row.refresh_token,
+      expiresAt: row.expires_at ? new Date(row.expires_at).toISOString() : null,
+      metadata: {
+        ...(row.metadata as Record<string, unknown>),
+        syncCalendarIds,
       },
     },
     pool,

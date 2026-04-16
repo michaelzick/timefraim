@@ -50,12 +50,14 @@ function TimelineScheduleBlock({
   block,
   date,
   task,
+  isSelected,
   onDeleteScheduleBlock,
   onSelectTask,
 }: {
   block: ScheduleBlock;
   date: string;
   task: Task | undefined;
+  isSelected: boolean;
   onDeleteScheduleBlock: (scheduleBlockId: string, title: string) => void;
   onSelectTask: (taskId: string) => void;
 }) {
@@ -86,6 +88,7 @@ function TimelineScheduleBlock({
         "absolute left-8 right-8 z-10 cursor-pointer rounded-[24px] border p-4 transition",
         getTaskPriorityTimelineBlockClass(priority),
         isDragging && "opacity-75",
+        isSelected && "ring-2 ring-white",
       )}
       onClick={() => onSelectTask(block.taskId)}
       {...listeners}
@@ -123,16 +126,22 @@ export function TimelineBoard({
   tasks,
   scheduleBlocks,
   calendarEvents,
+  selectedTaskId,
+  selectedCalendarEventId,
   onDismissCalendarEvent,
   onSelectTask,
+  onSelectCalendarEvent,
   onDeleteScheduleBlock,
 }: {
   date: string;
   tasks: Task[];
   scheduleBlocks: ScheduleBlock[];
   calendarEvents: CalendarEventView[];
+  selectedTaskId: string | null;
+  selectedCalendarEventId: string | null;
   onDismissCalendarEvent: (calendarEventId: string, title: string) => void;
   onSelectTask: (taskId: string) => void;
+  onSelectCalendarEvent: (calendarEventId: string) => void;
   onDeleteScheduleBlock: (scheduleBlockId: string, title: string) => void;
 }) {
   const containerHeight = getTimelineContainerHeight();
@@ -153,6 +162,8 @@ export function TimelineBoard({
             key={event.id}
             date={date}
             event={event}
+            isSelected={selectedCalendarEventId === event.id}
+            onSelectCalendarEvent={onSelectCalendarEvent}
             onDismissCalendarEvent={onDismissCalendarEvent}
           />
         ))}
@@ -163,6 +174,7 @@ export function TimelineBoard({
             block={block}
             date={date}
             task={tasks.find((item) => item.id === block.taskId)}
+            isSelected={selectedTaskId === block.taskId}
             onDeleteScheduleBlock={onDeleteScheduleBlock}
             onSelectTask={onSelectTask}
           />

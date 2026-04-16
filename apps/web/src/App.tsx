@@ -18,10 +18,12 @@ function AppContent() {
     authQuery,
     date,
     dayPlanQuery,
+    googleCalendarSettingsQuery,
     loading,
     plannerMutations,
     queryError,
     queryErrorMessage,
+    saveGoogleCalendarsMutation,
     setDate,
     togglSettingsQuery,
   } =
@@ -80,12 +82,16 @@ function AppContent() {
       date={date}
       dayPlan={dayPlanQuery.data}
       togglSettings={togglSettingsQuery.data}
+      googleCalendarSettings={googleCalendarSettingsQuery.data ?? null}
       isDiscoveringToggl={plannerMutations.isDiscoveringToggl}
       isSavingToggl={plannerMutations.isSavingToggl}
+      isLoadingGoogleCalendars={googleCalendarSettingsQuery.isLoading}
+      isSavingGoogleCalendars={saveGoogleCalendarsMutation.isPending}
       onDateChange={setDate}
       onDiscoverToggl={plannerMutations.actions.discoverToggl}
       onDeleteToggl={plannerMutations.actions.deleteToggl}
       onSaveToggl={plannerMutations.actions.saveToggl}
+      onSaveGoogleCalendars={(ids) => saveGoogleCalendarsMutation.mutateAsync(ids)}
       onSignOut={handleSignOut}
       plannerPageProps={{
         isMutating: plannerMutations.isMutating,
@@ -98,6 +104,7 @@ function AppContent() {
         onDismissCalendarEvent: plannerMutations.actions.dismissCalendarEvent,
         onRejectDraft: plannerMutations.actions.rejectDraft,
         onStartTimer: plannerMutations.actions.startTimer,
+        onStartEventTimer: plannerMutations.actions.startEventTimer,
         onStopTimer: plannerMutations.actions.stopTimer,
         onSyncCalendar: plannerMutations.actions.syncCalendar,
         onUpdateScheduleBlock: plannerMutations.actions.updateScheduleBlock,

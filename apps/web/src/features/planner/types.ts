@@ -51,6 +51,7 @@ export type PlannerPageProps = {
   onConfirmDraft: (draftId: string) => Promise<unknown>;
   onRejectDraft: (draftId: string) => Promise<unknown>;
   onStartTimer: (taskId: string) => Promise<unknown>;
+  onStartEventTimer: (calendarEventId: string) => Promise<unknown>;
   onStopTimer: () => Promise<unknown>;
   onSyncCalendar: () => Promise<unknown>;
   isSyncing: boolean;

@@ -72,6 +72,23 @@ export const googleConnectSchema = z.object({
   calendarId: z.string().default("primary"),
 });
 
+export const googleCalendarOptionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  primary: z.boolean().default(false),
+  backgroundColor: z.string().nullable().default(null),
+});
+
+export const googleCalendarSettingsSchema = z.object({
+  availableCalendars: z.array(googleCalendarOptionSchema),
+  syncCalendarIds: z.array(z.string()),
+  plannerCalendarId: z.string(),
+});
+
+export const googleCalendarSettingsUpdateSchema = z.object({
+  syncCalendarIds: z.array(z.string()).min(1),
+});
+
 export const authUserSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
@@ -92,6 +109,9 @@ export type TogglIntegrationSettings = z.infer<typeof togglIntegrationSettingsSc
 export type TogglWorkspaceOption = z.infer<typeof togglWorkspaceOptionSchema>;
 export type TogglProjectOption = z.infer<typeof togglProjectOptionSchema>;
 export type GoogleConnect = z.infer<typeof googleConnectSchema>;
+export type GoogleCalendarOption = z.infer<typeof googleCalendarOptionSchema>;
+export type GoogleCalendarSettings = z.infer<typeof googleCalendarSettingsSchema>;
+export type GoogleCalendarSettingsUpdate = z.infer<typeof googleCalendarSettingsUpdateSchema>;
 export type AuthUser = z.infer<typeof authUserSchema>;
 export type AuthSession = z.infer<typeof authSessionSchema>;
 export type McpProfile = z.infer<typeof mcpProfileSchema>;

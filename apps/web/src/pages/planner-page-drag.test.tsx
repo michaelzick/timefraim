@@ -114,6 +114,7 @@ function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerP
     onConfirmDraft: noopAsync,
     onRejectDraft: noopAsync,
     onStartTimer: noopAsync,
+    onStartEventTimer: noopAsync,
     onStopTimer: noopAsync,
     onSyncCalendar: noopAsync,
     togglSettings: buildTogglSettings(),

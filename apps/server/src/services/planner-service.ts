@@ -9,9 +9,11 @@ import {
   deleteTogglConnection,
   discoverTogglConnection,
   getAllowedPlannerUserId,
+  getGoogleCalendarSettings,
   getGoogleConnection,
   getTogglConnection,
   getTogglSettings,
+  saveGoogleCalendarSettings,
   saveGoogleSession,
   saveTogglConnection,
 } from "./planner-service-integrations.js";
@@ -58,6 +60,13 @@ export class PlannerService {
   async deleteTogglConnection(userId: string) {
     await deleteTogglConnection(this.repository, userId);
     return this.getTogglSettings(userId);
+  }
+  async getGoogleCalendarSettings() {
+    return getGoogleCalendarSettings(this.repository);
+  }
+  async saveGoogleCalendarSettings(syncCalendarIds: string[]) {
+    await saveGoogleCalendarSettings(this.repository, syncCalendarIds);
+    return getGoogleCalendarSettings(this.repository);
   }
   async getDayPlan(userId: string | null = null, date = todayIsoDate(), tzOffsetMinutes = 0) {
     const effectiveUserId = userId ?? await getAllowedPlannerUserId(this.repository);

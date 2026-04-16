@@ -63,7 +63,38 @@ export async function startTogglTimer(params: {
         stop: null,
         workspace_id: Number(params.connection.workspaceId),
         project_id: projectId ? Number(projectId) : undefined,
-        tags: ["timefraim", params.source],
+        tags: ["timefraim"],
+      }),
+    },
+  );
+
+  return { togglEntryId: getEntryId(payload) };
+}
+
+export async function startTogglTimerForEvent(params: {
+  connection: TogglConnection | null;
+  eventTitle: string;
+  source: ScheduleBlockSource;
+}): Promise<TogglStartResult> {
+  if (!params.connection) {
+    return { togglEntryId: null };
+  }
+
+  const projectId = params.connection.defaultProjectId ?? undefined;
+  const payload = await togglRequest<unknown>(
+    `/workspaces/${encodeURIComponent(params.connection.workspaceId)}/time_entries`,
+    params.connection.apiToken,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        created_with: "TimeFraim",
+        description: params.eventTitle,
+        duration: -1,
+        start: new Date().toISOString(),
+        stop: null,
+        workspace_id: Number(params.connection.workspaceId),
+        project_id: projectId ? Number(projectId) : undefined,
+        tags: ["timefraim"],
       }),
     },
   );

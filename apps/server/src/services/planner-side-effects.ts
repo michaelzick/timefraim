@@ -1,6 +1,6 @@
 import { deleteGoogleScheduleBlock, upsertGoogleScheduleBlock, type GoogleConnection } from "../integration/google-calendar.js";
 import { createGoogleTask } from "../integration/google-tasks.js";
-import { startTogglTimer, stopTogglTimer, type TogglConnection } from "../integration/toggl-track.js";
+import { startTogglTimer, startTogglTimerForEvent, stopTogglTimer, type TogglConnection } from "../integration/toggl-track.js";
 import { pool } from "../db/pool.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
 import type { SideEffect } from "./planner-service-types.js";
@@ -41,6 +41,8 @@ export async function runPlannerSideEffects(
             rawPayload: { source: "timefraim", pendingSync: !googleEventId },
             externalUpdatedAt: null,
             dismissedExternalUpdatedAt: null,
+            sourceCalendarId: null,
+            sourceCalendarName: null,
           },
           pool,
         );
@@ -92,6 +94,22 @@ export async function runPlannerSideEffects(
         }
       } catch (error) {
         console.error("Toggl start failed", error);
+      }
+      continue;
+    }
+
+    if (effect.type === "toggl.start_event") {
+      try {
+        const result = await startTogglTimerForEvent({
+          connection: togglConnection,
+          eventTitle: effect.eventTitle,
+          source: effect.source,
+        });
+        if (result.togglEntryId) {
+          await repository.attachTogglEntry(effect.timerSessionId, result.togglEntryId, pool);
+        }
+      } catch (error) {
+        console.error("Toggl start (event) failed", error);
       }
       continue;
     }

@@ -3,6 +3,7 @@ import {
   scheduleBlockUpdateSchema,
   taskInputSchema,
   taskUpdateSchema,
+  timerStartEventSchema,
   timerStartSchema,
   timerStopSchema,
 } from "@timefraim/shared";
@@ -168,6 +169,17 @@ export function registerPlannerRoutes(app: FastifyInstance, plannerService: Plan
         return null;
       }
       return plannerService.applyChange("timer.start", payload, "user", user.id);
+    }),
+  );
+
+  app.post(
+    "/api/timers/start-event",
+    withAuthenticatedRoute(async (request, reply, user) => {
+      const payload = parseWithReply(reply, timerStartEventSchema, request.body);
+      if (!payload) {
+        return null;
+      }
+      return plannerService.applyChange("timer.start_event", payload, "user", user.id);
     }),
   );
 

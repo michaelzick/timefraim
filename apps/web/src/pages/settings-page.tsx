@@ -1,5 +1,6 @@
 import type {
   AuthSession,
+  GoogleCalendarSettings,
   TogglConnect,
   TogglDiscoverInput,
   TogglDiscoverResult,
@@ -8,22 +9,31 @@ import type {
 import { Bot, LockKeyhole, Orbit } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { env } from "@/lib/env";
+import { SettingsGoogleCalendarsCard } from "@/pages/settings-google-calendars-card";
 import { SettingsTogglCard } from "@/pages/settings-toggl-card";
 
 export function SettingsPage({
   authSession,
   togglSettings,
+  googleCalendarSettings,
+  isLoadingGoogleCalendars,
+  isSavingGoogleCalendars,
   onDiscoverToggl,
   onDeleteToggl,
   onSaveToggl,
+  onSaveGoogleCalendars,
   isDiscovering,
   isSaving,
 }: {
   authSession: AuthSession;
   togglSettings: TogglIntegrationSettings;
+  googleCalendarSettings: GoogleCalendarSettings | null;
+  isLoadingGoogleCalendars: boolean;
+  isSavingGoogleCalendars: boolean;
   onDiscoverToggl: (values: TogglDiscoverInput) => Promise<TogglDiscoverResult>;
   onDeleteToggl: () => Promise<TogglIntegrationSettings>;
   onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
+  onSaveGoogleCalendars: (syncCalendarIds: string[]) => Promise<unknown>;
   isDiscovering: boolean;
   isSaving: boolean;
 }) {
@@ -52,10 +62,20 @@ export function SettingsPage({
             <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
               <p className="text-sm font-medium text-white">Scope guardrails</p>
               <p className="mt-2 text-sm text-[var(--muted-strong)]">
-                The primary Google Calendar stays in sync for blockers, while planner-created time blocks write to the dedicated planner calendar and newly created planner tasks mirror into your default Google Tasks list.
+                Selected source calendars sync as blockers on the timeline, while planner-created time blocks write to the dedicated planner calendar and newly created planner tasks mirror into your default Google Tasks list.
               </p>
             </div>
           </div>
+          {authSession.integrationStatus.googleConnected && (
+            <div className="mt-5">
+              <SettingsGoogleCalendarsCard
+                settings={googleCalendarSettings}
+                isLoading={isLoadingGoogleCalendars}
+                isSaving={isSavingGoogleCalendars}
+                onSave={onSaveGoogleCalendars}
+              />
+            </div>
+          )}
         </Card>
 
         <SettingsTogglCard

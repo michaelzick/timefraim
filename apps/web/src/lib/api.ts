@@ -2,6 +2,7 @@ import {
   authSessionSchema,
   calendarSyncResultSchema,
   dayPlanSchema,
+  googleCalendarSettingsSchema,
   googleConnectSchema,
   integrationStatusSchema,
   plannerMutationResultSchema,
@@ -16,6 +17,8 @@ import {
   togglIntegrationSettingsSchema,
   type AuthSession,
   type CalendarSyncResult,
+  type GoogleCalendarSettings,
+  type GoogleCalendarSettingsUpdate,
   type GoogleConnect,
   type IntegrationStatus,
   type PlannerMutationResult,
@@ -26,6 +29,7 @@ import {
   type TaskInput,
   type TaskUpdate,
   type TimerStart,
+  type TimerStartEvent,
   type TogglConnect,
   type TogglDiscoverInput,
   type TogglDiscoverResult,
@@ -146,6 +150,12 @@ export const api = {
       body,
       schema: plannerMutationResultSchema,
     }),
+  startEventTimer: (token: string, body: TimerStartEvent) =>
+    request<PlannerMutationResult, TimerStartEvent>("/api/timers/start-event", token, {
+      method: "POST",
+      body,
+      schema: plannerMutationResultSchema,
+    }),
   stopTimer: (token: string) =>
     request<PlannerMutationResult, { source: "manual" }>("/api/timers/stop", token, {
       method: "POST",
@@ -183,4 +193,14 @@ export const api = {
     request<IntegrationStatus>("/api/integrations/status", token, {
       schema: integrationStatusSchema,
     }),
+  getGoogleCalendarSettings: (token: string) =>
+    request<GoogleCalendarSettings>("/api/integrations/google/calendars", token, {
+      schema: googleCalendarSettingsSchema,
+    }),
+  saveGoogleCalendarSettings: (token: string, body: GoogleCalendarSettingsUpdate) =>
+    request<GoogleCalendarSettings, GoogleCalendarSettingsUpdate>(
+      "/api/integrations/google/calendars",
+      token,
+      { method: "PUT", body, schema: googleCalendarSettingsSchema },
+    ),
 };

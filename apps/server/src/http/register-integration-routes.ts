@@ -1,4 +1,5 @@
 import {
+  googleCalendarSettingsUpdateSchema,
   googleConnectSchema,
   togglConnectSchema,
   togglDiscoverInputSchema,
@@ -48,6 +49,22 @@ export function registerIntegrationRoutes(app: FastifyInstance, plannerService: 
         calendarId: payload.calendarId,
         userId: user.id,
       });
+    }),
+  );
+
+  app.get(
+    "/api/integrations/google/calendars",
+    withAuthenticatedRoute(async () => plannerService.getGoogleCalendarSettings()),
+  );
+
+  app.put(
+    "/api/integrations/google/calendars",
+    withAuthenticatedRoute(async (request, reply) => {
+      const payload = parseWithReply(reply, googleCalendarSettingsUpdateSchema, request.body);
+      if (!payload) {
+        return null;
+      }
+      return plannerService.saveGoogleCalendarSettings(payload.syncCalendarIds);
     }),
   );
 
