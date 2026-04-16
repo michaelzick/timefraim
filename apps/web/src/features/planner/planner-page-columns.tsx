@@ -89,7 +89,6 @@ export function PlannerTimelineColumn({
     <div className="space-y-6">
       <PlannerSummaryCard
         date={date}
-        integrationStatus={dayPlan.integrationStatus}
         isSyncing={isSyncing}
         onDateChange={onDateChange}
         onSyncCalendar={onSyncCalendar}
@@ -163,7 +162,9 @@ export function PlannerDetailColumn({
           detailPanelRef={detailPanelRef}
           form={detailForm}
           selectedTask={selectedTask}
+          activeTimer={dayPlan.activeTimer}
           activeTimerTaskId={activeTimerTaskId}
+          tasks={dayPlan.tasks}
           isMutating={isMutating}
           togglSettings={togglSettings}
           onDeleteTask={onDeleteTask}
@@ -174,6 +175,7 @@ export function PlannerDetailColumn({
       )}
       <PlannerActivityCard
         dayPlan={dayPlan}
+        togglSettings={togglSettings}
         onConfirmDraft={onConfirmDraft}
         onRejectDraft={onRejectDraft}
         onStopTimer={onStopTimer}

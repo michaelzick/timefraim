@@ -195,10 +195,77 @@ describe("PlannerPage", () => {
   it("removes retired planner chrome copy from the planner page", () => {
     render(<PlannerPage {...buildPlannerPageProps()} />);
 
-    expect(screen.getByText("Toggl live")).toBeInTheDocument();
+    expect(screen.queryByText("Toggl live")).not.toBeInTheDocument();
     expect(screen.queryByText("Google live")).not.toBeInTheDocument();
     expect(screen.queryByText("Tunnel ready")).not.toBeInTheDocument();
     expect(screen.queryByText("No pending AI drafts. MCP proposals will land here for approval.")).not.toBeInTheDocument();
+  });
+
+  it("renders the refreshed planner header", () => {
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    expect(screen.getByRole("heading", { name: "Focus on what matters today." })).toBeInTheDocument();
+    expect(screen.queryByText("Timebox the right work, then protect it.")).not.toBeInTheDocument();
+  });
+
+  it("defaults the activity panel to the timer tab", () => {
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    expect(
+      screen.getByText("No timer is running. Start one from the selected task."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the running task and project name in the timer section", () => {
+    const dayPlan = buildDayPlan();
+    const task = dayPlan.tasks[0];
+    task.togglProjectId = "project-2";
+    dayPlan.activeTimer = {
+      id: "timer-1",
+      taskId: task.id,
+      calendarEventId: null,
+      togglEntryId: null,
+      startedAt: "2026-04-06T09:00:00.000Z",
+      endedAt: null,
+      durationSeconds: null,
+      source: "manual",
+    };
+
+    render(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
+
+    expect(screen.getAllByText(`${task.title} (Client X / Bugfix)`).length).toBeGreaterThan(0);
+  });
+
+  it("renders the inline timer above delete when the selected task is running", () => {
+    const dayPlan = buildDayPlan();
+    const task = dayPlan.tasks[0];
+    dayPlan.activeTimer = {
+      id: "timer-2",
+      taskId: task.id,
+      calendarEventId: null,
+      togglEntryId: null,
+      startedAt: "2026-04-06T09:00:00.000Z",
+      endedAt: null,
+      durationSeconds: null,
+      source: "manual",
+    };
+
+    render(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
+
+    const stopButtons = screen.getAllByRole("button", { name: /stop active timer/i });
+    expect(stopButtons.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText(`${task.title} (Without project)`).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("uses 'Without project' as the project dropdown placeholder when Toggl is connected with no default", () => {
+    const togglSettings = buildTogglSettings({ defaultProjectId: null, defaultProjectName: null });
+
+    render(<PlannerPage {...buildPlannerPageProps({ togglSettings })} />);
+
+    const dropdown = screen.getByLabelText("Detail Toggl project") as HTMLSelectElement;
+    const emptyOption = Array.from(dropdown.options).find((option) => option.value === "");
+    expect(emptyOption?.textContent).toBe("Without project");
+    expect(screen.queryByText("No project override")).not.toBeInTheDocument();
   });
 
   it("shows an error when saving task details fails", async () => {

@@ -1,13 +1,15 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import type { DayPlan } from "@timefraim/shared";
+import type { DayPlan, TogglIntegrationSettings } from "@timefraim/shared";
 import { Hourglass, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { formatActiveTimerHeading } from "@/features/planner/task-presentation";
 import { formatTime } from "@/lib/utils";
 
 type PlannerActivityCardProps = {
   dayPlan: DayPlan;
+  togglSettings: TogglIntegrationSettings;
   onConfirmDraft: (draftId: string) => void;
   onRejectDraft: (draftId: string) => void;
   onStopTimer: () => void;
@@ -15,13 +17,14 @@ type PlannerActivityCardProps = {
 
 export function PlannerActivityCard({
   dayPlan,
+  togglSettings,
   onConfirmDraft,
   onRejectDraft,
   onStopTimer,
 }: PlannerActivityCardProps) {
   return (
     <Card>
-      <Tabs.Root defaultValue="drafts">
+      <Tabs.Root defaultValue="timer">
         <Tabs.List className="mb-5 grid grid-cols-3 rounded-full border border-white/10 bg-white/5 p-1">
           <Tabs.Trigger className="rounded-full px-3 py-2 text-sm text-[var(--muted)] data-[state=active]:bg-[var(--accent)] data-[state=active]:text-[var(--surface)]" value="drafts">
             Drafts
@@ -73,7 +76,9 @@ export function PlannerActivityCard({
             <div className="rounded-[24px] border border-[rgba(255,111,59,0.35)] bg-[rgba(255,111,59,0.1)] p-4">
               <div className="mb-2 flex items-center gap-2">
                 <Hourglass className="h-4 w-4 text-[var(--accent)]" />
-                <span className="text-sm font-medium text-white">Active focus timer</span>
+                <span className="text-sm font-medium text-white">
+                  {formatActiveTimerHeading(dayPlan.activeTimer, dayPlan.tasks, togglSettings)}
+                </span>
               </div>
               <p className="text-sm text-[var(--muted-strong)]">
                 Started at {formatTime(dayPlan.activeTimer.startedAt)}

@@ -1,5 +1,5 @@
-import type { Task, TogglIntegrationSettings } from "@timefraim/shared";
-import { Play, Square, Trash2 } from "lucide-react";
+import type { Task, TimerSession, TogglIntegrationSettings } from "@timefraim/shared";
+import { Hourglass, Play, Square, Trash2 } from "lucide-react";
 import type { RefObject } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
@@ -10,17 +10,21 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   PRIORITY_OPTIONS,
   TASK_LIFECYCLE_OPTIONS,
+  formatActiveTimerHeading,
   formatTaskLifecycle,
   formatTaskPriority,
   getTaskPriorityBadgeClass,
 } from "@/features/planner/task-presentation";
 import type { TaskFormValues } from "@/features/planner/types";
+import { formatTime } from "@/lib/utils";
 
 type TaskDetailCardProps = {
   detailPanelRef: RefObject<HTMLDivElement | null>;
   form: UseFormReturn<TaskFormValues>;
   selectedTask: Task | null;
+  activeTimer: TimerSession | null;
   activeTimerTaskId: string | null;
+  tasks: Task[];
   isMutating: boolean;
   togglSettings: TogglIntegrationSettings;
   onDeleteTask: () => void;
@@ -49,7 +53,9 @@ export function TaskDetailCard({
   detailPanelRef,
   form,
   selectedTask,
+  activeTimer,
   activeTimerTaskId,
+  tasks,
   isMutating,
   togglSettings,
   onDeleteTask,
@@ -58,6 +64,9 @@ export function TaskDetailCard({
   onStopTimer,
 }: TaskDetailCardProps) {
   const projectOptions = getProjectOptions(togglSettings, selectedTask);
+  const showInlineTimer = Boolean(
+    selectedTask && activeTimer && activeTimer.taskId === selectedTask.id,
+  );
 
   return (
     <Card ref={detailPanelRef}>
@@ -116,7 +125,7 @@ export function TaskDetailCard({
                 {togglSettings.defaultProjectName
                   ? `Use workspace default (${togglSettings.defaultProjectName})`
                   : togglSettings.connected
-                    ? "No project override"
+                    ? "Without project"
                     : "Connect Toggl in Settings to assign a project"}
               </option>
               {projectOptions.map((project) => (
@@ -154,6 +163,23 @@ export function TaskDetailCard({
               </Button>
             )}
           </div>
+          {showInlineTimer && activeTimer ? (
+            <div className="rounded-[24px] border border-[rgba(255,111,59,0.35)] bg-[rgba(255,111,59,0.1)] p-4">
+              <div className="mb-2 flex items-center gap-2">
+                <Hourglass className="h-4 w-4 text-[var(--accent)]" />
+                <span className="text-sm font-medium text-white">
+                  {formatActiveTimerHeading(activeTimer, tasks, togglSettings)}
+                </span>
+              </div>
+              <p className="text-sm text-[var(--muted-strong)]">
+                Started at {formatTime(activeTimer.startedAt)}
+              </p>
+              <Button type="button" className="mt-4" onClick={onStopTimer} disabled={isMutating}>
+                <Square className="h-4 w-4" />
+                Stop active timer
+              </Button>
+            </div>
+          ) : null}
           <Button
             type="button"
             variant="secondary"

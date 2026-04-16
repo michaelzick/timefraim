@@ -26,7 +26,7 @@ function getDefaultProjectLabel(togglSettings: TogglIntegrationSettings) {
     return `Use workspace default (${togglSettings.defaultProjectName})`;
   }
 
-  return "No project override";
+  return "Without project";
 }
 
 export function CreateTaskCard({

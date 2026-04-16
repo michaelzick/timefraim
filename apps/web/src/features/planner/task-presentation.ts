@@ -1,4 +1,4 @@
-import type { Task } from "@timefraim/shared";
+import type { Task, TimerSession, TogglIntegrationSettings } from "@timefraim/shared";
 import type { TaskLifecycleValue } from "@/features/planner/types";
 
 export const PRIORITY_OPTIONS: Task["priority"][] = ["low", "medium", "high", "urgent"];
@@ -69,6 +69,28 @@ export function getTaskLifecycleValue(task: Pick<Task, "status"> | null): TaskLi
   }
 
   return "active";
+}
+
+export function formatActiveTimerHeading(
+  activeTimer: TimerSession,
+  tasks: Task[],
+  togglSettings: TogglIntegrationSettings,
+): string {
+  if (!activeTimer.taskId) {
+    return "Calendar event";
+  }
+
+  const task = tasks.find((candidate) => candidate.id === activeTimer.taskId);
+  if (!task) {
+    return "Active focus timer";
+  }
+
+  const project = task.togglProjectId
+    ? togglSettings.availableProjects.find((candidate) => candidate.id === task.togglProjectId)
+    : null;
+  const projectName = project?.name ?? "Without project";
+
+  return `${task.title} (${projectName})`;
 }
 
 export function resolveActiveTaskStatus(task: Pick<Task, "id" | "scheduledBlockId">, activeTimerTaskId: string | null) {
