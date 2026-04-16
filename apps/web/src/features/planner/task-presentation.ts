@@ -34,10 +34,10 @@ const PRIORITY_CARD_CLASSES: Record<Task["priority"], string> = {
 };
 
 const PRIORITY_TIMELINE_BLOCK_CLASSES: Record<Task["priority"], string> = {
-  low: "border-[var(--priority-low-border)] bg-[var(--priority-low-block)] shadow-[0_20px_50px_rgba(120,138,175,0.24)]",
-  medium: "border-[var(--priority-medium-border)] bg-[var(--priority-medium-block)] shadow-[0_20px_50px_rgba(94,112,214,0.24)]",
-  high: "border-[var(--priority-high-border)] bg-[var(--priority-high-block)] shadow-[0_22px_54px_rgba(255,111,59,0.26)]",
-  urgent: "border-[var(--priority-urgent-border)] bg-[var(--priority-urgent-block)] shadow-[0_22px_54px_rgba(255,90,64,0.3)]",
+  low: "border-[var(--priority-low-border)] bg-[var(--priority-low-block)] shadow-[0_20px_50px_rgba(94,112,214,0.24)]",
+  medium: "border-[var(--priority-medium-border)] bg-[var(--priority-medium-block)] shadow-[0_20px_50px_rgba(234,197,60,0.24)]",
+  high: "border-[var(--priority-high-border)] bg-[var(--priority-high-block)] shadow-[0_22px_54px_rgba(230,60,60,0.26)]",
+  urgent: "border-[var(--priority-urgent-border)] bg-[var(--priority-urgent-block)] shadow-[0_22px_54px_rgba(255,30,30,0.3)]",
 };
 
 export function formatTaskPriority(priority: Task["priority"]) {
