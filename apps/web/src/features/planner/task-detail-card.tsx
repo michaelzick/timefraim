@@ -88,7 +88,7 @@ export function TaskDetailCard({
               {...form.register("priority")}
             >
               {PRIORITY_OPTIONS.map((priority) => (
-                <option key={priority} value={priority} className="bg-[var(--panel)]">
+                <option key={priority} value={priority}>
                   {formatTaskPriority(priority)}
                 </option>
               ))}
@@ -100,7 +100,7 @@ export function TaskDetailCard({
             {...form.register("lifecycle")}
           >
             {TASK_LIFECYCLE_OPTIONS.map((value) => (
-              <option key={value} value={value} className="bg-[var(--panel)]">
+              <option key={value} value={value}>
               {formatTaskLifecycle(value)}
             </option>
           ))}
@@ -112,7 +112,7 @@ export function TaskDetailCard({
               disabled={!togglSettings.connected}
               {...form.register("togglProjectId")}
             >
-              <option value="" className="bg-[var(--panel)]">
+              <option value="">
                 {togglSettings.defaultProjectName
                   ? `Use workspace default (${togglSettings.defaultProjectName})`
                   : togglSettings.connected
@@ -120,7 +120,7 @@ export function TaskDetailCard({
                     : "Connect Toggl in Settings to assign a project"}
               </option>
               {projectOptions.map((project) => (
-                <option key={project.id} value={project.id} className="bg-[var(--panel)]">
+                <option key={project.id} value={project.id}>
                   {project.name}
                 </option>
               ))}
