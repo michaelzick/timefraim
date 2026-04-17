@@ -32,6 +32,10 @@ describe("SettingsPage", () => {
         onSaveToggl={onSaveToggl}
         isDiscovering={false}
         isSaving={false}
+        googleCalendarSettings={null}
+        isLoadingGoogleCalendars={false}
+        isSavingGoogleCalendars={false}
+        onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
       />,
     );
 
@@ -86,6 +90,10 @@ describe("SettingsPage", () => {
         onSaveToggl={onSaveToggl}
         isDiscovering={false}
         isSaving={false}
+        googleCalendarSettings={null}
+        isLoadingGoogleCalendars={false}
+        isSavingGoogleCalendars={false}
+        onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
       />,
     );
 

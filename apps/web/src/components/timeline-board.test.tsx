@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { TimelineBoard } from "@/components/timeline-board";
 import { buildTask } from "@/test/fixtures";
@@ -60,10 +61,16 @@ describe("TimelineBoard", () => {
             isAppManaged: false,
             backgroundColor: null,
             foregroundColor: null,
+            sourceCalendarId: null,
+            sourceCalendarName: null,
+            togglProjectId: null,
           },
         ]}
+        selectedTaskId={null}
+        selectedCalendarEventId={null}
         onDismissCalendarEvent={vi.fn()}
         onSelectTask={vi.fn()}
+        onSelectCalendarEvent={vi.fn()}
         onDeleteScheduleBlock={vi.fn()}
       />,
     );
@@ -80,7 +87,7 @@ describe("TimelineBoard", () => {
     expect(item.style.color).toBe("rgb(255, 255, 255)");
     expect(getTimelineItem("Ship planner polish")).toHaveClass(
       "bg-[var(--priority-high-block)]",
-      "shadow-[0_22px_54px_rgba(255,111,59,0.26)]",
+      "shadow-[0_22px_54px_rgba(230,60,60,0.26)]",
     );
   });
 
@@ -100,10 +107,16 @@ describe("TimelineBoard", () => {
             isAppManaged: false,
             backgroundColor: "#9fe1e7",
             foregroundColor: "#1d1d1d",
+            sourceCalendarId: null,
+            sourceCalendarName: null,
+            togglProjectId: null,
           },
         ]}
+        selectedTaskId={null}
+        selectedCalendarEventId={null}
         onDismissCalendarEvent={vi.fn()}
         onSelectTask={vi.fn()}
+        onSelectCalendarEvent={vi.fn()}
         onDeleteScheduleBlock={vi.fn()}
       />,
     );
@@ -133,10 +146,16 @@ describe("TimelineBoard", () => {
             isAppManaged: false,
             backgroundColor: "#f6c026",
             foregroundColor: null,
+            sourceCalendarId: null,
+            sourceCalendarName: null,
+            togglProjectId: null,
           },
         ]}
+        selectedTaskId={null}
+        selectedCalendarEventId={null}
         onDismissCalendarEvent={vi.fn()}
         onSelectTask={vi.fn()}
+        onSelectCalendarEvent={vi.fn()}
         onDeleteScheduleBlock={vi.fn()}
       />,
     );
@@ -148,5 +167,45 @@ describe("TimelineBoard", () => {
     expect(item.style.color).toBe("rgb(255, 255, 255)");
     expect(screen.getByText("Google Calendar")).toHaveStyle({ color: "rgb(255, 255, 255)" });
     expect(screen.getByRole("button", { name: /hide/i })).toHaveStyle({ color: "rgb(255, 255, 255)" });
+  });
+
+  it("dismisses a calendar event without selecting it first", async () => {
+    const user = userEvent.setup();
+    const onDismissCalendarEvent = vi.fn();
+    const onSelectCalendarEvent = vi.fn();
+
+    render(
+      <TimelineBoard
+        date="2026-04-06"
+        tasks={[]}
+        scheduleBlocks={[]}
+        calendarEvents={[
+          {
+            id: "calendar-1",
+            externalEventId: "google-1",
+            title: "Team sync",
+            startAt: "2026-04-06T15:00:00.000Z",
+            endAt: "2026-04-06T15:30:00.000Z",
+            isAppManaged: false,
+            backgroundColor: null,
+            foregroundColor: null,
+            sourceCalendarId: null,
+            sourceCalendarName: null,
+            togglProjectId: null,
+          },
+        ]}
+        selectedTaskId={null}
+        selectedCalendarEventId={null}
+        onDismissCalendarEvent={onDismissCalendarEvent}
+        onSelectTask={vi.fn()}
+        onSelectCalendarEvent={onSelectCalendarEvent}
+        onDeleteScheduleBlock={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /hide/i }));
+
+    expect(onDismissCalendarEvent).toHaveBeenCalledWith("calendar-1", "Team sync");
+    expect(onSelectCalendarEvent).not.toHaveBeenCalled();
   });
 });

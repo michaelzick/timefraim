@@ -7,6 +7,13 @@ import {
   type PlannerCreateTaskValues,
   type PlannerSaveTaskValues,
 } from "@/features/planner/planner-page-utils";
+import type { CalendarEventFormValues, PlannerCalendarEventUpdateInput } from "@/features/planner/types";
+
+export function buildCalendarEventUpdateInput(values: CalendarEventFormValues): PlannerCalendarEventUpdateInput {
+  return {
+    togglProjectId: values.togglProjectId || null,
+  };
+}
 
 export function buildPlannerCreateTaskInput(values: PlannerCreateTaskValues, date: string): LocalPlannerTaskInput {
   return {
@@ -54,7 +61,6 @@ export function confirmTimelineBlockDelete(title: string) {
 export function createPlannerMutationHandlers(args: {
   selectedTask: Task | null;
   onDeleteTask: (taskId: string) => Promise<unknown>;
-  onDismissCalendarEvent: (calendarEventId: string) => Promise<unknown>;
   onDeleteScheduleBlock: (scheduleBlockId: string) => Promise<unknown>;
 }) {
   return {
@@ -75,15 +81,6 @@ export function createPlannerMutationHandlers(args: {
       }
 
       void args.onDeleteTask(taskId).catch((error) => showActionError("Failed to delete the task. Please try again.", error));
-    },
-    handleDismissTimelineEvent(calendarEventId: string, title: string) {
-      if (!confirmTimelineEventDismiss(title)) {
-        return;
-      }
-
-      void args.onDismissCalendarEvent(calendarEventId).catch((error) => {
-        showActionError("Failed to dismiss the calendar event. Please try again.", error);
-      });
     },
     handleDeleteTimelineBlock(blockId: string, title: string) {
       if (!confirmTimelineBlockDelete(title)) {

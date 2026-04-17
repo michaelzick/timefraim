@@ -76,6 +76,9 @@ describe("usePlannerMutations", () => {
             isAppManaged: false,
             backgroundColor: null,
             foregroundColor: null,
+            sourceCalendarId: null,
+            sourceCalendarName: null,
+            togglProjectId: null,
           },
         ],
       }),
@@ -117,6 +120,9 @@ describe("usePlannerMutations", () => {
       isAppManaged: false,
       backgroundColor: "#d50000",
       foregroundColor: "#ffffff",
+      sourceCalendarId: null,
+      sourceCalendarName: null,
+      togglProjectId: null,
     };
 
     queryClient.setQueryData<DayPlan>(key, buildDayPlan({ calendarEvents: [] }));

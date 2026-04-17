@@ -5,16 +5,7 @@ import { PlannerRepository } from "../repositories/planner-repository.js";
 import { endOfDay, startOfDay, todayIsoDate } from "../utils/date.js";
 import { applyPlannerDraft } from "./planner-service-apply.js";
 import { syncPlannerGoogleCalendar } from "./planner-service-calendar.js";
-import {
-  deleteTogglConnection,
-  discoverTogglConnection,
-  getAllowedPlannerUserId,
-  getGoogleConnection,
-  getTogglConnection,
-  getTogglSettings,
-  saveGoogleSession,
-  saveTogglConnection,
-} from "./planner-service-integrations.js";
+import { deleteTogglConnection, discoverTogglConnection, getAllowedPlannerUserId, getGoogleCalendarSettings, getGoogleConnection, getTogglConnection, getTogglSettings, saveGoogleCalendarSettings, saveGoogleSession, saveTogglConnection } from "./planner-service-integrations.js";
 import { runPlannerSideEffects } from "./planner-side-effects.js";
 import type { SideEffect } from "./planner-service-types.js";
 export class PlannerService {
@@ -47,17 +38,20 @@ export class PlannerService {
     await saveGoogleSession(this.repository, input);
     return this.getIntegrationStatus(input.userId);
   }
-  async saveTogglConnection(userId: string, input: {
-    apiToken?: string | null;
-    workspaceId: string;
-    defaultProjectId: string | null;
-  }) {
+  async saveTogglConnection(userId: string, input: { apiToken?: string | null; workspaceId: string; defaultProjectId: string | null }) {
     await saveTogglConnection(this.repository, userId, input);
     return this.getTogglSettings(userId);
   }
   async deleteTogglConnection(userId: string) {
     await deleteTogglConnection(this.repository, userId);
     return this.getTogglSettings(userId);
+  }
+  async getGoogleCalendarSettings() {
+    return getGoogleCalendarSettings(this.repository);
+  }
+  async saveGoogleCalendarSettings(syncCalendarIds: string[]) {
+    await saveGoogleCalendarSettings(this.repository, syncCalendarIds);
+    return getGoogleCalendarSettings(this.repository);
   }
   async getDayPlan(userId: string | null = null, date = todayIsoDate(), tzOffsetMinutes = 0) {
     const effectiveUserId = userId ?? await getAllowedPlannerUserId(this.repository);
@@ -92,9 +86,7 @@ export class PlannerService {
     return syncPlannerGoogleCalendar(this.repository, date, tzOffsetMinutes);
   }
   async createDraft(kind: DraftKind, payload: Record<string, unknown>, actorRole: ActorRole, ownerUserId?: string | null) {
-    const resolvedOwnerUserId = ownerUserId ?? (actorRole === "assistant"
-      ? await getAllowedPlannerUserId(this.repository)
-      : null);
+    const resolvedOwnerUserId = ownerUserId ?? (actorRole === "assistant" ? await getAllowedPlannerUserId(this.repository) : null);
     return this.repository.createDraft(
       {
         kind,
@@ -113,9 +105,7 @@ export class PlannerService {
   }
   async applyChange(kind: DraftKind, payload: Record<string, unknown>, actorRole: ActorRole, userId?: string | null) {
     const googleConnection = await getGoogleConnection(this.repository);
-    const effectiveUserId = userId ?? (actorRole === "assistant"
-      ? await getAllowedPlannerUserId(this.repository)
-      : null);
+    const effectiveUserId = userId ?? (actorRole === "assistant" ? await getAllowedPlannerUserId(this.repository) : null);
     const togglConnection = await getTogglConnection(this.repository, effectiveUserId);
     const sideEffects: SideEffect[] = [];
     const diffSummary = formatDraftSummary(kind, payload);
@@ -174,9 +164,7 @@ export class PlannerService {
         return existingDraft;
       }
 
-      togglOwnerUserId = existingDraft.ownerUserId
-        ?? togglOwnerUserId
-        ?? (actorRole === "assistant" ? await getAllowedPlannerUserId(this.repository) : null);
+      togglOwnerUserId = existingDraft.ownerUserId ?? togglOwnerUserId ?? (actorRole === "assistant" ? await getAllowedPlannerUserId(this.repository) : null);
 
       return applyPlannerDraft({
         repository: this.repository,

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: dark;
   --bg: #070b16;
   --bg-accent: #101b39;
   --surface: #f6f2ea;
@@ -10,26 +11,26 @@
   --text: #f8f8f7;
   --muted: #99a8ca;
   --muted-strong: #c8d1eb;
-  --priority-low-border: rgba(153, 168, 202, 0.28);
-  --priority-low-soft: rgba(153, 168, 202, 0.14);
-  --priority-low-card: rgba(152, 166, 201, 0.1);
-  --priority-low-block: #576079;
-  --priority-low-text: #d9e1f3;
-  --priority-medium-border: rgba(116, 142, 255, 0.34);
-  --priority-medium-soft: rgba(116, 142, 255, 0.16);
-  --priority-medium-card: rgba(98, 117, 212, 0.12);
-  --priority-medium-block: #393b7e;
-  --priority-medium-text: #dfe4ff;
-  --priority-high-border: rgba(255, 111, 59, 0.4);
-  --priority-high-soft: rgba(255, 111, 59, 0.16);
-  --priority-high-card: rgba(255, 111, 59, 0.12);
-  --priority-high-block: #8f422a;
-  --priority-high-text: #fff0ea;
-  --priority-urgent-border: rgba(255, 90, 64, 0.48);
-  --priority-urgent-soft: rgba(255, 90, 64, 0.18);
-  --priority-urgent-card: rgba(255, 90, 64, 0.14);
-  --priority-urgent-block: #8f392b;
-  --priority-urgent-text: #fff1ec;
+  --priority-low-block: #393b7e60;
+  --priority-low-border: rgba(98, 100, 170, 0.45);
+  --priority-low-soft: rgba(98, 100, 170, 0.20);
+  --priority-low-card: rgba(98, 100, 170, 0.14);
+  --priority-low-text: #b8bbff;
+  --priority-medium-block: #00fbff60;
+  --priority-medium-border: rgba(0, 230, 235, 0.45);
+  --priority-medium-soft: rgba(0, 230, 235, 0.20);
+  --priority-medium-card: rgba(0, 230, 235, 0.14);
+  --priority-medium-text: #a8fdff;
+  --priority-high-block: #8b202060;
+  --priority-high-border: rgba(180, 60, 60, 0.50);
+  --priority-high-soft: rgba(180, 60, 60, 0.22);
+  --priority-high-card: rgba(180, 60, 60, 0.16);
+  --priority-high-text: #ffb0b0;
+  --priority-urgent-block: #9e15a060;
+  --priority-urgent-border: rgba(200, 40, 200, 0.55);
+  --priority-urgent-soft: rgba(200, 40, 200, 0.25);
+  --priority-urgent-card: rgba(200, 40, 200, 0.18);
+  --priority-urgent-text: #ffb8ff;
   font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
   color: var(--text);
   background: radial-gradient(circle at top left, rgba(255, 111, 59, 0.18), transparent 28%),

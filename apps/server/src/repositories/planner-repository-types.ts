@@ -31,6 +31,9 @@ export type CalendarEventRecord = {
   rawPayload: Record<string, unknown>;
   externalUpdatedAt: string | null;
   dismissedExternalUpdatedAt: string | null;
+  sourceCalendarId: string | null;
+  sourceCalendarName: string | null;
+  togglProjectId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -97,6 +100,8 @@ export type UpsertCalendarEventInput = {
   rawPayload: Record<string, unknown>;
   externalUpdatedAt: string | null;
   dismissedExternalUpdatedAt: string | null;
+  sourceCalendarId: string | null;
+  sourceCalendarName: string | null;
 };
 
 export type CreateDraftInput = {

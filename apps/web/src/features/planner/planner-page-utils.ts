@@ -9,7 +9,7 @@ import type {
 } from "@/features/planner/types";
 
 export type PlannerPriority = "low" | "medium" | "high" | "urgent";
-export type PlannerStatus = "inbox" | "planned" | "scheduled" | "in_progress" | "done" | "archived";
+export type PlannerStatus = "inbox" | "planned" | "scheduled" | "in_progress" | "done";
 export type PlannerCreateTaskValues = {
   title: string;
   notes: string;
@@ -40,7 +40,7 @@ export type PlannerSaveTaskValues = {
   notes: string;
   estimatedMinutes: number;
   priority: PlannerPriority;
-  lifecycle: "active" | "done" | "archived";
+  lifecycle: "active" | "done";
   togglProjectId: string;
 };
 

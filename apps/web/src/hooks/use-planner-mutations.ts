@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
+  CalendarEventUpdate,
   CalendarSyncResult,
   DayPlan,
   TaskInput,
@@ -48,6 +49,11 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
     mutationFn: (scheduleBlockId: string) => api.deleteScheduleBlock(token, scheduleBlockId),
     onSuccess,
   });
+  const updateCalendarEventMutation = useMutation({
+    mutationFn: ({ calendarEventId, values }: { calendarEventId: string; values: CalendarEventUpdate }) =>
+      api.updateCalendarEvent(token, calendarEventId, values),
+    onSuccess,
+  });
   const dismissCalendarEventMutation = useMutation({
     mutationFn: (calendarEventId: string) => api.dismissCalendarEvent(token, calendarEventId),
     onMutate: async (calendarEventId) => {
@@ -80,6 +86,10 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
   });
   const startTimerMutation = useMutation({
     mutationFn: (taskId: string) => api.startTimer(token, { taskId, source: "manual" }),
+    onSuccess,
+  });
+  const startEventTimerMutation = useMutation({
+    mutationFn: (calendarEventId: string) => api.startEventTimer(token, { calendarEventId, source: "manual" }),
     onSuccess,
   });
   const stopTimerMutation = useMutation({
@@ -121,9 +131,11 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
       updateScheduleBlockMutation,
       deleteScheduleBlockMutation,
       dismissCalendarEventMutation,
+      updateCalendarEventMutation,
       confirmDraftMutation,
       rejectDraftMutation,
       startTimerMutation,
+      startEventTimerMutation,
       stopTimerMutation,
     ].some((mutation) => mutation.isPending),
     isSavingToggl: saveTogglMutation.isPending || deleteTogglMutation.isPending,
@@ -140,12 +152,15 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
         updateScheduleBlockMutation.mutateAsync({ scheduleBlockId, values }),
       deleteScheduleBlock: (scheduleBlockId: string) => deleteScheduleBlockMutation.mutateAsync(scheduleBlockId),
       dismissCalendarEvent: (calendarEventId: string) => dismissCalendarEventMutation.mutateAsync(calendarEventId),
+      updateCalendarEvent: (calendarEventId: string, values: CalendarEventUpdate) =>
+        updateCalendarEventMutation.mutateAsync({ calendarEventId, values }),
       confirmDraft: (draftId: string) => confirmDraftMutation.mutateAsync(draftId),
       rejectDraft: (draftId: string) => rejectDraftMutation.mutateAsync(draftId),
       discoverToggl: (values: TogglDiscoverInput) => discoverTogglMutation.mutateAsync(values),
       saveToggl: (values: TogglConnect) => saveTogglMutation.mutateAsync(values),
       deleteToggl: () => deleteTogglMutation.mutateAsync(),
       startTimer: (taskId: string) => startTimerMutation.mutateAsync(taskId),
+      startEventTimer: (calendarEventId: string) => startEventTimerMutation.mutateAsync(calendarEventId),
       stopTimer: () => stopTimerMutation.mutateAsync(),
       syncCalendar: () => syncCalendarMutation.mutateAsync(),
     },

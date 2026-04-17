@@ -33,6 +33,10 @@ describe("planner-repository", () => {
       expect.stringContaining("and is_app_managed = false"),
       ["2026-04-06T00:00:00.000Z", "2026-04-07T00:00:00.000Z"],
     );
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining("external_updated_at is null"),
+      ["2026-04-06T00:00:00.000Z", "2026-04-07T00:00:00.000Z"],
+    );
     expect(events).toEqual([
       {
         id: "event-row-1",
@@ -43,6 +47,9 @@ describe("planner-repository", () => {
         isAppManaged: false,
         backgroundColor: "#dc2127",
         foregroundColor: "#ffffff",
+        sourceCalendarId: null,
+        sourceCalendarName: null,
+        togglProjectId: null,
       },
     ]);
   });
@@ -87,9 +94,46 @@ describe("planner-repository", () => {
       rawPayload: { source: "timefraim" },
       externalUpdatedAt: null,
       dismissedExternalUpdatedAt: null,
+      sourceCalendarId: null,
+      sourceCalendarName: null,
+      togglProjectId: null,
       createdAt: "2026-04-06T08:00:00.000Z",
       updatedAt: "2026-04-06T08:00:00.000Z",
     });
+  });
+
+  it("marks dismissed calendar rows even when Google did not send an updated timestamp", async () => {
+    const db = {
+      query: vi.fn().mockResolvedValue({
+        rows: [
+          {
+            id: "event-row-3",
+            external_event_id: "google-evt-3",
+            title: "Lunch",
+            start_at: "2026-04-06T18:00:00.000Z",
+            end_at: "2026-04-06T18:30:00.000Z",
+            is_app_managed: false,
+            background_color: null,
+            foreground_color: null,
+            schedule_block_id: null,
+            raw_payload: {},
+            external_updated_at: null,
+            dismissed_external_updated_at: "2026-04-06T08:00:00.000Z",
+            created_at: "2026-04-06T08:00:00.000Z",
+            updated_at: "2026-04-06T08:00:00.000Z",
+          },
+        ],
+      }),
+    };
+    const repository = new PlannerRepository();
+
+    const event = await repository.dismissCalendarEvent("event-row-3", db as never);
+
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining("coalesce(external_updated_at, updated_at)"),
+      ["event-row-3"],
+    );
+    expect(event?.dismissedExternalUpdatedAt).toBe("2026-04-06T08:00:00.000Z");
   });
 
   it("stores Toggl catalogs as jsonb strings and maps the saved row", async () => {

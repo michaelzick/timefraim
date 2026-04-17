@@ -4,14 +4,14 @@ import { PlannerRepositoryDraftStore } from "./planner-repository-draft-store.js
 
 export class PlannerRepositoryTimerStore extends PlannerRepositoryDraftStore {
   async createTimerSession(
-    input: { taskId: string; startedAt: string; source: "manual" | "ai" | "sync" },
+    input: { taskId?: string | null; calendarEventId?: string | null; startedAt: string; source: "manual" | "ai" | "sync" },
     db: Queryable,
   ) {
     const result = await db.query(
-      `insert into public.timer_sessions (task_id, started_at, source)
-       values ($1, $2, $3)
+      `insert into public.timer_sessions (task_id, calendar_event_id, started_at, source)
+       values ($1, $2, $3, $4)
        returning *`,
-      [input.taskId, input.startedAt, input.source],
+      [input.taskId ?? null, input.calendarEventId ?? null, input.startedAt, input.source],
     );
     return mapTimer(result.rows[0]);
   }

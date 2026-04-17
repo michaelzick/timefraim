@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useEffectEvent, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { env } from "@/lib/env";
@@ -55,6 +55,21 @@ export function useAppShellData(session: Session | null) {
     retry: false,
   });
 
+  const googleCalendarSettingsQuery = useQuery({
+    queryKey: ["google-calendar-settings", token],
+    enabled: Boolean(token),
+    queryFn: () => api.getGoogleCalendarSettings(token),
+    retry: false,
+  });
+
+  const saveGoogleCalendarsMutation = useMutation({
+    mutationFn: (syncCalendarIds: string[]) =>
+      api.saveGoogleCalendarSettings(token, { syncCalendarIds }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["google-calendar-settings", token] });
+    },
+  });
+
   const plannerMutations = usePlannerMutations({
     date,
     token,
@@ -72,10 +87,12 @@ export function useAppShellData(session: Session | null) {
     authQuery,
     date,
     dayPlanQuery,
+    googleCalendarSettingsQuery,
     loading,
     plannerMutations,
     queryError,
     queryErrorMessage,
+    saveGoogleCalendarsMutation,
     setDate,
     togglSettingsQuery,
   };

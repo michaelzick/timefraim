@@ -24,3 +24,32 @@ export async function applyCalendarEventDismissDraft(context: DraftHandlerContex
   );
   return context.markApplied();
 }
+
+export async function applyCalendarEventUpdateDraft(context: DraftHandlerContext) {
+  const payload = context.draft.payload as {
+    calendarEventId: string;
+    togglProjectId?: string | null;
+  };
+  const calendarEvent = await context.repository.getCalendarEvent(payload.calendarEventId, context.client);
+  if (!calendarEvent) {
+    throw new Error(`Calendar event ${payload.calendarEventId} not found`);
+  }
+
+  await context.repository.updateCalendarEvent(
+    calendarEvent.id,
+    { togglProjectId: payload.togglProjectId ?? null },
+    context.client,
+  );
+  await context.repository.createAuditLog(
+    {
+      actorRole: context.actorRole,
+      action: context.draft.kind,
+      entityType: "calendar_event",
+      entityId: calendarEvent.id,
+      diffSummary: context.draft.diffSummary,
+      payload: context.draft.payload,
+    },
+    context.client,
+  );
+  return context.markApplied();
+}

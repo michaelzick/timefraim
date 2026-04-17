@@ -50,7 +50,7 @@ await app.register(cors, {
   origin(origin, callback) {
     callback(null, isAllowedOrigin(origin));
   },
-  methods: ["GET", "HEAD", "POST", "PATCH", "DELETE", "OPTIONS"],
+  methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Authorization", "Content-Type", "Mcp-Session-Id"],
   credentials: true,
   exposedHeaders: ["Mcp-Session-Id"],

@@ -1,14 +1,20 @@
 import type { DragEndEvent } from "@dnd-kit/core";
-import type { ScheduleBlock, Task } from "@timefraim/shared";
+import type { CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
 import { startTransition } from "react";
 import type { PlannerScheduleBlockUpdateInput } from "@/features/planner/types";
 
 export type SelectedTaskSource = "queue" | "timeline";
 
+export type PlannerSelection =
+  | { type: "queue-task"; taskId: string }
+  | { type: "timeline-task"; taskId: string }
+  | { type: "calendar-event"; calendarEventId: string }
+  | { type: "none" };
+
 export function filterQueueTasks(tasks: Task[], search: string) {
   const needle = search.trim().toLowerCase();
   return tasks.filter((task) => {
-    if (task.scheduledBlockId !== null || task.status === "done" || task.status === "archived") {
+    if (task.scheduledBlockId !== null || task.status === "done") {
       return false;
     }
 
@@ -34,6 +40,23 @@ export function resolveTaskSelection(args: {
 
   const fallbackTask = args.queueTasks[0] ?? null;
   return { selectedTask: fallbackTask, selectedTaskId: fallbackTask?.id ?? null, selectedTaskSource: "queue" as const };
+}
+
+export function getSelectedCalendarEventId(selection: PlannerSelection): string | null {
+  if (selection.type === "calendar-event") {
+    return selection.calendarEventId;
+  }
+  return null;
+}
+
+export function resolveSelectedCalendarEvent(
+  selection: PlannerSelection,
+  calendarEvents: CalendarEventView[],
+): CalendarEventView | null {
+  if (selection.type !== "calendar-event") {
+    return null;
+  }
+  return calendarEvents.find((e) => e.id === selection.calendarEventId) ?? null;
 }
 
 export async function handlePlannerDragEnd(args: {

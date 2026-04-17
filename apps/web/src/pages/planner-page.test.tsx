@@ -6,7 +6,35 @@ import { PlannerPage } from "@/pages/planner-page";
 import { buildDayPlan, buildTask, buildTogglSettings } from "@/test/fixtures";
 
 vi.mock("@/components/timeline-board", () => ({
-  TimelineBoard: () => <div>timeline board</div>,
+  TimelineBoard: ({
+    calendarEvents,
+    selectedCalendarEventId,
+    onDismissCalendarEvent,
+    onSelectCalendarEvent,
+  }: {
+    calendarEvents: Array<{ id: string; title: string }>;
+    selectedCalendarEventId: string | null;
+    onDismissCalendarEvent: (calendarEventId: string, title: string) => void;
+    onSelectCalendarEvent: (calendarEventId: string) => void;
+  }) => (
+    <div>
+      <div>timeline board</div>
+      <div data-testid="selected-calendar-event">{selectedCalendarEventId ?? "none"}</div>
+      {calendarEvents[0] ? (
+        <>
+          <button type="button" onClick={() => onSelectCalendarEvent(calendarEvents[0].id)}>
+            Select calendar event
+          </button>
+          <button
+            type="button"
+            onClick={() => onDismissCalendarEvent(calendarEvents[0].id, calendarEvents[0].title)}
+          >
+            Hide calendar event
+          </button>
+        </>
+      ) : null}
+    </div>
+  ),
 }));
 
 const noopAsync = () => Promise.resolve(undefined);
@@ -38,9 +66,9 @@ function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerP
     onUpdateScheduleBlock: noopAsync,
     onDeleteScheduleBlock: noopAsync,
     onDismissCalendarEvent: noopAsync,
-    onConfirmDraft: noopAsync,
-    onRejectDraft: noopAsync,
+    onUpdateCalendarEvent: noopAsync,
     onStartTimer: noopAsync,
+    onStartEventTimer: noopAsync,
     onStopTimer: noopAsync,
     onSyncCalendar: noopAsync,
     togglSettings: buildTogglSettings(),
@@ -57,8 +85,10 @@ describe("PlannerPage", () => {
 
     await user.type(screen.getByLabelText("Task title"), "Deep work");
     await user.type(screen.getByLabelText("Task notes"), "Protect a quiet block.");
-    await user.clear(screen.getByLabelText("Estimated minutes"));
-    await user.type(screen.getByLabelText("Estimated minutes"), "60");
+    await user.clear(screen.getByLabelText("Task estimated hours"));
+    await user.type(screen.getByLabelText("Task estimated hours"), "1");
+    await user.clear(screen.getByLabelText("Task estimated minutes"));
+    await user.type(screen.getByLabelText("Task estimated minutes"), "0");
     await user.selectOptions(screen.getByLabelText("Task priority"), "high");
     await user.click(screen.getByRole("button", { name: /add task/i }));
 
@@ -194,10 +224,87 @@ describe("PlannerPage", () => {
   it("removes retired planner chrome copy from the planner page", () => {
     render(<PlannerPage {...buildPlannerPageProps()} />);
 
-    expect(screen.getByText("Toggl live")).toBeInTheDocument();
+    expect(screen.queryByText("Toggl live")).not.toBeInTheDocument();
     expect(screen.queryByText("Google live")).not.toBeInTheDocument();
     expect(screen.queryByText("Tunnel ready")).not.toBeInTheDocument();
     expect(screen.queryByText("No pending AI drafts. MCP proposals will land here for approval.")).not.toBeInTheDocument();
+  });
+
+  it("renders the refreshed planner header", () => {
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    expect(screen.getByRole("heading", { name: "Focus on what matters today." })).toBeInTheDocument();
+    expect(screen.queryByText("Timebox the right work, then protect it.")).not.toBeInTheDocument();
+  });
+
+  it("defaults the activity panel to the timer tab", () => {
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    expect(
+      screen.getByText("No timer is running. Start one from the selected task."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows only Timer and Activity tabs in the right rail", () => {
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    expect(screen.getByRole("tab", { name: "Timer" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Activity" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Drafts" })).not.toBeInTheDocument();
+  });
+
+  it("shows the running task and project name in the timer section", () => {
+    const dayPlan = buildDayPlan();
+    const task = dayPlan.tasks[0];
+    task.togglProjectId = "project-2";
+    dayPlan.activeTimer = {
+      id: "timer-1",
+      taskId: task.id,
+      calendarEventId: null,
+      togglEntryId: null,
+      startedAt: "2026-04-06T09:00:00.000Z",
+      endedAt: null,
+      durationSeconds: null,
+      source: "manual",
+    };
+
+    render(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
+
+    expect(screen.getAllByText(`${task.title} (Client X / Bugfix)`).length).toBeGreaterThan(0);
+  });
+
+  it("renders the inline timer above delete when the selected task is running", () => {
+    const dayPlan = buildDayPlan();
+    const task = dayPlan.tasks[0];
+    dayPlan.activeTimer = {
+      id: "timer-2",
+      taskId: task.id,
+      calendarEventId: null,
+      togglEntryId: null,
+      startedAt: "2026-04-06T09:00:00.000Z",
+      endedAt: null,
+      durationSeconds: null,
+      source: "manual",
+    };
+
+    render(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
+
+    const stopButtons = screen.getAllByRole("button", { name: /stop active timer/i });
+    expect(stopButtons.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText(`${task.title} (Without project)`).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("uses 'Without project' as the project dropdown placeholder when Toggl is connected with no default", () => {
+    const togglSettings = buildTogglSettings({ defaultProjectId: null, defaultProjectName: null });
+
+    render(<PlannerPage {...buildPlannerPageProps({ togglSettings })} />);
+
+    const dropdown = screen.getByLabelText("Detail Toggl project");
+    const emptyOption = Array.from(
+      dropdown instanceof HTMLSelectElement ? dropdown.options : [],
+    ).find((option) => option.value === "");
+    expect(emptyOption?.textContent).toBe("Without project");
+    expect(screen.queryByText("No project override")).not.toBeInTheDocument();
   });
 
   it("shows an error when saving task details fails", async () => {
@@ -219,5 +326,45 @@ describe("PlannerPage", () => {
       'Tasks can\'t overlap on the timeline. This change would overlap with "Standup". Shorten or move this task, or clear the conflicting event first.',
       expect.any(Error),
     );
+  });
+
+  it("restores task selection immediately after hiding the selected calendar event", async () => {
+    const user = userEvent.setup();
+    const onDismissCalendarEvent = vi.fn().mockResolvedValue(undefined);
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const dayPlan = buildDayPlan({
+      calendarEvents: [
+        {
+          id: "calendar-1",
+          externalEventId: "google-1",
+          title: "Team sync",
+          startAt: "2026-04-06T15:00:00.000Z",
+          endAt: "2026-04-06T15:30:00.000Z",
+          isAppManaged: false,
+          backgroundColor: null,
+          foregroundColor: null,
+          sourceCalendarId: null,
+          sourceCalendarName: null,
+          togglProjectId: null,
+        },
+      ],
+    });
+
+    render(<PlannerPage {...buildPlannerPageProps({ dayPlan, onDismissCalendarEvent })} />);
+
+    await user.click(screen.getByRole("button", { name: /select calendar event/i }));
+    expect(screen.getByRole("heading", { name: "Calendar event" })).toBeInTheDocument();
+    expect(screen.getByTestId("selected-calendar-event")).toHaveTextContent("calendar-1");
+
+    await user.click(screen.getByRole("button", { name: /hide calendar event/i }));
+
+    await waitFor(() => {
+      expect(onDismissCalendarEvent).toHaveBeenCalledWith("calendar-1");
+    });
+    expect(confirmSpy).toHaveBeenCalledWith(
+      'Hide "Team sync" from the planner timeline until it changes in Google Calendar?',
+    );
+    expect(screen.getByRole("heading", { name: "Task detail" })).toBeInTheDocument();
+    expect(screen.getByTestId("selected-calendar-event")).toHaveTextContent("none");
   });
 });

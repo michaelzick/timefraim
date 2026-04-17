@@ -114,6 +114,7 @@ function createRepositoryMock() {
     updateTask: vi.fn(),
     upsertCalendarEvent: vi.fn(),
     upsertIntegrationToken: vi.fn(),
+    deleteStaleCalendarEvents: vi.fn(),
   };
 }
 

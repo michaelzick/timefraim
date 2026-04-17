@@ -1,6 +1,6 @@
 import type { DayPlan, TaskPriority, TaskStatus, TogglIntegrationSettings } from "@timefraim/shared";
 
-export type TaskLifecycleValue = "active" | "done" | "archived";
+export type TaskLifecycleValue = "active" | "done";
 
 export type TaskFormValues = {
   title: string;
@@ -12,6 +12,14 @@ export type TaskFormValues = {
 };
 
 export type CreateTaskValues = Omit<TaskFormValues, "lifecycle">;
+
+export type CalendarEventFormValues = {
+  togglProjectId: string;
+};
+
+export type PlannerCalendarEventUpdateInput = {
+  togglProjectId: string | null;
+};
 
 export type PlannerTaskInput = {
   title: string;
@@ -48,9 +56,9 @@ export type PlannerPageProps = {
   onUpdateScheduleBlock: (scheduleBlockId: string, values: PlannerScheduleBlockUpdateInput) => Promise<unknown>;
   onDeleteScheduleBlock: (scheduleBlockId: string) => Promise<unknown>;
   onDismissCalendarEvent: (calendarEventId: string) => Promise<unknown>;
-  onConfirmDraft: (draftId: string) => Promise<unknown>;
-  onRejectDraft: (draftId: string) => Promise<unknown>;
+  onUpdateCalendarEvent: (calendarEventId: string, values: PlannerCalendarEventUpdateInput) => Promise<unknown>;
   onStartTimer: (taskId: string) => Promise<unknown>;
+  onStartEventTimer: (calendarEventId: string) => Promise<unknown>;
   onStopTimer: () => Promise<unknown>;
   onSyncCalendar: () => Promise<unknown>;
   isSyncing: boolean;

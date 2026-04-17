@@ -1,26 +1,32 @@
-import type { Task, TogglIntegrationSettings } from "@timefraim/shared";
-import { Play, Square, Trash2 } from "lucide-react";
+import type { Task, TimerSession, TogglIntegrationSettings } from "@timefraim/shared";
+import { Hourglass, Play, Square, Trash2 } from "lucide-react";
 import type { RefObject } from "react";
-import type { UseFormReturn } from "react-hook-form";
+import { Controller, type UseFormReturn } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DurationInput } from "@/components/duration-input";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   PRIORITY_OPTIONS,
   TASK_LIFECYCLE_OPTIONS,
+  formatActiveTimerHeading,
   formatTaskLifecycle,
   formatTaskPriority,
   getTaskPriorityBadgeClass,
 } from "@/features/planner/task-presentation";
+import { getTogglProjectOptions } from "@/features/planner/toggl-project-options";
 import type { TaskFormValues } from "@/features/planner/types";
+import { formatTime } from "@/lib/utils";
 
 type TaskDetailCardProps = {
   detailPanelRef: RefObject<HTMLDivElement | null>;
   form: UseFormReturn<TaskFormValues>;
   selectedTask: Task | null;
+  activeTimer: TimerSession | null;
   activeTimerTaskId: string | null;
+  tasks: Task[];
   isMutating: boolean;
   togglSettings: TogglIntegrationSettings;
   onDeleteTask: () => void;
@@ -29,27 +35,13 @@ type TaskDetailCardProps = {
   onStopTimer: () => void;
 };
 
-function getProjectOptions(togglSettings: TogglIntegrationSettings, selectedTask: Task | null) {
-  const options = togglSettings.availableProjects.filter((project) =>
-    togglSettings.workspaceId ? project.workspaceId === togglSettings.workspaceId : true,
-  );
-  const currentProjectId = selectedTask?.togglProjectId ?? null;
-
-  if (currentProjectId && !options.some((project) => project.id === currentProjectId)) {
-    return [
-      { id: currentProjectId, name: `Missing project (ID ${currentProjectId})` },
-      ...options.map((project) => ({ id: project.id, name: project.name })),
-    ];
-  }
-
-  return options.map((project) => ({ id: project.id, name: project.name }));
-}
-
 export function TaskDetailCard({
   detailPanelRef,
   form,
   selectedTask,
+  activeTimer,
   activeTimerTaskId,
+  tasks,
   isMutating,
   togglSettings,
   onDeleteTask,
@@ -57,7 +49,10 @@ export function TaskDetailCard({
   onStartTimer,
   onStopTimer,
 }: TaskDetailCardProps) {
-  const projectOptions = getProjectOptions(togglSettings, selectedTask);
+  const projectOptions = getTogglProjectOptions(togglSettings, selectedTask?.togglProjectId ?? null);
+  const showInlineTimer = Boolean(
+    selectedTask && activeTimer && activeTimer.taskId === selectedTask.id,
+  );
 
   return (
     <Card ref={detailPanelRef}>
@@ -74,13 +69,17 @@ export function TaskDetailCard({
         <form className="space-y-4" onSubmit={form.handleSubmit(onSaveTask)}>
           <Input aria-label="Detail title" {...form.register("title")} />
           <Textarea aria-label="Detail notes" {...form.register("notes")} />
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              aria-label="Detail estimated minutes"
-              type="number"
-              min={5}
-              step={5}
-              {...form.register("estimatedMinutes", { valueAsNumber: true })}
+          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
+            <Controller
+              control={form.control}
+              name="estimatedMinutes"
+              render={({ field }) => (
+                <DurationInput
+                  valueMinutes={field.value}
+                  onChange={field.onChange}
+                  ariaLabelPrefix="Detail"
+                />
+              )}
             />
             <select
               aria-label="Detail priority"
@@ -88,7 +87,7 @@ export function TaskDetailCard({
               {...form.register("priority")}
             >
               {PRIORITY_OPTIONS.map((priority) => (
-                <option key={priority} value={priority} className="bg-[var(--panel)]">
+                <option key={priority} value={priority}>
                   {formatTaskPriority(priority)}
                 </option>
               ))}
@@ -100,7 +99,7 @@ export function TaskDetailCard({
             {...form.register("lifecycle")}
           >
             {TASK_LIFECYCLE_OPTIONS.map((value) => (
-              <option key={value} value={value} className="bg-[var(--panel)]">
+              <option key={value} value={value}>
               {formatTaskLifecycle(value)}
             </option>
           ))}
@@ -112,15 +111,15 @@ export function TaskDetailCard({
               disabled={!togglSettings.connected}
               {...form.register("togglProjectId")}
             >
-              <option value="" className="bg-[var(--panel)]">
+              <option value="">
                 {togglSettings.defaultProjectName
                   ? `Use workspace default (${togglSettings.defaultProjectName})`
                   : togglSettings.connected
-                    ? "No project override"
+                    ? "Without project"
                     : "Connect Toggl in Settings to assign a project"}
               </option>
               {projectOptions.map((project) => (
-                <option key={project.id} value={project.id} className="bg-[var(--panel)]">
+                <option key={project.id} value={project.id}>
                   {project.name}
                 </option>
               ))}
@@ -154,6 +153,23 @@ export function TaskDetailCard({
               </Button>
             )}
           </div>
+          {showInlineTimer && activeTimer ? (
+            <div className="rounded-[24px] border border-[rgba(255,111,59,0.35)] bg-[rgba(255,111,59,0.1)] p-4">
+              <div className="mb-2 flex items-center gap-2">
+                <Hourglass className="h-4 w-4 text-[var(--accent)]" />
+                <span className="text-sm font-medium text-white">
+                  {formatActiveTimerHeading(activeTimer, tasks, togglSettings)}
+                </span>
+              </div>
+              <p className="text-sm text-[var(--muted-strong)]">
+                Started at {formatTime(activeTimer.startedAt)}
+              </p>
+              <Button type="button" className="mt-4" onClick={onStopTimer} disabled={isMutating}>
+                <Square className="h-4 w-4" />
+                Stop active timer
+              </Button>
+            </div>
+          ) : null}
           <Button
             type="button"
             variant="secondary"

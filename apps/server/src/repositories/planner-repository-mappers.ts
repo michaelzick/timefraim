@@ -51,6 +51,9 @@ export function mapCalendarEventView(row: QueryResultRow) {
     isAppManaged: row.is_app_managed,
     backgroundColor: row.background_color ?? null,
     foregroundColor: row.foreground_color ?? null,
+    sourceCalendarId: row.source_calendar_id ?? null,
+    sourceCalendarName: row.source_calendar_name ?? null,
+    togglProjectId: row.toggl_project_id ?? null,
   });
 }
 
@@ -68,6 +71,9 @@ export function mapCalendarEventRecord(row: QueryResultRow): CalendarEventRecord
     rawPayload: (row.raw_payload ?? {}) as Record<string, unknown>,
     externalUpdatedAt: asIso(row.external_updated_at),
     dismissedExternalUpdatedAt: asIso(row.dismissed_external_updated_at),
+    sourceCalendarId: row.source_calendar_id ?? null,
+    sourceCalendarName: row.source_calendar_name ?? null,
+    togglProjectId: row.toggl_project_id ?? null,
     createdAt: asIso(row.created_at)!,
     updatedAt: asIso(row.updated_at)!,
   };
@@ -92,7 +98,8 @@ export function mapDraft(row: QueryResultRow) {
 export function mapTimer(row: QueryResultRow) {
   return timerSessionSchema.parse({
     id: row.id,
-    taskId: row.task_id,
+    taskId: row.task_id ?? null,
+    calendarEventId: row.calendar_event_id ?? null,
     togglEntryId: row.toggl_entry_id,
     startedAt: asIso(row.started_at),
     endedAt: asIso(row.ended_at),

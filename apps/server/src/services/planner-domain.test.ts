@@ -25,6 +25,9 @@ describe("planner-domain", () => {
           isAppManaged: false,
           backgroundColor: null,
           foregroundColor: null,
+          sourceCalendarId: null,
+          sourceCalendarName: null,
+          togglProjectId: null,
         } satisfies CalendarEventView,
       ],
     });
@@ -69,6 +72,7 @@ describe("planner-domain", () => {
     const timer: TimerSession = {
       id: "20cf69ec-4b36-4ff4-af56-2024b56d40ff",
       taskId: "b8e05d80-1e2b-4a81-b6b8-3af64f5ec794",
+      calendarEventId: null,
       togglEntryId: null,
       startedAt: "2026-04-04T09:00:00.000Z",
       endedAt: null,
@@ -80,7 +84,7 @@ describe("planner-domain", () => {
     expect(finished.durationSeconds).toBe(1500);
     expect(
       resolveIdleTaskStatus({
-        id: timer.taskId,
+        id: "b8e05d80-1e2b-4a81-b6b8-3af64f5ec794",
         title: "Timer task",
         notes: null,
         estimatedMinutes: 25,
@@ -99,6 +103,12 @@ describe("planner-domain", () => {
       isCalendarEventDismissed({
         externalUpdatedAt: "2026-04-04T08:00:00.000Z",
         dismissedExternalUpdatedAt: "2026-04-04T08:00:00.000Z",
+      }),
+    ).toBe(true);
+    expect(
+      isCalendarEventDismissed({
+        externalUpdatedAt: null,
+        dismissedExternalUpdatedAt: "2026-04-04T08:05:00.000Z",
       }),
     ).toBe(true);
 
