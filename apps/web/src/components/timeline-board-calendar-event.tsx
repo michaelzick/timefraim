@@ -81,7 +81,10 @@ export function TimelineBoardCalendarEvent({
             size="sm"
             className={cn("h-8 px-2", "hover:bg-white/10")}
             style={{ color: foregroundColor }}
-            onClick={() => onDismissCalendarEvent(event.id, event.title)}
+            onClick={(clickEvent) => {
+              clickEvent.stopPropagation();
+              onDismissCalendarEvent(event.id, event.title);
+            }}
           >
             <X className="h-4 w-4" />
             Hide

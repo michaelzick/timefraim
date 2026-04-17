@@ -126,8 +126,6 @@ type PlannerDetailColumnProps = {
   onStartTimer: (taskId: string) => void;
   onStartEventTimer: (calendarEventId: string) => void;
   onStopTimer: () => void;
-  onConfirmDraft: (draftId: string) => void;
-  onRejectDraft: (draftId: string) => void;
 };
 
 export function PlannerDetailColumn({
@@ -147,8 +145,6 @@ export function PlannerDetailColumn({
   onStartTimer,
   onStartEventTimer,
   onStopTimer,
-  onConfirmDraft,
-  onRejectDraft,
 }: PlannerDetailColumnProps) {
   return (
     <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
@@ -183,8 +179,6 @@ export function PlannerDetailColumn({
       <PlannerActivityCard
         dayPlan={dayPlan}
         togglSettings={togglSettings}
-        onConfirmDraft={onConfirmDraft}
-        onRejectDraft={onRejectDraft}
         onStopTimer={onStopTimer}
       />
     </div>

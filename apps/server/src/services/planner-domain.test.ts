@@ -105,6 +105,12 @@ describe("planner-domain", () => {
         dismissedExternalUpdatedAt: "2026-04-04T08:00:00.000Z",
       }),
     ).toBe(true);
+    expect(
+      isCalendarEventDismissed({
+        externalUpdatedAt: null,
+        dismissedExternalUpdatedAt: "2026-04-04T08:05:00.000Z",
+      }),
+    ).toBe(true);
 
     expect(
       resolveDismissedExternalUpdatedAt({

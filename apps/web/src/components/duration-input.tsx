@@ -23,13 +23,14 @@ export function DurationInput({ valueMinutes, onChange, ariaLabelPrefix }: Durat
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <div className="flex items-center gap-1">
+    <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-3">
+      <div className="min-w-0 flex items-center gap-2">
         <Input
           aria-label={`${ariaLabelPrefix} estimated hours`}
           type="number"
           min={0}
           step={1}
+          className="min-w-0 px-3"
           value={hoursText}
           onChange={(event) => {
             const raw = event.target.value;
@@ -45,14 +46,15 @@ export function DurationInput({ valueMinutes, onChange, ariaLabelPrefix }: Durat
             }
           }}
         />
-        <span className="text-xs text-[var(--muted)]">hr</span>
+        <span className="shrink-0 text-xs text-[var(--muted)]">hr</span>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="min-w-0 flex items-center gap-2">
         <Input
           aria-label={`${ariaLabelPrefix} estimated minutes`}
           type="number"
           min={0}
           step={5}
+          className="min-w-0 px-3"
           value={minutesText}
           onChange={(event) => {
             const raw = event.target.value;
@@ -68,7 +70,7 @@ export function DurationInput({ valueMinutes, onChange, ariaLabelPrefix }: Durat
             }
           }}
         />
-        <span className="text-xs text-[var(--muted)]">min</span>
+        <span className="shrink-0 text-xs text-[var(--muted)]">min</span>
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ import {
   buildCalendarEventUpdateInput,
   buildPlannerCreateTaskInput,
   buildPlannerTaskUpdateInput,
+  confirmTimelineEventDismiss,
   createPlannerMutationHandlers,
 } from "@/pages/planner-page-actions";
 
@@ -34,8 +35,6 @@ export function PlannerPage({
   onDeleteScheduleBlock,
   onDismissCalendarEvent,
   onUpdateCalendarEvent,
-  onConfirmDraft,
-  onRejectDraft,
   onStartTimer,
   onStartEventTimer,
   onStopTimer,
@@ -81,7 +80,6 @@ export function PlannerPage({
   const mutationHandlers = createPlannerMutationHandlers({
     selectedTask,
     onDeleteTask,
-    onDismissCalendarEvent,
     onDeleteScheduleBlock,
   });
   const detailFormValues = useMemo(() => getTaskFormValues(selectedTask), [selectedTask]);
@@ -164,6 +162,43 @@ export function PlannerPage({
     });
   }
 
+  function buildFallbackPlannerSelection(): PlannerSelection {
+    if (!resolvedTaskSelection.selectedTaskId) {
+      return { type: "none" };
+    }
+
+    return resolvedTaskSelection.selectedTaskSource === "timeline"
+      ? { type: "timeline-task", taskId: resolvedTaskSelection.selectedTaskId }
+      : { type: "queue-task", taskId: resolvedTaskSelection.selectedTaskId };
+  }
+
+  async function handleDismissCalendarEvent(calendarEventId: string, title: string) {
+    if (!confirmTimelineEventDismiss(title)) {
+      return;
+    }
+
+    const dismissedSelectionWasActive =
+      plannerSelection.type === "calendar-event" && plannerSelection.calendarEventId === calendarEventId;
+    const previousSelection = dismissedSelectionWasActive ? plannerSelection : null;
+
+    if (dismissedSelectionWasActive) {
+      startTransition(() => {
+        setPlannerSelection(buildFallbackPlannerSelection());
+      });
+    }
+
+    try {
+      await onDismissCalendarEvent(calendarEventId);
+    } catch (error) {
+      if (previousSelection) {
+        startTransition(() => {
+          setPlannerSelection(previousSelection);
+        });
+      }
+      showActionError("Failed to dismiss the calendar event. Please try again.", error);
+    }
+  }
+
   async function handleSaveTask(values: PlannerSaveTaskValues) {
     if (!selectedTask) {
       return;
@@ -214,7 +249,7 @@ export function PlannerPage({
           onSyncCalendar={() => void onSyncCalendar()}
           onSelectTask={handleSelectTimelineTask}
           onSelectCalendarEvent={handleSelectCalendarEvent}
-          onDismissCalendarEvent={(calendarEventId, title) => mutationHandlers.handleDismissTimelineEvent(calendarEventId, title)}
+          onDismissCalendarEvent={(calendarEventId, title) => void handleDismissCalendarEvent(calendarEventId, title)}
           onDeleteScheduleBlock={(blockId, title) => mutationHandlers.handleDeleteTimelineBlock(blockId, title)}
         />
         <PlannerDetailColumn
@@ -234,8 +269,6 @@ export function PlannerPage({
           onStartTimer={(taskId) => void onStartTimer(taskId)}
           onStartEventTimer={(calendarEventId) => void onStartEventTimer(calendarEventId)}
           onStopTimer={() => void onStopTimer()}
-          onConfirmDraft={(draftId) => void onConfirmDraft(draftId)}
-          onRejectDraft={(draftId) => void onRejectDraft(draftId)}
         />
       </div>
     </DndContext>

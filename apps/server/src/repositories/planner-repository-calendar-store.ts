@@ -13,9 +13,12 @@ export class PlannerRepositoryCalendarStore extends PlannerRepositoryTaskStore {
        from public.calendar_events
        where start_at < $2 and end_at > $1
          and is_app_managed = false
-         and (
-           dismissed_external_updated_at is null
-           or dismissed_external_updated_at is distinct from external_updated_at
+         and not (
+           dismissed_external_updated_at is not null
+           and (
+             external_updated_at is null
+             or dismissed_external_updated_at is not distinct from external_updated_at
+           )
          )
        order by start_at asc`,
       [range.startAt, range.endAt],
@@ -120,7 +123,7 @@ export class PlannerRepositoryCalendarStore extends PlannerRepositoryTaskStore {
   async dismissCalendarEvent(calendarEventId: string, db: Queryable) {
     const result = await db.query(
       `update public.calendar_events
-       set dismissed_external_updated_at = external_updated_at
+       set dismissed_external_updated_at = coalesce(external_updated_at, updated_at)
        where id = $1
        returning *`,
       [calendarEventId],

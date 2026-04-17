@@ -6,7 +6,35 @@ import { PlannerPage } from "@/pages/planner-page";
 import { buildDayPlan, buildTask, buildTogglSettings } from "@/test/fixtures";
 
 vi.mock("@/components/timeline-board", () => ({
-  TimelineBoard: () => <div>timeline board</div>,
+  TimelineBoard: ({
+    calendarEvents,
+    selectedCalendarEventId,
+    onDismissCalendarEvent,
+    onSelectCalendarEvent,
+  }: {
+    calendarEvents: Array<{ id: string; title: string }>;
+    selectedCalendarEventId: string | null;
+    onDismissCalendarEvent: (calendarEventId: string, title: string) => void;
+    onSelectCalendarEvent: (calendarEventId: string) => void;
+  }) => (
+    <div>
+      <div>timeline board</div>
+      <div data-testid="selected-calendar-event">{selectedCalendarEventId ?? "none"}</div>
+      {calendarEvents[0] ? (
+        <>
+          <button type="button" onClick={() => onSelectCalendarEvent(calendarEvents[0].id)}>
+            Select calendar event
+          </button>
+          <button
+            type="button"
+            onClick={() => onDismissCalendarEvent(calendarEvents[0].id, calendarEvents[0].title)}
+          >
+            Hide calendar event
+          </button>
+        </>
+      ) : null}
+    </div>
+  ),
 }));
 
 const noopAsync = () => Promise.resolve(undefined);
@@ -39,8 +67,6 @@ function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerP
     onDeleteScheduleBlock: noopAsync,
     onDismissCalendarEvent: noopAsync,
     onUpdateCalendarEvent: noopAsync,
-    onConfirmDraft: noopAsync,
-    onRejectDraft: noopAsync,
     onStartTimer: noopAsync,
     onStartEventTimer: noopAsync,
     onStopTimer: noopAsync,
@@ -219,6 +245,14 @@ describe("PlannerPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows only Timer and Activity tabs in the right rail", () => {
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    expect(screen.getByRole("tab", { name: "Timer" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Activity" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Drafts" })).not.toBeInTheDocument();
+  });
+
   it("shows the running task and project name in the timer section", () => {
     const dayPlan = buildDayPlan();
     const task = dayPlan.tasks[0];
@@ -290,5 +324,45 @@ describe("PlannerPage", () => {
       'Tasks can\'t overlap on the timeline. This change would overlap with "Standup". Shorten or move this task, or clear the conflicting event first.',
       expect.any(Error),
     );
+  });
+
+  it("restores task selection immediately after hiding the selected calendar event", async () => {
+    const user = userEvent.setup();
+    const onDismissCalendarEvent = vi.fn().mockResolvedValue(undefined);
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const dayPlan = buildDayPlan({
+      calendarEvents: [
+        {
+          id: "calendar-1",
+          externalEventId: "google-1",
+          title: "Team sync",
+          startAt: "2026-04-06T15:00:00.000Z",
+          endAt: "2026-04-06T15:30:00.000Z",
+          isAppManaged: false,
+          backgroundColor: null,
+          foregroundColor: null,
+          sourceCalendarId: null,
+          sourceCalendarName: null,
+          togglProjectId: null,
+        },
+      ],
+    });
+
+    render(<PlannerPage {...buildPlannerPageProps({ dayPlan, onDismissCalendarEvent })} />);
+
+    await user.click(screen.getByRole("button", { name: /select calendar event/i }));
+    expect(screen.getByRole("heading", { name: "Calendar event" })).toBeInTheDocument();
+    expect(screen.getByTestId("selected-calendar-event")).toHaveTextContent("calendar-1");
+
+    await user.click(screen.getByRole("button", { name: /hide calendar event/i }));
+
+    await waitFor(() => {
+      expect(onDismissCalendarEvent).toHaveBeenCalledWith("calendar-1");
+    });
+    expect(confirmSpy).toHaveBeenCalledWith(
+      'Hide "Team sync" from the planner timeline until it changes in Google Calendar?',
+    );
+    expect(screen.getByRole("heading", { name: "Task detail" })).toBeInTheDocument();
+    expect(screen.getByTestId("selected-calendar-event")).toHaveTextContent("none");
   });
 });

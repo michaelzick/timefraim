@@ -89,7 +89,8 @@ export function isCalendarEventDismissed(params: {
   dismissedExternalUpdatedAt: string | null;
 }) {
   return params.dismissedExternalUpdatedAt !== null
-    && sameInstant(params.externalUpdatedAt, params.dismissedExternalUpdatedAt);
+    && (params.externalUpdatedAt === null
+      || sameInstant(params.externalUpdatedAt, params.dismissedExternalUpdatedAt));
 }
 
 export function resolveDismissedExternalUpdatedAt(params: {
