@@ -2,13 +2,14 @@ import { pool } from "../db/pool.js";
 import { syncGoogleCalendarWindow } from "../integration/google-calendar.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
 import { endOfDay, startOfDay } from "../utils/date.js";
-import { getGoogleConnection } from "./planner-service-integrations.js";
+import {
+  getGoogleConnection,
+  readGoogleSyncCalendarIds,
+} from "./planner-service-integrations.js";
 
 function getSyncCalendarIds(repository: PlannerRepository): Promise<string[] | undefined> {
   return repository.getIntegrationToken("google", pool).then((row) => {
-    if (!row?.metadata) return undefined;
-    const ids = (row.metadata as Record<string, unknown>).syncCalendarIds;
-    return Array.isArray(ids) ? ids as string[] : undefined;
+    return readGoogleSyncCalendarIds(row);
   });
 }
 

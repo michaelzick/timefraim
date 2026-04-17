@@ -1,0 +1,183 @@
+import type { DragEndEvent } from "@dnd-kit/core";
+import { startTransition, type RefObject } from "react";
+import type { UseFormReturn } from "react-hook-form";
+import { handlePlannerDragEnd, type PlannerSelection, type SelectedTaskSource } from "@/features/planner/planner-page-selection";
+import { EMPTY_CREATE_TASK_VALUES, showActionError, type PlannerCreateTaskValues, type PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
+import { type CalendarEventFormValues, type CreateTaskValues, type PlannerScheduleBlockUpdateInput } from "@/features/planner/types";
+import { buildCalendarEventUpdateInput, buildPlannerCreateTaskInput, buildPlannerTaskUpdateInput, confirmTimelineEventDismiss } from "@/pages/planner-page-actions";
+
+export function createPlannerPageHandlers(args: {
+  createTask: (values: ReturnType<typeof buildPlannerCreateTaskInput>) => Promise<unknown>;
+  createTaskForm: UseFormReturn<CreateTaskValues>;
+  date: string;
+  detailPanelRef: RefObject<HTMLDivElement | null>;
+  onCreateScheduleBlock: (values: {
+    taskId: string;
+    startAt: string;
+    endAt: string;
+    source: "manual";
+  }) => Promise<unknown>;
+  onDismissCalendarEvent: (calendarEventId: string) => Promise<unknown>;
+  onUpdateCalendarEvent: (
+    calendarEventId: string,
+    values: ReturnType<typeof buildCalendarEventUpdateInput>,
+  ) => Promise<unknown>;
+  plannerSelection: PlannerSelection;
+  resolvedTaskSelection: {
+    selectedTaskId: string | null;
+    selectedTaskSource: SelectedTaskSource;
+  };
+  selectedCalendarEvent: { id: string } | null;
+  selectedTask: Parameters<typeof buildPlannerTaskUpdateInput>[0] | null;
+  setPlannerSelection: (selection: PlannerSelection) => void;
+  setSelectedTaskState: (state: {
+    taskId: string | null;
+    source: SelectedTaskSource;
+  }) => void;
+  updateScheduleBlock: (
+    scheduleBlockId: string,
+    values: PlannerScheduleBlockUpdateInput,
+  ) => Promise<unknown>;
+  updateTask: (
+    taskId: string,
+    values: ReturnType<typeof buildPlannerTaskUpdateInput>,
+  ) => Promise<unknown>;
+  activeTimerTaskId: string | null;
+}) {
+  async function handleCreateTask(values: PlannerCreateTaskValues) {
+    await args.createTask(buildPlannerCreateTaskInput(values, args.date));
+    args.createTaskForm.reset(EMPTY_CREATE_TASK_VALUES);
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    await handlePlannerDragEnd({
+      event,
+      onCreateScheduleBlock: args.onCreateScheduleBlock,
+      onUpdateScheduleBlock: args.updateScheduleBlock,
+      onQueueTaskSelected: (taskId) => {
+        args.setSelectedTaskState({ taskId, source: "timeline" });
+        args.setPlannerSelection({ type: "timeline-task", taskId });
+      },
+      onQueueTaskReset: (taskId) => {
+        args.setSelectedTaskState({ taskId, source: "queue" });
+        args.setPlannerSelection({ type: "queue-task", taskId });
+      },
+      onError: showActionError,
+    });
+  }
+
+  function handleSelectQueueTask(taskId: string) {
+    startTransition(() => {
+      args.setSelectedTaskState({ taskId, source: "queue" });
+      args.setPlannerSelection({ type: "queue-task", taskId });
+    });
+    args.detailPanelRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }
+
+  function handleSelectTimelineTask(taskId: string) {
+    startTransition(() => {
+      args.setSelectedTaskState({ taskId, source: "timeline" });
+      args.setPlannerSelection({ type: "timeline-task", taskId });
+    });
+  }
+
+  function handleSelectCalendarEvent(calendarEventId: string) {
+    startTransition(() => {
+      args.setPlannerSelection({ type: "calendar-event", calendarEventId });
+    });
+  }
+
+  function buildFallbackPlannerSelection(): PlannerSelection {
+    if (!args.resolvedTaskSelection.selectedTaskId) {
+      return { type: "none" };
+    }
+
+    return args.resolvedTaskSelection.selectedTaskSource === "timeline"
+      ? { type: "timeline-task", taskId: args.resolvedTaskSelection.selectedTaskId }
+      : { type: "queue-task", taskId: args.resolvedTaskSelection.selectedTaskId };
+  }
+
+  async function handleDismissCalendarEvent(
+    calendarEventId: string,
+    title: string,
+  ) {
+    if (!confirmTimelineEventDismiss(title)) {
+      return;
+    }
+
+    const dismissedSelectionWasActive =
+      args.plannerSelection.type === "calendar-event" &&
+      args.plannerSelection.calendarEventId === calendarEventId;
+    const previousSelection = dismissedSelectionWasActive
+      ? args.plannerSelection
+      : null;
+
+    if (dismissedSelectionWasActive) {
+      startTransition(() => {
+        args.setPlannerSelection(buildFallbackPlannerSelection());
+      });
+    }
+
+    try {
+      await args.onDismissCalendarEvent(calendarEventId);
+    } catch (error) {
+      if (previousSelection) {
+        startTransition(() => {
+          args.setPlannerSelection(previousSelection);
+        });
+      }
+      showActionError(
+        "Failed to dismiss the calendar event. Please try again.",
+        error,
+      );
+    }
+  }
+
+  async function handleSaveTask(values: PlannerSaveTaskValues) {
+    if (!args.selectedTask) {
+      return;
+    }
+
+    try {
+      await args.updateTask(
+        args.selectedTask.id,
+        buildPlannerTaskUpdateInput(
+          args.selectedTask,
+          values,
+          args.activeTimerTaskId,
+        ),
+      );
+    } catch (error) {
+      showActionError("Failed to save the task. Please try again.", error);
+    }
+  }
+
+  async function handleSaveCalendarEvent(values: CalendarEventFormValues) {
+    if (!args.selectedCalendarEvent) {
+      return;
+    }
+
+    try {
+      await args.onUpdateCalendarEvent(
+        args.selectedCalendarEvent.id,
+        buildCalendarEventUpdateInput(values),
+      );
+    } catch (error) {
+      showActionError("Failed to save the calendar event. Please try again.", error);
+    }
+  }
+
+  return {
+    handleCreateTask,
+    handleDismissCalendarEvent,
+    handleDragEnd,
+    handleSaveCalendarEvent,
+    handleSaveTask,
+    handleSelectCalendarEvent,
+    handleSelectQueueTask,
+    handleSelectTimelineTask,
+  };
+}

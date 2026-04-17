@@ -2,39 +2,10 @@ import type { ScheduleBlock, Task } from "@timefraim/shared";
 import { google, type calendar_v3 } from "googleapis";
 import { buildGoogleEventPayload } from "../services/planner-domain.js";
 import { getGoogleOAuthClient } from "./google-auth.js";
-import {
-  loadGoogleColorPalette,
-  resolveCalendarColors,
-  resolveCalendarId,
-  resolveEventColors,
-  withCalendarFallback,
-  type GoogleColorPalette,
-  type GoogleColorValues,
-} from "./google-calendar-helpers.js";
+import { loadGoogleColorPalette, resolveCalendarColors, resolveCalendarId, resolveEventColors, withCalendarFallback, type GoogleColorPalette, type GoogleColorValues } from "./google-calendar-helpers.js";
 
-export type GoogleConnection = {
-  accessToken: string;
-  refreshToken: string | null;
-  expiresAt: string | null;
-  calendarId: string;
-  plannerCalendarId: string;
-  email: string;
-};
-
-export type GoogleEventRecord = {
-  externalEventId: string;
-  title: string;
-  startAt: string;
-  endAt: string;
-  isAppManaged: boolean;
-  backgroundColor: string | null;
-  foregroundColor: string | null;
-  rawPayload: Record<string, unknown>;
-  scheduleBlockId: string | null;
-  externalUpdatedAt: string | null;
-  sourceCalendarId: string | null;
-  sourceCalendarName: string | null;
-};
+export type GoogleConnection = { accessToken: string; refreshToken: string | null; expiresAt: string | null; calendarId: string; plannerCalendarId: string; email: string };
+export type GoogleEventRecord = { externalEventId: string; title: string; startAt: string; endAt: string; isAppManaged: boolean; backgroundColor: string | null; foregroundColor: string | null; rawPayload: Record<string, unknown>; scheduleBlockId: string | null; externalUpdatedAt: string | null; sourceCalendarId: string | null; sourceCalendarName: string | null };
 
 function createGoogleCalendarClient(connection: GoogleConnection) {
   const auth = getGoogleOAuthClient(connection);
@@ -69,12 +40,7 @@ function mapGoogleEventRecord(
   };
 }
 
-export type GoogleCalendarListEntry = {
-  id: string;
-  name: string;
-  primary: boolean;
-  backgroundColor: string | null;
-};
+export type GoogleCalendarListEntry = { id: string; name: string; primary: boolean; backgroundColor: string | null };
 
 export async function listGoogleCalendars(
   connection: GoogleConnection | null,

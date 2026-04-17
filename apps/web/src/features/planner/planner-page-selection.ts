@@ -42,13 +42,6 @@ export function resolveTaskSelection(args: {
   return { selectedTask: fallbackTask, selectedTaskId: fallbackTask?.id ?? null, selectedTaskSource: "queue" as const };
 }
 
-export function getSelectedTaskId(selection: PlannerSelection): string | null {
-  if (selection.type === "queue-task" || selection.type === "timeline-task") {
-    return selection.taskId;
-  }
-  return null;
-}
-
 export function getSelectedCalendarEventId(selection: PlannerSelection): string | null {
   if (selection.type === "calendar-event") {
     return selection.calendarEventId;

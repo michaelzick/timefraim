@@ -299,8 +299,10 @@ describe("PlannerPage", () => {
 
     render(<PlannerPage {...buildPlannerPageProps({ togglSettings })} />);
 
-    const dropdown = screen.getByLabelText("Detail Toggl project") as HTMLSelectElement;
-    const emptyOption = Array.from(dropdown.options).find((option) => option.value === "");
+    const dropdown = screen.getByLabelText("Detail Toggl project");
+    const emptyOption = Array.from(
+      dropdown instanceof HTMLSelectElement ? dropdown.options : [],
+    ).find((option) => option.value === "");
     expect(emptyOption?.textContent).toBe("Without project");
     expect(screen.queryByText("No project override")).not.toBeInTheDocument();
   });

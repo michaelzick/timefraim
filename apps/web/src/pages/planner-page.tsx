@@ -1,26 +1,7 @@
-import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { DndContext, pointerWithin } from "@dnd-kit/core";
 import { PlannerDetailColumn, PlannerQueueColumn, PlannerTimelineColumn } from "@/features/planner/planner-page-columns";
-import {
-  filterQueueTasks,
-  getSelectedCalendarEventId,
-  getSelectedTaskId,
-  handlePlannerDragEnd,
-  resolveSelectedCalendarEvent,
-  resolveTaskSelection,
-  type PlannerSelection,
-  type SelectedTaskSource,
-} from "@/features/planner/planner-page-selection";
-import { EMPTY_CREATE_TASK_VALUES, getTaskFormValues, showActionError, type LocalPlannerTaskInput, type LocalPlannerTaskUpdateInput, type PlannerCreateTaskValues, type PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
-import { type CalendarEventFormValues, type CreateTaskValues, type PlannerPageProps, type PlannerScheduleBlockUpdateInput, type TaskFormValues } from "@/features/planner/types";
-import {
-  buildCalendarEventUpdateInput,
-  buildPlannerCreateTaskInput,
-  buildPlannerTaskUpdateInput,
-  confirmTimelineEventDismiss,
-  createPlannerMutationHandlers,
-} from "@/pages/planner-page-actions";
+import type { PlannerPageProps } from "@/features/planner/types";
+import { usePlannerPageController } from "@/pages/use-planner-page-controller";
 
 export function PlannerPage({
   date,
@@ -42,186 +23,41 @@ export function PlannerPage({
   isSyncing,
   isMutating,
 }: PlannerPageProps) {
-  const createTask = onCreateTask as (values: LocalPlannerTaskInput) => Promise<unknown>;
-  const updateTask = onUpdateTask as (taskId: string, values: LocalPlannerTaskUpdateInput) => Promise<unknown>;
-  const updateScheduleBlock = onUpdateScheduleBlock as (scheduleBlockId: string, values: PlannerScheduleBlockUpdateInput) => Promise<unknown>;
-  const [selectedTaskState, setSelectedTaskState] = useState<{
-    taskId: string | null;
-    source: SelectedTaskSource;
-  }>(() => ({
-    taskId: filterQueueTasks(dayPlan.tasks, "")[0]?.id ?? null,
-    source: "queue",
-  }));
-  const [plannerSelection, setPlannerSelection] = useState<PlannerSelection>(() => {
-    const firstQueue = filterQueueTasks(dayPlan.tasks, "")[0];
-    return firstQueue ? { type: "queue-task", taskId: firstQueue.id } : { type: "none" };
-  });
-  const [search, setSearch] = useState("");
-  const detailPanelRef = useRef<HTMLDivElement>(null);
-  const deferredSearch = useDeferredValue(search);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
-
-  const createTaskForm = useForm<CreateTaskValues>({ defaultValues: EMPTY_CREATE_TASK_VALUES });
-  const filteredQueueTasks = useMemo(() => {
-    return filterQueueTasks(dayPlan.tasks, deferredSearch);
-  }, [dayPlan.tasks, deferredSearch]);
-  const resolvedTaskSelection = useMemo(
-    () =>
-      resolveTaskSelection({
-        tasks: dayPlan.tasks,
-        queueTasks: filteredQueueTasks,
-        selectedTaskId: selectedTaskState.taskId,
-        selectedTaskSource: selectedTaskState.source,
-      }),
-    [dayPlan.tasks, filteredQueueTasks, selectedTaskState.taskId, selectedTaskState.source],
-  );
-  const selectedTask = plannerSelection.type === "calendar-event" ? null : resolvedTaskSelection.selectedTask;
-  const selectedCalendarEvent = resolveSelectedCalendarEvent(plannerSelection, dayPlan.calendarEvents);
-  const mutationHandlers = createPlannerMutationHandlers({
+  const {
+    calendarEventForm,
+    createTaskForm,
+    detailForm,
+    detailPanelRef,
+    filteredQueueTasks,
+    handleCreateTask,
+    handleDismissCalendarEvent,
+    handleDragEnd,
+    handleSaveCalendarEvent,
+    handleSaveTask,
+    handleSelectCalendarEvent,
+    handleSelectQueueTask,
+    handleSelectTimelineTask,
+    mutationHandlers,
+    plannerSelection,
+    search,
+    selectedCalendarEvent,
     selectedTask,
+    selectedTimelineCalendarEventId,
+    selectedTimelineTaskId,
+    sensors,
+    setSearch,
+  } = usePlannerPageController({
+    date,
+    dayPlan,
+    onCreateTask,
+    onUpdateTask,
     onDeleteTask,
+    onCreateScheduleBlock,
+    onUpdateScheduleBlock,
     onDeleteScheduleBlock,
+    onDismissCalendarEvent,
+    onUpdateCalendarEvent,
   });
-  const detailFormValues = useMemo(() => getTaskFormValues(selectedTask), [selectedTask]);
-  const detailForm = useForm<TaskFormValues>({ values: detailFormValues });
-  const calendarEventFormValues = useMemo<CalendarEventFormValues>(
-    () => ({ togglProjectId: selectedCalendarEvent?.togglProjectId ?? "" }),
-    [selectedCalendarEvent?.togglProjectId],
-  );
-  const calendarEventForm = useForm<CalendarEventFormValues>({ values: calendarEventFormValues });
-
-  const selectedTimelineTaskId = plannerSelection.type === "timeline-task" ? plannerSelection.taskId : null;
-  const selectedTimelineCalendarEventId = getSelectedCalendarEventId(plannerSelection);
-
-  useEffect(() => {
-    if (plannerSelection.type === "calendar-event") {
-      return;
-    }
-
-    if (
-      selectedTaskState.taskId === resolvedTaskSelection.selectedTaskId &&
-      selectedTaskState.source === resolvedTaskSelection.selectedTaskSource
-    ) {
-      return;
-    }
-
-    startTransition(() => {
-      setSelectedTaskState({
-        taskId: resolvedTaskSelection.selectedTaskId,
-        source: resolvedTaskSelection.selectedTaskSource,
-      });
-    });
-  }, [
-    plannerSelection.type,
-    resolvedTaskSelection.selectedTaskId,
-    resolvedTaskSelection.selectedTaskSource,
-    selectedTaskState.source,
-    selectedTaskState.taskId,
-  ]);
-
-  async function handleCreateTask(values: PlannerCreateTaskValues) {
-    await createTask(buildPlannerCreateTaskInput(values, date));
-    createTaskForm.reset(EMPTY_CREATE_TASK_VALUES);
-  }
-
-  async function handleDragEnd(event: DragEndEvent) {
-    await handlePlannerDragEnd({
-      event,
-      onCreateScheduleBlock,
-      onUpdateScheduleBlock: updateScheduleBlock,
-      onQueueTaskSelected: (taskId) => {
-        setSelectedTaskState({ taskId, source: "timeline" });
-        setPlannerSelection({ type: "timeline-task", taskId });
-      },
-      onQueueTaskReset: (taskId) => {
-        setSelectedTaskState({ taskId, source: "queue" });
-        setPlannerSelection({ type: "queue-task", taskId });
-      },
-      onError: showActionError,
-    });
-  }
-
-  function handleSelectQueueTask(taskId: string) {
-    startTransition(() => {
-      setSelectedTaskState({ taskId, source: "queue" });
-      setPlannerSelection({ type: "queue-task", taskId });
-    });
-    detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
-
-  function handleSelectTimelineTask(taskId: string) {
-    startTransition(() => {
-      setSelectedTaskState({ taskId, source: "timeline" });
-      setPlannerSelection({ type: "timeline-task", taskId });
-    });
-  }
-
-  function handleSelectCalendarEvent(calendarEventId: string) {
-    startTransition(() => {
-      setPlannerSelection({ type: "calendar-event", calendarEventId });
-    });
-  }
-
-  function buildFallbackPlannerSelection(): PlannerSelection {
-    if (!resolvedTaskSelection.selectedTaskId) {
-      return { type: "none" };
-    }
-
-    return resolvedTaskSelection.selectedTaskSource === "timeline"
-      ? { type: "timeline-task", taskId: resolvedTaskSelection.selectedTaskId }
-      : { type: "queue-task", taskId: resolvedTaskSelection.selectedTaskId };
-  }
-
-  async function handleDismissCalendarEvent(calendarEventId: string, title: string) {
-    if (!confirmTimelineEventDismiss(title)) {
-      return;
-    }
-
-    const dismissedSelectionWasActive =
-      plannerSelection.type === "calendar-event" && plannerSelection.calendarEventId === calendarEventId;
-    const previousSelection = dismissedSelectionWasActive ? plannerSelection : null;
-
-    if (dismissedSelectionWasActive) {
-      startTransition(() => {
-        setPlannerSelection(buildFallbackPlannerSelection());
-      });
-    }
-
-    try {
-      await onDismissCalendarEvent(calendarEventId);
-    } catch (error) {
-      if (previousSelection) {
-        startTransition(() => {
-          setPlannerSelection(previousSelection);
-        });
-      }
-      showActionError("Failed to dismiss the calendar event. Please try again.", error);
-    }
-  }
-
-  async function handleSaveTask(values: PlannerSaveTaskValues) {
-    if (!selectedTask) {
-      return;
-    }
-
-    try {
-      await updateTask(selectedTask.id, buildPlannerTaskUpdateInput(selectedTask, values, dayPlan.activeTimer?.taskId ?? null));
-    } catch (error) {
-      showActionError("Failed to save the task. Please try again.", error);
-    }
-  }
-
-  async function handleSaveCalendarEvent(values: CalendarEventFormValues) {
-    if (!selectedCalendarEvent) {
-      return;
-    }
-
-    try {
-      await onUpdateCalendarEvent(selectedCalendarEvent.id, buildCalendarEventUpdateInput(values));
-    } catch (error) {
-      showActionError("Failed to save the calendar event. Please try again.", error);
-    }
-  }
 
   return (
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={(event) => void handleDragEnd(event)}>
