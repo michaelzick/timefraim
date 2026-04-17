@@ -53,6 +53,7 @@ export function mapCalendarEventView(row: QueryResultRow) {
     foregroundColor: row.foreground_color ?? null,
     sourceCalendarId: row.source_calendar_id ?? null,
     sourceCalendarName: row.source_calendar_name ?? null,
+    togglProjectId: row.toggl_project_id ?? null,
   });
 }
 
@@ -72,6 +73,7 @@ export function mapCalendarEventRecord(row: QueryResultRow): CalendarEventRecord
     dismissedExternalUpdatedAt: asIso(row.dismissed_external_updated_at),
     sourceCalendarId: row.source_calendar_id ?? null,
     sourceCalendarName: row.source_calendar_name ?? null,
+    togglProjectId: row.toggl_project_id ?? null,
     createdAt: asIso(row.created_at)!,
     updatedAt: asIso(row.updated_at)!,
   };

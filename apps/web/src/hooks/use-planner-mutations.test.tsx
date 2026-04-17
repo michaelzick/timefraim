@@ -78,6 +78,7 @@ describe("usePlannerMutations", () => {
             foregroundColor: null,
             sourceCalendarId: null,
             sourceCalendarName: null,
+            togglProjectId: null,
           },
         ],
       }),
@@ -121,6 +122,7 @@ describe("usePlannerMutations", () => {
       foregroundColor: "#ffffff",
       sourceCalendarId: null,
       sourceCalendarName: null,
+      togglProjectId: null,
     };
 
     queryClient.setQueryData<DayPlan>(key, buildDayPlan({ calendarEvents: [] }));

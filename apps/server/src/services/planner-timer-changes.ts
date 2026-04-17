@@ -82,6 +82,7 @@ export async function applyTimerStartEventDraft(context: DraftHandlerContext) {
     eventTitle: calendarEvent.title,
     timerSessionId: timer.id,
     source: payload.source,
+    togglProjectId: calendarEvent.togglProjectId,
   });
   return context.markApplied();
 }

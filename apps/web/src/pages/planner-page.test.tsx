@@ -38,6 +38,7 @@ function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerP
     onUpdateScheduleBlock: noopAsync,
     onDeleteScheduleBlock: noopAsync,
     onDismissCalendarEvent: noopAsync,
+    onUpdateCalendarEvent: noopAsync,
     onConfirmDraft: noopAsync,
     onRejectDraft: noopAsync,
     onStartTimer: noopAsync,
@@ -58,8 +59,10 @@ describe("PlannerPage", () => {
 
     await user.type(screen.getByLabelText("Task title"), "Deep work");
     await user.type(screen.getByLabelText("Task notes"), "Protect a quiet block.");
-    await user.clear(screen.getByLabelText("Estimated minutes"));
-    await user.type(screen.getByLabelText("Estimated minutes"), "60");
+    await user.clear(screen.getByLabelText("Task estimated hours"));
+    await user.type(screen.getByLabelText("Task estimated hours"), "1");
+    await user.clear(screen.getByLabelText("Task estimated minutes"));
+    await user.type(screen.getByLabelText("Task estimated minutes"), "0");
     await user.selectOptions(screen.getByLabelText("Task priority"), "high");
     await user.click(screen.getByRole("button", { name: /add task/i }));
 

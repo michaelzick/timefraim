@@ -54,6 +54,7 @@ describe("AppShell", () => {
             onDeleteScheduleBlock: noopAsync,
             onDeleteTask: noopAsync,
             onDismissCalendarEvent: noopAsync,
+            onUpdateCalendarEvent: noopAsync,
             onRejectDraft: noopAsync,
             onStartTimer: noopAsync,
             onStartEventTimer: noopAsync,

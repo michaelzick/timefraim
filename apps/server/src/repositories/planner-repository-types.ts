@@ -33,6 +33,7 @@ export type CalendarEventRecord = {
   dismissedExternalUpdatedAt: string | null;
   sourceCalendarId: string | null;
   sourceCalendarName: string | null;
+  togglProjectId: string | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -111,6 +111,7 @@ function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerP
     onUpdateScheduleBlock: noopAsync,
     onDeleteScheduleBlock: noopAsync,
     onDismissCalendarEvent: noopAsync,
+    onUpdateCalendarEvent: noopAsync,
     onConfirmDraft: noopAsync,
     onRejectDraft: noopAsync,
     onStartTimer: noopAsync,

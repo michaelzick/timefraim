@@ -40,6 +40,10 @@ export function buildTimelineSlots(date: string) {
   });
 }
 
+export function isShortBlock(startAtIso: string, endAtIso: string) {
+  return new Date(endAtIso).getTime() - new Date(startAtIso).getTime() < 60 * 60 * 1000;
+}
+
 export function getTimelinePlacement(date: string, startAt: string, endAt: string) {
   const window = getTimelineWindow(date);
   const itemStart = new Date(startAt);

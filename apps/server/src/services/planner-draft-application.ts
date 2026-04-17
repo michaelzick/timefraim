@@ -1,5 +1,8 @@
 import type { SyncDraft } from "@timefraim/shared";
-import { applyCalendarEventDismissDraft } from "./planner-calendar-changes.js";
+import {
+  applyCalendarEventDismissDraft,
+  applyCalendarEventUpdateDraft,
+} from "./planner-calendar-changes.js";
 import {
   applyScheduleBlockCreateDraft,
   applyScheduleBlockDeleteDraft,
@@ -29,6 +32,8 @@ export async function applyDraftChange(context: DraftHandlerContext): Promise<Sy
       return applyScheduleBlockDeleteDraft(context);
     case "calendar_event.dismiss":
       return applyCalendarEventDismissDraft(context);
+    case "calendar_event.update":
+      return applyCalendarEventUpdateDraft(context);
     case "timer.start":
       return applyTimerStartDraft(context);
     case "timer.start_event":

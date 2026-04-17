@@ -127,4 +127,20 @@ export class PlannerRepositoryCalendarStore extends PlannerRepositoryTaskStore {
     );
     return result.rows[0] ? mapCalendarEventRecord(result.rows[0]) : null;
   }
+
+  async updateCalendarEvent(
+    calendarEventId: string,
+    updates: { togglProjectId: string | null },
+    db: Queryable,
+  ) {
+    const result = await db.query(
+      `update public.calendar_events
+       set toggl_project_id = $2,
+           updated_at = timezone('utc', now())
+       where id = $1
+       returning *`,
+      [calendarEventId, updates.togglProjectId],
+    );
+    return result.rows[0] ? mapCalendarEventRecord(result.rows[0]) : null;
+  }
 }

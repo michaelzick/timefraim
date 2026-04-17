@@ -19,12 +19,12 @@ export function PlannerSummaryCard({
 }: PlannerSummaryCardProps) {
   return (
     <Card>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Daily planner</p>
-          <h1 className="mt-1 text-3xl font-semibold text-white">Focus on what matters today.</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Daily planner</p>
+            <h1 className="mt-1 text-3xl font-semibold text-white">Focus on what matters today.</h1>
+          </div>
           <div className="flex items-center gap-1">
             <Button
               type="button"
@@ -54,6 +54,8 @@ export function PlannerSummaryCard({
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+        </div>
+        <div className="flex justify-end">
           <Button variant="secondary" onClick={onSyncCalendar} disabled={isSyncing}>
             {isSyncing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
             Sync calendar

@@ -1,7 +1,7 @@
 import type { CalendarEventView } from "@timefraim/shared";
 import { X } from "lucide-react";
 import type { CSSProperties } from "react";
-import { getTimelinePlacement } from "@/components/timeline-geometry";
+import { getTimelinePlacement, isShortBlock } from "@/components/timeline-geometry";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatTime } from "@/lib/utils";
@@ -55,10 +55,21 @@ export function TimelineBoardCalendarEvent({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-medium">{event.title}</p>
-          <p className="mt-1 text-xs opacity-80">
-            {formatTime(event.startAt)} to {formatTime(event.endAt)}
-          </p>
+          {isShortBlock(event.startAt, event.endAt) ? (
+            <p className="truncate font-medium">
+              {event.title}
+              <span className="ml-2 text-xs font-normal opacity-80">
+                {formatTime(event.startAt)} to {formatTime(event.endAt)}
+              </span>
+            </p>
+          ) : (
+            <>
+              <p className="truncate font-medium">{event.title}</p>
+              <p className="mt-1 text-xs opacity-80">
+                {formatTime(event.startAt)} to {formatTime(event.endAt)}
+              </p>
+            </>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Badge className="normal-case tracking-[0.08em]" style={badgeStyle}>

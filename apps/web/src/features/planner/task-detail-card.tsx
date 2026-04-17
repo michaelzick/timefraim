@@ -1,10 +1,11 @@
 import type { Task, TimerSession, TogglIntegrationSettings } from "@timefraim/shared";
 import { Hourglass, Play, Square, Trash2 } from "lucide-react";
 import type { RefObject } from "react";
-import type { UseFormReturn } from "react-hook-form";
+import { Controller, type UseFormReturn } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DurationInput } from "@/components/duration-input";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -15,6 +16,7 @@ import {
   formatTaskPriority,
   getTaskPriorityBadgeClass,
 } from "@/features/planner/task-presentation";
+import { getTogglProjectOptions } from "@/features/planner/toggl-project-options";
 import type { TaskFormValues } from "@/features/planner/types";
 import { formatTime } from "@/lib/utils";
 
@@ -33,22 +35,6 @@ type TaskDetailCardProps = {
   onStopTimer: () => void;
 };
 
-function getProjectOptions(togglSettings: TogglIntegrationSettings, selectedTask: Task | null) {
-  const options = togglSettings.availableProjects.filter((project) =>
-    togglSettings.workspaceId ? project.workspaceId === togglSettings.workspaceId : true,
-  );
-  const currentProjectId = selectedTask?.togglProjectId ?? null;
-
-  if (currentProjectId && !options.some((project) => project.id === currentProjectId)) {
-    return [
-      { id: currentProjectId, name: `Missing project (ID ${currentProjectId})` },
-      ...options.map((project) => ({ id: project.id, name: project.name })),
-    ];
-  }
-
-  return options.map((project) => ({ id: project.id, name: project.name }));
-}
-
 export function TaskDetailCard({
   detailPanelRef,
   form,
@@ -63,7 +49,7 @@ export function TaskDetailCard({
   onStartTimer,
   onStopTimer,
 }: TaskDetailCardProps) {
-  const projectOptions = getProjectOptions(togglSettings, selectedTask);
+  const projectOptions = getTogglProjectOptions(togglSettings, selectedTask?.togglProjectId ?? null);
   const showInlineTimer = Boolean(
     selectedTask && activeTimer && activeTimer.taskId === selectedTask.id,
   );
@@ -83,13 +69,17 @@ export function TaskDetailCard({
         <form className="space-y-4" onSubmit={form.handleSubmit(onSaveTask)}>
           <Input aria-label="Detail title" {...form.register("title")} />
           <Textarea aria-label="Detail notes" {...form.register("notes")} />
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              aria-label="Detail estimated minutes"
-              type="number"
-              min={5}
-              step={5}
-              {...form.register("estimatedMinutes", { valueAsNumber: true })}
+          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
+            <Controller
+              control={form.control}
+              name="estimatedMinutes"
+              render={({ field }) => (
+                <DurationInput
+                  valueMinutes={field.value}
+                  onChange={field.onChange}
+                  ariaLabelPrefix="Detail"
+                />
+              )}
             />
             <select
               aria-label="Detail priority"

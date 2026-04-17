@@ -62,6 +62,7 @@ describe("TimelineBoard", () => {
             foregroundColor: null,
             sourceCalendarId: null,
             sourceCalendarName: null,
+            togglProjectId: null,
           },
         ]}
         selectedTaskId={null}
@@ -107,6 +108,7 @@ describe("TimelineBoard", () => {
             foregroundColor: "#1d1d1d",
             sourceCalendarId: null,
             sourceCalendarName: null,
+            togglProjectId: null,
           },
         ]}
         selectedTaskId={null}
@@ -145,6 +147,7 @@ describe("TimelineBoard", () => {
             foregroundColor: null,
             sourceCalendarId: null,
             sourceCalendarName: null,
+            togglProjectId: null,
           },
         ]}
         selectedTaskId={null}

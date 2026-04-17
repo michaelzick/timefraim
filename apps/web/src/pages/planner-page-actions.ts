@@ -7,6 +7,13 @@ import {
   type PlannerCreateTaskValues,
   type PlannerSaveTaskValues,
 } from "@/features/planner/planner-page-utils";
+import type { CalendarEventFormValues, PlannerCalendarEventUpdateInput } from "@/features/planner/types";
+
+export function buildCalendarEventUpdateInput(values: CalendarEventFormValues): PlannerCalendarEventUpdateInput {
+  return {
+    togglProjectId: values.togglProjectId || null,
+  };
+}
 
 export function buildPlannerCreateTaskInput(values: PlannerCreateTaskValues, date: string): LocalPlannerTaskInput {
   return {

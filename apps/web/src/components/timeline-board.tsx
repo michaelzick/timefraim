@@ -6,6 +6,7 @@ import {
   buildTimelineSlots,
   getTimelineContainerHeight,
   getTimelinePlacement,
+  isShortBlock,
   SLOT_HEIGHT,
 } from "@/components/timeline-geometry";
 import { TimelineBoardCalendarEvent } from "@/components/timeline-board-calendar-event";
@@ -96,10 +97,21 @@ function TimelineScheduleBlock({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-semibold text-white">{task?.title ?? "Scheduled task"}</p>
-          <p className="mt-1 text-xs text-[var(--muted-strong)]">
-            {formatTime(block.startAt)} to {formatTime(block.endAt)}
-          </p>
+          {isShortBlock(block.startAt, block.endAt) ? (
+            <p className="truncate font-semibold text-white">
+              {task?.title ?? "Scheduled task"}
+              <span className="ml-2 text-xs font-normal text-[var(--muted-strong)]">
+                {formatTime(block.startAt)} to {formatTime(block.endAt)}
+              </span>
+            </p>
+          ) : (
+            <>
+              <p className="truncate font-semibold text-white">{task?.title ?? "Scheduled task"}</p>
+              <p className="mt-1 text-xs text-[var(--muted-strong)]">
+                {formatTime(block.startAt)} to {formatTime(block.endAt)}
+              </p>
+            </>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Badge className={getTaskPriorityBadgeClass(priority)}>{formatTaskPriority(priority)}</Badge>

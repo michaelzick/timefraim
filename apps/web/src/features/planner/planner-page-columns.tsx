@@ -8,7 +8,7 @@ import { PlannerActivityCard } from "@/features/planner/planner-activity-card";
 import { PlannerSummaryCard } from "@/features/planner/planner-summary-card";
 import { TaskDetailCard } from "@/features/planner/task-detail-card";
 import { TaskQueueCard } from "@/features/planner/task-queue-card";
-import type { CreateTaskValues, TaskFormValues } from "@/features/planner/types";
+import type { CalendarEventFormValues, CreateTaskValues, TaskFormValues } from "@/features/planner/types";
 
 type PlannerQueueColumnProps = {
   createTaskForm: UseFormReturn<CreateTaskValues>;
@@ -112,6 +112,7 @@ export function PlannerTimelineColumn({
 type PlannerDetailColumnProps = {
   detailPanelRef: RefObject<HTMLDivElement | null>;
   detailForm: UseFormReturn<TaskFormValues>;
+  calendarEventForm: UseFormReturn<CalendarEventFormValues>;
   selectedTask: Task | null;
   selectedCalendarEvent: CalendarEventView | null;
   dayPlan: DayPlan;
@@ -121,6 +122,7 @@ type PlannerDetailColumnProps = {
   togglSettings: TogglIntegrationSettings;
   onDeleteTask: () => void;
   onSaveTask: (values: TaskFormValues) => Promise<void>;
+  onSaveCalendarEvent: (values: CalendarEventFormValues) => Promise<void>;
   onStartTimer: (taskId: string) => void;
   onStartEventTimer: (calendarEventId: string) => void;
   onStopTimer: () => void;
@@ -131,6 +133,7 @@ type PlannerDetailColumnProps = {
 export function PlannerDetailColumn({
   detailPanelRef,
   detailForm,
+  calendarEventForm,
   selectedTask,
   selectedCalendarEvent,
   dayPlan,
@@ -140,6 +143,7 @@ export function PlannerDetailColumn({
   togglSettings,
   onDeleteTask,
   onSaveTask,
+  onSaveCalendarEvent,
   onStartTimer,
   onStartEventTimer,
   onStopTimer,
@@ -154,6 +158,9 @@ export function PlannerDetailColumn({
           event={selectedCalendarEvent}
           activeTimerCalendarEventId={activeTimerCalendarEventId}
           isMutating={isMutating}
+          togglSettings={togglSettings}
+          form={calendarEventForm}
+          onSaveEvent={onSaveCalendarEvent}
           onStartEventTimer={onStartEventTimer}
           onStopTimer={onStopTimer}
         />

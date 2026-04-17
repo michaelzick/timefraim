@@ -1,5 +1,6 @@
 import {
   authSessionSchema,
+  calendarEventUpdateSchema,
   calendarSyncResultSchema,
   dayPlanSchema,
   googleCalendarSettingsSchema,
@@ -16,6 +17,7 @@ import {
   togglDiscoverResultSchema,
   togglIntegrationSettingsSchema,
   type AuthSession,
+  type CalendarEventUpdate,
   type CalendarSyncResult,
   type GoogleCalendarSettings,
   type GoogleCalendarSettingsUpdate,
@@ -127,6 +129,16 @@ export const api = {
       method: "POST",
       schema: plannerMutationResultSchema,
     }),
+  updateCalendarEvent: (token: string, calendarEventId: string, body: CalendarEventUpdate) =>
+    request<PlannerMutationResult, CalendarEventUpdate>(
+      `/api/calendar-events/${calendarEventId}`,
+      token,
+      {
+        method: "PATCH",
+        body: calendarEventUpdateSchema.parse(body),
+        schema: plannerMutationResultSchema,
+      },
+    ),
   getDrafts: (token: string) =>
     request<SyncDraft[]>("/api/drafts", token, { schema: syncDraftSchema.array() }),
   confirmDraft: (token: string, draftId: string) =>

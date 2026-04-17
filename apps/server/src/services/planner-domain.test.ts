@@ -27,6 +27,7 @@ describe("planner-domain", () => {
           foregroundColor: null,
           sourceCalendarId: null,
           sourceCalendarName: null,
+          togglProjectId: null,
         } satisfies CalendarEventView,
       ],
     });

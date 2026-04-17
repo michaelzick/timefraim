@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
+  CalendarEventUpdate,
   CalendarSyncResult,
   DayPlan,
   TaskInput,
@@ -46,6 +47,11 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
   });
   const deleteScheduleBlockMutation = useMutation({
     mutationFn: (scheduleBlockId: string) => api.deleteScheduleBlock(token, scheduleBlockId),
+    onSuccess,
+  });
+  const updateCalendarEventMutation = useMutation({
+    mutationFn: ({ calendarEventId, values }: { calendarEventId: string; values: CalendarEventUpdate }) =>
+      api.updateCalendarEvent(token, calendarEventId, values),
     onSuccess,
   });
   const dismissCalendarEventMutation = useMutation({
@@ -125,6 +131,7 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
       updateScheduleBlockMutation,
       deleteScheduleBlockMutation,
       dismissCalendarEventMutation,
+      updateCalendarEventMutation,
       confirmDraftMutation,
       rejectDraftMutation,
       startTimerMutation,
@@ -145,6 +152,8 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
         updateScheduleBlockMutation.mutateAsync({ scheduleBlockId, values }),
       deleteScheduleBlock: (scheduleBlockId: string) => deleteScheduleBlockMutation.mutateAsync(scheduleBlockId),
       dismissCalendarEvent: (calendarEventId: string) => dismissCalendarEventMutation.mutateAsync(calendarEventId),
+      updateCalendarEvent: (calendarEventId: string, values: CalendarEventUpdate) =>
+        updateCalendarEventMutation.mutateAsync({ calendarEventId, values }),
       confirmDraft: (draftId: string) => confirmDraftMutation.mutateAsync(draftId),
       rejectDraft: (draftId: string) => rejectDraftMutation.mutateAsync(draftId),
       discoverToggl: (values: TogglDiscoverInput) => discoverTogglMutation.mutateAsync(values),

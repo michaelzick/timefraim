@@ -1,9 +1,10 @@
 import type { TogglIntegrationSettings } from "@timefraim/shared";
 import { LoaderCircle, Sparkles } from "lucide-react";
-import type { UseFormReturn } from "react-hook-form";
+import { Controller, type UseFormReturn } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DurationInput } from "@/components/duration-input";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PRIORITY_OPTIONS, formatTaskPriority } from "@/features/planner/task-presentation";
@@ -53,13 +54,17 @@ export function CreateTaskCard({
           className="min-h-24"
           {...form.register("notes")}
         />
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            aria-label="Estimated minutes"
-            type="number"
-            min={5}
-            step={5}
-            {...form.register("estimatedMinutes", { valueAsNumber: true })}
+        <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
+          <Controller
+            control={form.control}
+            name="estimatedMinutes"
+            render={({ field }) => (
+              <DurationInput
+                valueMinutes={field.value}
+                onChange={field.onChange}
+                ariaLabelPrefix="Task"
+              />
+            )}
           />
           <select
             aria-label="Task priority"

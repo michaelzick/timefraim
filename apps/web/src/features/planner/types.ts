@@ -13,6 +13,14 @@ export type TaskFormValues = {
 
 export type CreateTaskValues = Omit<TaskFormValues, "lifecycle">;
 
+export type CalendarEventFormValues = {
+  togglProjectId: string;
+};
+
+export type PlannerCalendarEventUpdateInput = {
+  togglProjectId: string | null;
+};
+
 export type PlannerTaskInput = {
   title: string;
   notes?: string;
@@ -48,6 +56,7 @@ export type PlannerPageProps = {
   onUpdateScheduleBlock: (scheduleBlockId: string, values: PlannerScheduleBlockUpdateInput) => Promise<unknown>;
   onDeleteScheduleBlock: (scheduleBlockId: string) => Promise<unknown>;
   onDismissCalendarEvent: (calendarEventId: string) => Promise<unknown>;
+  onUpdateCalendarEvent: (calendarEventId: string, values: PlannerCalendarEventUpdateInput) => Promise<unknown>;
   onConfirmDraft: (draftId: string) => Promise<unknown>;
   onRejectDraft: (draftId: string) => Promise<unknown>;
   onStartTimer: (taskId: string) => Promise<unknown>;

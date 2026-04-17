@@ -75,12 +75,13 @@ export async function startTogglTimerForEvent(params: {
   connection: TogglConnection | null;
   eventTitle: string;
   source: ScheduleBlockSource;
+  togglProjectId?: string | null;
 }): Promise<TogglStartResult> {
   if (!params.connection) {
     return { togglEntryId: null };
   }
 
-  const projectId = params.connection.defaultProjectId ?? undefined;
+  const projectId = params.togglProjectId ?? params.connection.defaultProjectId ?? undefined;
   const payload = await togglRequest<unknown>(
     `/workspaces/${encodeURIComponent(params.connection.workspaceId)}/time_entries`,
     params.connection.apiToken,

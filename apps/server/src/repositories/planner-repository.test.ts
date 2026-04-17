@@ -45,6 +45,7 @@ describe("planner-repository", () => {
         foregroundColor: "#ffffff",
         sourceCalendarId: null,
         sourceCalendarName: null,
+        togglProjectId: null,
       },
     ]);
   });
@@ -91,6 +92,7 @@ describe("planner-repository", () => {
       dismissedExternalUpdatedAt: null,
       sourceCalendarId: null,
       sourceCalendarName: null,
+      togglProjectId: null,
       createdAt: "2026-04-06T08:00:00.000Z",
       updatedAt: "2026-04-06T08:00:00.000Z",
     });

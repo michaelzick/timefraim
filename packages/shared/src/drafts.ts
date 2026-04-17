@@ -9,6 +9,7 @@ export const draftKindSchema = z.enum([
   "schedule_block.update",
   "schedule_block.delete",
   "calendar_event.dismiss",
+  "calendar_event.update",
   "timer.start",
   "timer.start_event",
   "timer.stop",
@@ -54,6 +55,8 @@ export function formatDraftSummary(kind: DraftKind, payload: Record<string, unkn
       return `Remove schedule block ${getPayloadString(payload.scheduleBlockId)}`;
     case "calendar_event.dismiss":
       return `Hide calendar event ${getPayloadString(payload.calendarEventId)}`.trim();
+    case "calendar_event.update":
+      return `Update calendar event ${getPayloadString(payload.calendarEventId)}`.trim();
     case "timer.start":
       return `Start timer for task ${getPayloadString(payload.taskId)}`;
     case "timer.start_event":

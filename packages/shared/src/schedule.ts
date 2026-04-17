@@ -51,6 +51,11 @@ export const calendarEventViewSchema = z.object({
   foregroundColor: z.string().nullable().default(null),
   sourceCalendarId: z.string().nullable().default(null),
   sourceCalendarName: z.string().nullable().default(null),
+  togglProjectId: z.string().nullable().default(null),
+});
+
+export const calendarEventUpdateSchema = z.object({
+  togglProjectId: z.string().nullable().optional(),
 });
 
 export const timerSessionSchema = z.object({
@@ -86,6 +91,7 @@ export type ScheduleBlockCreate = z.infer<typeof scheduleBlockCreateSchema>;
 export type ScheduleBlockUpdate = z.infer<typeof scheduleBlockUpdateSchema>;
 export type ScheduleBlockDelete = z.infer<typeof scheduleBlockDeleteSchema>;
 export type CalendarEventView = z.infer<typeof calendarEventViewSchema>;
+export type CalendarEventUpdate = z.infer<typeof calendarEventUpdateSchema>;
 export type TimerSession = z.infer<typeof timerSessionSchema>;
 export type TimerStart = z.infer<typeof timerStartSchema>;
 export type TimerStartEvent = z.infer<typeof timerStartEventSchema>;

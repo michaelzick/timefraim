@@ -13,8 +13,9 @@ import {
   type SelectedTaskSource,
 } from "@/features/planner/planner-page-selection";
 import { EMPTY_CREATE_TASK_VALUES, getTaskFormValues, showActionError, type LocalPlannerTaskInput, type LocalPlannerTaskUpdateInput, type PlannerCreateTaskValues, type PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
-import { type CreateTaskValues, type PlannerPageProps, type PlannerScheduleBlockUpdateInput, type TaskFormValues } from "@/features/planner/types";
+import { type CalendarEventFormValues, type CreateTaskValues, type PlannerPageProps, type PlannerScheduleBlockUpdateInput, type TaskFormValues } from "@/features/planner/types";
 import {
+  buildCalendarEventUpdateInput,
   buildPlannerCreateTaskInput,
   buildPlannerTaskUpdateInput,
   createPlannerMutationHandlers,
@@ -32,6 +33,7 @@ export function PlannerPage({
   onUpdateScheduleBlock,
   onDeleteScheduleBlock,
   onDismissCalendarEvent,
+  onUpdateCalendarEvent,
   onConfirmDraft,
   onRejectDraft,
   onStartTimer,
@@ -84,6 +86,11 @@ export function PlannerPage({
   });
   const detailFormValues = useMemo(() => getTaskFormValues(selectedTask), [selectedTask]);
   const detailForm = useForm<TaskFormValues>({ values: detailFormValues });
+  const calendarEventFormValues = useMemo<CalendarEventFormValues>(
+    () => ({ togglProjectId: selectedCalendarEvent?.togglProjectId ?? "" }),
+    [selectedCalendarEvent?.togglProjectId],
+  );
+  const calendarEventForm = useForm<CalendarEventFormValues>({ values: calendarEventFormValues });
 
   const selectedTimelineTaskId = plannerSelection.type === "timeline-task" ? plannerSelection.taskId : null;
   const selectedTimelineCalendarEventId = getSelectedCalendarEventId(plannerSelection);
@@ -169,6 +176,18 @@ export function PlannerPage({
     }
   }
 
+  async function handleSaveCalendarEvent(values: CalendarEventFormValues) {
+    if (!selectedCalendarEvent) {
+      return;
+    }
+
+    try {
+      await onUpdateCalendarEvent(selectedCalendarEvent.id, buildCalendarEventUpdateInput(values));
+    } catch (error) {
+      showActionError("Failed to save the calendar event. Please try again.", error);
+    }
+  }
+
   return (
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={(event) => void handleDragEnd(event)}>
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
@@ -201,6 +220,7 @@ export function PlannerPage({
         <PlannerDetailColumn
           detailPanelRef={detailPanelRef}
           detailForm={detailForm}
+          calendarEventForm={calendarEventForm}
           selectedTask={selectedTask}
           selectedCalendarEvent={selectedCalendarEvent}
           dayPlan={dayPlan}
@@ -210,6 +230,7 @@ export function PlannerPage({
           togglSettings={togglSettings}
           onDeleteTask={() => void mutationHandlers.handleDeleteSelectedTask()}
           onSaveTask={handleSaveTask}
+          onSaveCalendarEvent={handleSaveCalendarEvent}
           onStartTimer={(taskId) => void onStartTimer(taskId)}
           onStartEventTimer={(calendarEventId) => void onStartEventTimer(calendarEventId)}
           onStopTimer={() => void onStopTimer()}

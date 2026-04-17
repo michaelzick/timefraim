@@ -104,6 +104,7 @@ export async function runPlannerSideEffects(
           connection: togglConnection,
           eventTitle: effect.eventTitle,
           source: effect.source,
+          togglProjectId: effect.togglProjectId,
         });
         if (result.togglEntryId) {
           await repository.attachTogglEntry(effect.timerSessionId, result.togglEntryId, pool);

@@ -1,4 +1,5 @@
 import {
+  calendarEventUpdateSchema,
   scheduleBlockCreateSchema,
   scheduleBlockUpdateSchema,
   taskInputSchema,
@@ -128,6 +129,23 @@ export function registerPlannerRoutes(app: FastifyInstance, plannerService: Plan
       return plannerService.applyChange(
         "calendar_event.dismiss",
         { calendarEventId: params.calendarEventId },
+        "user",
+        user.id,
+      );
+    }),
+  );
+
+  app.patch(
+    "/api/calendar-events/:calendarEventId",
+    withAuthenticatedRoute(async (request, reply, user) => {
+      const params = parseWithReply(reply, z.object({ calendarEventId: z.string().uuid() }), request.params);
+      const body = parseWithReply(reply, calendarEventUpdateSchema, request.body);
+      if (!params || !body) {
+        return null;
+      }
+      return plannerService.applyChange(
+        "calendar_event.update",
+        { calendarEventId: params.calendarEventId, togglProjectId: body.togglProjectId ?? null },
         "user",
         user.id,
       );

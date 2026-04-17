@@ -102,6 +102,7 @@ function AppContent() {
         onDeleteScheduleBlock: plannerMutations.actions.deleteScheduleBlock,
         onDeleteTask: plannerMutations.actions.deleteTask,
         onDismissCalendarEvent: plannerMutations.actions.dismissCalendarEvent,
+        onUpdateCalendarEvent: plannerMutations.actions.updateCalendarEvent,
         onRejectDraft: plannerMutations.actions.rejectDraft,
         onStartTimer: plannerMutations.actions.startTimer,
         onStartEventTimer: plannerMutations.actions.startEventTimer,
