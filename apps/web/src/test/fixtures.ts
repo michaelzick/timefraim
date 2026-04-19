@@ -1,4 +1,17 @@
-import type { AuthSession, DayPlan, Task, TogglIntegrationSettings } from "@timefraim/shared";
+import type { AuthSession, DayPlan, PlannerDuplicateResult, Task, TogglIntegrationSettings } from "@timefraim/shared";
+
+export function buildDuplicateResult(overrides: Partial<PlannerDuplicateResult> = {}): PlannerDuplicateResult {
+  return {
+    status: "applied",
+    kind: "task.duplicate",
+    diffSummary: "Duplicated task",
+    createdTaskId: null,
+    createdScheduleBlockId: null,
+    ...overrides,
+  };
+}
+
+export const noopDuplicate: () => Promise<PlannerDuplicateResult> = () => Promise.resolve(buildDuplicateResult());
 
 export function buildTask(overrides: Partial<Task> = {}): Task {
   return {

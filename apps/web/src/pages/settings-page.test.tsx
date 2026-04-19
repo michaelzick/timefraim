@@ -1,8 +1,18 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { SettingsPage } from "@/pages/settings-page";
 import { buildAuthSession, buildTogglSettings } from "@/test/fixtures";
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+    message: vi.fn(),
+  },
+  Toaster: () => null,
+}));
 
 describe("SettingsPage", () => {
   afterEach(() => {
@@ -65,7 +75,8 @@ describe("SettingsPage", () => {
 
   it("shows an alert when saving Toggl settings fails", async () => {
     const user = userEvent.setup();
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => undefined);
+    const toastErrorSpy = vi.mocked(toast.error);
+    toastErrorSpy.mockClear();
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const onSaveToggl = vi.fn().mockRejectedValue(new Error("invalid input syntax for type json"));
     const togglSettings = buildTogglSettings({
@@ -109,7 +120,10 @@ describe("SettingsPage", () => {
       });
     });
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith("Failed to save the Toggl setup. Please try again.");
+      expect(toastErrorSpy).toHaveBeenCalledWith(
+        "Failed to save the Toggl setup. Please try again.",
+        { duration: 8000 },
+      );
     });
     expect(consoleSpy).toHaveBeenCalled();
     expect(screen.getByPlaceholderText(/paste toggl api token/i)).toHaveValue("test-token");

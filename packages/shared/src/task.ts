@@ -36,8 +36,16 @@ export const taskUpdateSchema = taskInputSchema.partial().extend({
   taskId: z.string().uuid(),
 });
 
+export const taskDuplicatePayloadSchema = z.object({
+  sourceTaskId: z.string().uuid(),
+  startAt: z.string().datetime().optional(),
+  endAt: z.string().datetime().optional(),
+  plannerDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
 export type Task = z.infer<typeof taskSchema>;
 export type TaskPriority = z.infer<typeof taskPrioritySchema>;
 export type TaskStatus = z.infer<typeof taskStatusSchema>;
 export type TaskInput = z.infer<typeof taskInputSchema>;
 export type TaskUpdate = z.infer<typeof taskUpdateSchema>;
+export type TaskDuplicatePayload = z.infer<typeof taskDuplicatePayloadSchema>;

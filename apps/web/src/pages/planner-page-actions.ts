@@ -1,12 +1,7 @@
-import type { Task } from "@timefraim/shared";
-import {
-  resolvePlannerTaskStatus,
-  showActionError,
-  type LocalPlannerTaskInput,
-  type LocalPlannerTaskUpdateInput,
-  type PlannerCreateTaskValues,
-  type PlannerSaveTaskValues,
-} from "@/features/planner/planner-page-utils";
+import type { PlannerDuplicateResult, Task } from "@timefraim/shared";
+import { toast } from "sonner";
+import type { LocalPlannerTaskInput, LocalPlannerTaskUpdateInput, PlannerCreateTaskValues, PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
+import { resolvePlannerTaskStatus, showActionError } from "@/features/planner/planner-page-utils";
 import type { CalendarEventFormValues, PlannerCalendarEventUpdateInput } from "@/features/planner/types";
 
 export function buildCalendarEventUpdateInput(values: CalendarEventFormValues): PlannerCalendarEventUpdateInput {
@@ -58,10 +53,28 @@ export function confirmTimelineBlockDelete(title: string) {
   return window.confirm(`Remove "${title}" from the timeline? The task will return to the queue.`);
 }
 
+function taskUpdateInputFor(task: Task, status: LocalPlannerTaskUpdateInput["status"]): LocalPlannerTaskUpdateInput {
+  return {
+    title: task.title,
+    notes: task.notes ?? "",
+    estimatedMinutes: task.estimatedMinutes,
+    priority: task.priority,
+    status,
+    togglProjectId: task.togglProjectId ?? null,
+  };
+}
+
 export function createPlannerMutationHandlers(args: {
   selectedTask: Task | null;
+  date: string;
   onDeleteTask: (taskId: string) => Promise<unknown>;
   onDeleteScheduleBlock: (scheduleBlockId: string) => Promise<unknown>;
+  onUpdateTask: (taskId: string, values: LocalPlannerTaskUpdateInput) => Promise<unknown>;
+  onDuplicateTask: (
+    taskId: string,
+    body?: { startAt?: string; endAt?: string; plannerDate?: string },
+  ) => Promise<PlannerDuplicateResult>;
+  onStartTimer: (taskId: string) => Promise<unknown>;
 }) {
   return {
     async handleDeleteSelectedTask() {
@@ -90,6 +103,49 @@ export function createPlannerMutationHandlers(args: {
       void args.onDeleteScheduleBlock(blockId).catch((error) => {
         showActionError("Failed to remove the schedule block. Please try again.", error);
       });
+    },
+    handleReactivateDoneTask(task: Task) {
+      void args
+        .onUpdateTask(task.id, taskUpdateInputFor(task, "planned"))
+        .catch((error) => showActionError("Failed to reactivate the task. Please try again.", error));
+    },
+    handleDuplicateTask(task: Task) {
+      void args
+        .onDuplicateTask(task.id, { plannerDate: args.date })
+        .then((result) => {
+          if (!result.createdTaskId) return;
+          const createdTaskId = result.createdTaskId;
+          toast.success("Duplicated", {
+            duration: 8000,
+            action: {
+              label: "Undo",
+              onClick: () => {
+                void args.onDeleteTask(createdTaskId);
+              },
+            },
+          });
+        })
+        .catch((error) => showActionError("Failed to duplicate the task. Please try again.", error));
+    },
+    handleStartTaskTimer(taskId: string) {
+      void args.onStartTimer(taskId).catch((error) => showActionError("Failed to start the timer. Please try again.", error));
+    },
+    handleMarkTaskDone(task: Task) {
+      const previousStatus = task.status;
+      void args
+        .onUpdateTask(task.id, taskUpdateInputFor(task, "done"))
+        .then(() => {
+          toast.success("Marked done", {
+            duration: 8000,
+            action: {
+              label: "Undo",
+              onClick: () => {
+                void args.onUpdateTask(task.id, taskUpdateInputFor(task, previousStatus));
+              },
+            },
+          });
+        })
+        .catch((error) => showActionError("Failed to mark the task done. Please try again.", error));
     },
   };
 }

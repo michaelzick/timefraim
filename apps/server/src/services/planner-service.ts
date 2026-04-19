@@ -1,10 +1,21 @@
-import { dayPlanSchema, formatDraftSummary, type ActorRole, type DraftKind } from "@timefraim/shared";
+import {
+  dayPlanSchema,
+  formatDraftSummary,
+  type ActorRole,
+  type DraftKind,
+  type ScheduleBlockDuplicatePayload,
+  type TaskDuplicatePayload,
+} from "@timefraim/shared";
 import { env } from "../config/env.js";
 import { pool, withTransaction } from "../db/pool.js";
 import { PlannerRepository } from "../repositories/planner-repository.js";
 import { endOfDay, startOfDay, todayIsoDate } from "../utils/date.js";
 import { applyPlannerDraft } from "./planner-service-apply.js";
 import { syncPlannerGoogleCalendar } from "./planner-service-calendar.js";
+import {
+  duplicateScheduleBlockForUser,
+  duplicateTaskForUser,
+} from "./planner-service-duplicates.js";
 import { deleteTogglConnection, discoverTogglConnection, getAllowedPlannerUserId, getGoogleCalendarSettings, getGoogleConnection, getTogglConnection, getTogglSettings, saveGoogleCalendarSettings, saveGoogleSession, saveTogglConnection } from "./planner-service-integrations.js";
 import { runPlannerSideEffects } from "./planner-side-effects.js";
 import type { SideEffect } from "./planner-service-types.js";
@@ -102,6 +113,12 @@ export class PlannerService {
   async createAndApplyDraft(kind: DraftKind, payload: Record<string, unknown>, actorRole: ActorRole, ownerUserId?: string | null) {
     const draft = await this.createDraft(kind, payload, actorRole, ownerUserId);
     return this.confirmDraft(draft.id, actorRole, draft.ownerUserId);
+  }
+  async duplicateTask(payload: TaskDuplicatePayload, actorRole: ActorRole, userId?: string | null) {
+    return duplicateTaskForUser({ repository: this.repository, actorRole, userId }, payload);
+  }
+  async duplicateScheduleBlock(payload: ScheduleBlockDuplicatePayload, actorRole: ActorRole, userId?: string | null) {
+    return duplicateScheduleBlockForUser({ repository: this.repository, actorRole, userId }, payload);
   }
   async applyChange(kind: DraftKind, payload: Record<string, unknown>, actorRole: ActorRole, userId?: string | null) {
     const googleConnection = await getGoogleConnection(this.repository);

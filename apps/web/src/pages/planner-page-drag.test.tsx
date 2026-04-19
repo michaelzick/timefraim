@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { PlannerPage } from "@/pages/planner-page";
-import { buildDayPlan, buildTask, buildTogglSettings } from "@/test/fixtures";
+import { buildDayPlan, buildTask, buildTogglSettings, noopDuplicate } from "@/test/fixtures";
 
 vi.mock("@dnd-kit/core", () => ({
   DndContext: ({
@@ -74,6 +74,7 @@ vi.mock("@dnd-kit/core", () => ({
       {children}
     </div>
   ),
+  DragOverlay: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   PointerSensor: function PointerSensor() {},
   pointerWithin: () => [],
   useDraggable: () => ({
@@ -112,6 +113,8 @@ function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerP
     onDeleteScheduleBlock: noopAsync,
     onDismissCalendarEvent: noopAsync,
     onUpdateCalendarEvent: noopAsync,
+    onDuplicateTask: noopDuplicate,
+    onDuplicateScheduleBlock: noopDuplicate,
     onStartTimer: noopAsync,
     onStartEventTimer: noopAsync,
     onStopTimer: noopAsync,

@@ -2,19 +2,25 @@ import {
   calendarEventUpdateSchema,
   calendarSyncResultSchema,
   dayPlanSchema,
+  plannerDuplicateResultSchema,
   plannerMutationResultSchema,
+  scheduleBlockDuplicatePayloadSchema,
   scheduleBlockUpdateSchema,
   syncDraftSchema,
+  taskDuplicatePayloadSchema,
   taskInputSchema,
   taskSchema,
   taskUpdateSchema,
   type CalendarEventUpdate,
   type CalendarSyncResult,
+  type PlannerDuplicateResult,
   type PlannerMutationResult,
   type ScheduleBlockCreate,
+  type ScheduleBlockDuplicatePayload,
   type ScheduleBlockUpdate,
   type SyncDraft,
   type Task,
+  type TaskDuplicatePayload,
   type TaskInput,
   type TaskUpdate,
   type TimerStart,
@@ -24,6 +30,8 @@ import { request, withQuery } from "@/lib/api-client";
 
 type UpdateTaskInput = Omit<TaskUpdate, "taskId">;
 type UpdateScheduleBlockInput = Omit<ScheduleBlockUpdate, "scheduleBlockId">;
+type DuplicateTaskInput = Omit<TaskDuplicatePayload, "sourceTaskId">;
+type DuplicateScheduleBlockInput = Omit<ScheduleBlockDuplicatePayload, "sourceBlockId">;
 
 export const plannerApi = {
   getDayPlan: (token: string, date: string, tz: number) =>
@@ -46,6 +54,26 @@ export const plannerApi = {
       method: "DELETE",
       schema: plannerMutationResultSchema,
     }),
+  duplicateTask: (token: string, taskId: string, body: DuplicateTaskInput = {}) =>
+    request<PlannerDuplicateResult, DuplicateTaskInput>(`/api/tasks/${taskId}/duplicate`, token, {
+      method: "POST",
+      body: taskDuplicatePayloadSchema.omit({ sourceTaskId: true }).parse(body),
+      schema: plannerDuplicateResultSchema,
+    }),
+  duplicateScheduleBlock: (
+    token: string,
+    scheduleBlockId: string,
+    body: DuplicateScheduleBlockInput,
+  ) =>
+    request<PlannerDuplicateResult, DuplicateScheduleBlockInput>(
+      `/api/schedule-blocks/${scheduleBlockId}/duplicate`,
+      token,
+      {
+        method: "POST",
+        body: scheduleBlockDuplicatePayloadSchema.omit({ sourceBlockId: true }).parse(body),
+        schema: plannerDuplicateResultSchema,
+      },
+    ),
   createScheduleBlock: (token: string, body: ScheduleBlockCreate) =>
     request<PlannerMutationResult, ScheduleBlockCreate>("/api/schedule-blocks", token, {
       method: "POST",

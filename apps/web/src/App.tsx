@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
+import { Toaster } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { LoginView } from "@/components/auth/login-view";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,8 @@ function AppContent() {
         onDeleteScheduleBlock: plannerMutations.actions.deleteScheduleBlock,
         onDeleteTask: plannerMutations.actions.deleteTask,
         onDismissCalendarEvent: plannerMutations.actions.dismissCalendarEvent,
+        onDuplicateScheduleBlock: plannerMutations.actions.duplicateScheduleBlock,
+        onDuplicateTask: plannerMutations.actions.duplicateTask,
         onUpdateCalendarEvent: plannerMutations.actions.updateCalendarEvent,
         onStartTimer: plannerMutations.actions.startTimer,
         onStartEventTimer: plannerMutations.actions.startEventTimer,
@@ -119,6 +122,18 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AppContent />
+        <Toaster
+          theme="dark"
+          position="bottom-right"
+          closeButton
+          toastOptions={{
+            classNames: {
+              toast:
+                "border border-white/10 bg-[rgba(8,12,24,0.92)] text-[var(--text)] backdrop-blur-xl shadow-[0_24px_80px_rgba(5,8,18,0.55)]",
+              actionButton: "bg-[var(--accent)] text-[var(--surface)]",
+            },
+          }}
+        />
       </BrowserRouter>
     </QueryClientProvider>
   );

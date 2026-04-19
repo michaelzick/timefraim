@@ -49,6 +49,18 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
     mutationFn: (scheduleBlockId: string) => api.deleteScheduleBlock(token, scheduleBlockId),
     onSuccess,
   });
+  const duplicateTaskMutation = useMutation({
+    mutationFn: ({ taskId, body }: { taskId: string; body?: Parameters<typeof api.duplicateTask>[2] }) =>
+      api.duplicateTask(token, taskId, body),
+    onSuccess,
+  });
+  const duplicateScheduleBlockMutation = useMutation({
+    mutationFn: ({ scheduleBlockId, body }: {
+      scheduleBlockId: string;
+      body: Parameters<typeof api.duplicateScheduleBlock>[2];
+    }) => api.duplicateScheduleBlock(token, scheduleBlockId, body),
+    onSuccess,
+  });
   const updateCalendarEventMutation = useMutation({
     mutationFn: ({ calendarEventId, values }: { calendarEventId: string; values: CalendarEventUpdate }) =>
       api.updateCalendarEvent(token, calendarEventId, values),
@@ -130,6 +142,8 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
       createScheduleBlockMutation,
       updateScheduleBlockMutation,
       deleteScheduleBlockMutation,
+      duplicateTaskMutation,
+      duplicateScheduleBlockMutation,
       dismissCalendarEventMutation,
       updateCalendarEventMutation,
       confirmDraftMutation,
@@ -151,6 +165,12 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
       updateScheduleBlock: (scheduleBlockId: string, values: Parameters<typeof api.updateScheduleBlock>[2]) =>
         updateScheduleBlockMutation.mutateAsync({ scheduleBlockId, values }),
       deleteScheduleBlock: (scheduleBlockId: string) => deleteScheduleBlockMutation.mutateAsync(scheduleBlockId),
+      duplicateTask: (taskId: string, body?: Parameters<typeof api.duplicateTask>[2]) =>
+        duplicateTaskMutation.mutateAsync({ taskId, body }),
+      duplicateScheduleBlock: (
+        scheduleBlockId: string,
+        body: Parameters<typeof api.duplicateScheduleBlock>[2],
+      ) => duplicateScheduleBlockMutation.mutateAsync({ scheduleBlockId, body }),
       dismissCalendarEvent: (calendarEventId: string) => dismissCalendarEventMutation.mutateAsync(calendarEventId),
       updateCalendarEvent: (calendarEventId: string, values: CalendarEventUpdate) =>
         updateCalendarEventMutation.mutateAsync({ calendarEventId, values }),

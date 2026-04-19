@@ -1,23 +1,18 @@
-import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
-import type { CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
-import { X } from "lucide-react";
+import { useDroppable } from "@dnd-kit/core";
+import type { CalendarEventView, ScheduleBlock, Task, TimerSession } from "@timefraim/shared";
 import {
   buildTimelineSlots,
   getTimelineContainerHeight,
-  getTimelinePlacement,
-  isShortBlock,
   SLOT_HEIGHT,
 } from "@/components/timeline-geometry";
 import { TimelineBoardCalendarEvent } from "@/components/timeline-board-calendar-event";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TimelineNowHairline } from "@/components/timeline-now-hairline";
 import {
-  formatTaskPriority,
-  getTaskPriorityBadgeClass,
-  getTaskPriorityTimelineBlockClass,
-} from "@/features/planner/task-presentation";
-import { cn, formatTime } from "@/lib/utils";
+  TimelineScheduleBlock,
+  type TimelineBlockRunState,
+} from "@/components/timeline-schedule-block";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 function TimelineSlot({
   slot,
@@ -28,9 +23,7 @@ function TimelineSlot({
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: slot.id,
-    data: {
-      slotIso: slot.iso,
-    },
+    data: { slotIso: slot.iso },
   });
 
   return (
@@ -42,95 +35,17 @@ function TimelineSlot({
       )}
       style={{ top: slot.top, height: SLOT_HEIGHT }}
     >
-      {label ? <span className="absolute -left-[74px] top-1 text-xs font-medium text-[var(--muted)]">{label}</span> : null}
+      {label ? (
+        <span className="absolute -left-[74px] top-1 text-xs font-medium text-[var(--muted)]">{label}</span>
+      ) : null}
     </div>
   );
 }
 
-function TimelineScheduleBlock({
-  block,
-  date,
-  task,
-  isSelected,
-  onDeleteScheduleBlock,
-  onSelectTask,
-}: {
-  block: ScheduleBlock;
-  date: string;
-  task: Task | undefined;
-  isSelected: boolean;
-  onDeleteScheduleBlock: (scheduleBlockId: string, title: string) => void;
-  onSelectTask: (taskId: string) => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: block.id,
-    data: {
-      dragType: "schedule-block",
-      scheduleBlock: block,
-      task,
-    },
-  });
-  const placement = getTimelinePlacement(date, block.startAt, block.endAt);
-  const priority = task?.priority ?? "medium";
-
-  if (!placement) {
-    return null;
-  }
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        top: placement.top,
-        height: placement.height,
-        transform: CSS.Translate.toString(transform),
-      }}
-      className={cn(
-        "absolute left-8 right-8 z-10 cursor-pointer rounded-[24px] border p-4 transition",
-        getTaskPriorityTimelineBlockClass(priority),
-        isDragging && "opacity-75",
-        isSelected && "ring-2 ring-white",
-      )}
-      onClick={() => onSelectTask(block.taskId)}
-      {...listeners}
-      {...attributes}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          {isShortBlock(block.startAt, block.endAt) ? (
-            <p className="truncate font-semibold text-white">
-              {task?.title ?? "Scheduled task"}
-              <span className="ml-2 text-xs font-normal text-[var(--muted-strong)]">
-                {formatTime(block.startAt)} to {formatTime(block.endAt)}
-              </span>
-            </p>
-          ) : (
-            <>
-              <p className="truncate font-semibold text-white">{task?.title ?? "Scheduled task"}</p>
-              <p className="mt-1 text-xs text-[var(--muted-strong)]">
-                {formatTime(block.startAt)} to {formatTime(block.endAt)}
-              </p>
-            </>
-          )}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Badge className={getTaskPriorityBadgeClass(priority)}>{formatTaskPriority(priority)}</Badge>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2 text-[var(--muted-strong)] hover:bg-white/10 hover:text-white"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteScheduleBlock(block.id, task?.title ?? "Scheduled task");
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+function deriveRunState(block: ScheduleBlock, task: Task | undefined, activeTimer: TimerSession | null): TimelineBlockRunState {
+  if (task?.status === "done") return "done";
+  if (activeTimer?.taskId && activeTimer.taskId === block.taskId) return "running";
+  return "idle";
 }
 
 export function TimelineBoard({
@@ -138,23 +53,31 @@ export function TimelineBoard({
   tasks,
   scheduleBlocks,
   calendarEvents,
+  activeTimer,
   selectedTaskId,
   selectedCalendarEventId,
   onDismissCalendarEvent,
   onSelectTask,
   onSelectCalendarEvent,
   onDeleteScheduleBlock,
+  onDuplicateTask,
+  onStartTaskTimer,
+  onMarkTaskDone,
 }: {
   date: string;
   tasks: Task[];
   scheduleBlocks: ScheduleBlock[];
   calendarEvents: CalendarEventView[];
+  activeTimer: TimerSession | null;
   selectedTaskId: string | null;
   selectedCalendarEventId: string | null;
   onDismissCalendarEvent: (calendarEventId: string, title: string) => void;
   onSelectTask: (taskId: string) => void;
   onSelectCalendarEvent: (calendarEventId: string) => void;
   onDeleteScheduleBlock: (scheduleBlockId: string, title: string) => void;
+  onDuplicateTask?: (task: Task) => void;
+  onStartTaskTimer?: (taskId: string) => void;
+  onMarkTaskDone?: (task: Task) => void;
 }) {
   const containerHeight = getTimelineContainerHeight();
   const slots = buildTimelineSlots(date);
@@ -180,17 +103,27 @@ export function TimelineBoard({
           />
         ))}
 
-        {scheduleBlocks.map((block) => (
-          <TimelineScheduleBlock
-            key={block.id}
-            block={block}
-            date={date}
-            task={tasks.find((item) => item.id === block.taskId)}
-            isSelected={selectedTaskId === block.taskId}
-            onDeleteScheduleBlock={onDeleteScheduleBlock}
-            onSelectTask={onSelectTask}
-          />
-        ))}
+        {scheduleBlocks.map((block) => {
+          const task = tasks.find((item) => item.id === block.taskId);
+          return (
+            <TimelineScheduleBlock
+              key={block.id}
+              block={block}
+              date={date}
+              task={task}
+              isSelected={selectedTaskId === block.taskId}
+              runState={deriveRunState(block, task, activeTimer)}
+              runningStartedAt={activeTimer?.startedAt ?? null}
+              onDeleteScheduleBlock={onDeleteScheduleBlock}
+              onDuplicateTask={onDuplicateTask}
+              onStartTaskTimer={onStartTaskTimer}
+              onMarkTaskDone={onMarkTaskDone}
+              onSelectTask={onSelectTask}
+            />
+          );
+        })}
+
+        <TimelineNowHairline date={date} />
       </div>
     </div>
   );

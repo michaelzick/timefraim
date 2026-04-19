@@ -66,6 +66,7 @@ describe("TimelineBoard", () => {
             togglProjectId: null,
           },
         ]}
+        activeTimer={null}
         selectedTaskId={null}
         selectedCalendarEventId={null}
         onDismissCalendarEvent={vi.fn()}
@@ -112,6 +113,7 @@ describe("TimelineBoard", () => {
             togglProjectId: null,
           },
         ]}
+        activeTimer={null}
         selectedTaskId={null}
         selectedCalendarEventId={null}
         onDismissCalendarEvent={vi.fn()}
@@ -151,6 +153,7 @@ describe("TimelineBoard", () => {
             togglProjectId: null,
           },
         ]}
+        activeTimer={null}
         selectedTaskId={null}
         selectedCalendarEventId={null}
         onDismissCalendarEvent={vi.fn()}
@@ -196,6 +199,7 @@ describe("TimelineBoard", () => {
         ]}
         selectedTaskId={null}
         selectedCalendarEventId={null}
+        activeTimer={null}
         onDismissCalendarEvent={onDismissCalendarEvent}
         onSelectTask={vi.fn()}
         onSelectCalendarEvent={onSelectCalendarEvent}

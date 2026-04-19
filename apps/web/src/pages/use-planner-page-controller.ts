@@ -1,9 +1,10 @@
 import { PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { filterQueueTasks, getSelectedCalendarEventId, resolveSelectedCalendarEvent, resolveTaskSelection, type PlannerSelection, type SelectedTaskSource } from "@/features/planner/planner-page-selection";
+import { filterQueueTasks, getSelectedCalendarEventId, resolveSelectedCalendarEvent, resolveTaskSelection, selectDoneTasks, type PlannerSelection, type SelectedTaskSource } from "@/features/planner/planner-page-selection";
 import { EMPTY_CREATE_TASK_VALUES, getTaskFormValues, type LocalPlannerTaskInput, type LocalPlannerTaskUpdateInput } from "@/features/planner/planner-page-utils";
 import { type CalendarEventFormValues, type CreateTaskValues, type PlannerPageProps, type PlannerScheduleBlockUpdateInput, type TaskFormValues } from "@/features/planner/types";
+import { useAltKey } from "@/hooks/use-alt-key";
 import { createPlannerMutationHandlers } from "@/pages/planner-page-actions";
 import { createPlannerPageHandlers } from "@/pages/planner-page-controller-handlers";
 
@@ -18,6 +19,9 @@ export function usePlannerPageController({
   onDeleteScheduleBlock,
   onDismissCalendarEvent,
   onUpdateCalendarEvent,
+  onDuplicateTask,
+  onDuplicateScheduleBlock,
+  onStartTimer,
 }: Pick<
   PlannerPageProps,
   | "date"
@@ -30,6 +34,9 @@ export function usePlannerPageController({
   | "onDeleteScheduleBlock"
   | "onDismissCalendarEvent"
   | "onUpdateCalendarEvent"
+  | "onDuplicateTask"
+  | "onDuplicateScheduleBlock"
+  | "onStartTimer"
 >) {
   const createTask = onCreateTask as (values: LocalPlannerTaskInput) => Promise<unknown>;
   const updateTask = onUpdateTask as (taskId: string, values: LocalPlannerTaskUpdateInput) => Promise<unknown>;
@@ -51,11 +58,13 @@ export function usePlannerPageController({
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
+  const { isAltPressed, isAltPressedRef } = useAltKey();
 
   const createTaskForm = useForm<CreateTaskValues>({
     defaultValues: EMPTY_CREATE_TASK_VALUES,
   });
   const filteredQueueTasks = useMemo(() => filterQueueTasks(dayPlan.tasks, deferredSearch), [dayPlan.tasks, deferredSearch]);
+  const doneTasks = useMemo(() => selectDoneTasks(dayPlan.tasks), [dayPlan.tasks]);
   const resolvedTaskSelection = useMemo(
     () =>
       resolveTaskSelection({
@@ -70,8 +79,12 @@ export function usePlannerPageController({
   const selectedCalendarEvent = resolveSelectedCalendarEvent(plannerSelection, dayPlan.calendarEvents);
   const mutationHandlers = createPlannerMutationHandlers({
     selectedTask,
+    date,
     onDeleteTask,
     onDeleteScheduleBlock,
+    onUpdateTask: updateTask,
+    onDuplicateTask,
+    onStartTimer,
   });
   const detailFormValues = useMemo(() => getTaskFormValues(selectedTask), [selectedTask]);
   const detailForm = useForm<TaskFormValues>({ values: detailFormValues });
@@ -124,8 +137,13 @@ export function usePlannerPageController({
     createTaskForm,
     date,
     detailPanelRef,
+    isAltPressedRef,
     onCreateScheduleBlock,
+    onDeleteScheduleBlock,
+    onDeleteTask,
     onDismissCalendarEvent,
+    onDuplicateTask,
+    onDuplicateScheduleBlock,
     onUpdateCalendarEvent,
     plannerSelection,
     resolvedTaskSelection,
@@ -143,6 +161,7 @@ export function usePlannerPageController({
     createTaskForm,
     detailForm,
     detailPanelRef,
+    doneTasks,
     filteredQueueTasks,
     handleCreateTask,
     handleDismissCalendarEvent,
@@ -152,6 +171,7 @@ export function usePlannerPageController({
     handleSelectCalendarEvent,
     handleSelectQueueTask,
     handleSelectTimelineTask,
+    isAltPressed,
     mutationHandlers,
     plannerSelection,
     search,
