@@ -2,8 +2,18 @@ import type { ComponentProps } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { PlannerPage } from "@/pages/planner-page";
-import { buildDayPlan, buildTask, buildTogglSettings } from "@/test/fixtures";
+import { buildDayPlan, buildTask, buildTogglSettings, noopDuplicate } from "@/test/fixtures";
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+    message: vi.fn(),
+  },
+  Toaster: () => null,
+}));
 
 vi.mock("@/components/timeline-board", () => ({
   TimelineBoard: ({
@@ -67,6 +77,8 @@ function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerP
     onDeleteScheduleBlock: noopAsync,
     onDismissCalendarEvent: noopAsync,
     onUpdateCalendarEvent: noopAsync,
+    onDuplicateTask: noopDuplicate,
+    onDuplicateScheduleBlock: noopDuplicate,
     onStartTimer: noopAsync,
     onStartEventTimer: noopAsync,
     onStopTimer: noopAsync,
@@ -155,7 +167,8 @@ describe("PlannerPage", () => {
     const props = buildPlannerPageProps({ onDeleteTask });
     const { rerender } = render(<PlannerPage {...props} dayPlan={dayPlan} />);
 
-    await user.click(screen.getByRole("button", { name: /delete plan launch week/i }));
+    await user.click(screen.getByRole("button", { name: /more actions for plan launch week/i }));
+    await user.click(screen.getByRole("menuitem", { name: /delete/i }));
 
     await waitFor(() => {
       expect(onDeleteTask).toHaveBeenCalledWith(dayPlan.tasks[0].id);
@@ -198,7 +211,8 @@ describe("PlannerPage", () => {
     const props = buildPlannerPageProps({ onDeleteTask });
     const { rerender } = render(<PlannerPage {...props} dayPlan={dayPlan} />);
 
-    await user.click(screen.getByRole("button", { name: /delete queue task/i }));
+    await user.click(screen.getByRole("button", { name: /more actions for queue task/i }));
+    await user.click(screen.getByRole("menuitem", { name: /delete/i }));
 
     await waitFor(() => {
       expect(onDeleteTask).toHaveBeenCalledWith(dayPlan.tasks[0].id);
@@ -237,19 +251,20 @@ describe("PlannerPage", () => {
     expect(screen.queryByText("Timebox the right work, then protect it.")).not.toBeInTheDocument();
   });
 
-  it("defaults the activity panel to the timer tab", () => {
+  it("shows the idle ActiveTimerPanel prompt when no timer is running", () => {
     render(<PlannerPage {...buildPlannerPageProps()} />);
 
     expect(
-      screen.getByText("No timer is running. Start one from the selected task."),
+      screen.getByText("No timer running — pick a task to start one."),
     ).toBeInTheDocument();
   });
 
-  it("shows only Timer and Activity tabs in the right rail", () => {
+  it("renders the activity log without tabs in the right rail", () => {
     render(<PlannerPage {...buildPlannerPageProps()} />);
 
-    expect(screen.getByRole("tab", { name: "Timer" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Activity" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Today's changes" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Timer" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Activity" })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Drafts" })).not.toBeInTheDocument();
   });
 
@@ -273,7 +288,7 @@ describe("PlannerPage", () => {
     expect(screen.getAllByText(`${task.title} (Client X / Bugfix)`).length).toBeGreaterThan(0);
   });
 
-  it("renders the inline timer above delete when the selected task is running", () => {
+  it("surfaces the active timer panel and detail Stop control when the selected task is running", () => {
     const dayPlan = buildDayPlan();
     const task = dayPlan.tasks[0];
     dayPlan.activeTimer = {
@@ -289,9 +304,10 @@ describe("PlannerPage", () => {
 
     render(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
 
-    const stopButtons = screen.getAllByRole("button", { name: /stop active timer/i });
+    const stopButtons = screen.getAllByRole("button", { name: /stop timer/i });
     expect(stopButtons.length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText(`${task.title} (Without project)`).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText(`${task.title} (Without project)`)).toBeInTheDocument();
+    expect(screen.getAllByText("Running").length).toBeGreaterThanOrEqual(2);
   });
 
   it("uses 'Without project' as the project dropdown placeholder when Toggl is connected with no default", () => {
@@ -310,7 +326,8 @@ describe("PlannerPage", () => {
   it("shows an error when saving task details fails", async () => {
     const user = userEvent.setup();
     const onUpdateTask = vi.fn().mockRejectedValue(new Error("Schedule conflict with Standup"));
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => undefined);
+    const toastErrorSpy = vi.mocked(toast.error);
+    toastErrorSpy.mockClear();
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     render(<PlannerPage {...buildPlannerPageProps({ onUpdateTask })} />);
@@ -318,8 +335,9 @@ describe("PlannerPage", () => {
     await user.click(screen.getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(
+      expect(toastErrorSpy).toHaveBeenCalledWith(
         'Tasks can\'t overlap on the timeline. This change would overlap with "Standup". Shorten or move this task, or clear the conflicting event first.',
+        { duration: 8000 },
       );
     });
     expect(errorSpy).toHaveBeenCalledWith(

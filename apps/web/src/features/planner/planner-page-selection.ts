@@ -1,5 +1,5 @@
 import type { DragEndEvent } from "@dnd-kit/core";
-import type { CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
+import type { CalendarEventView, PlannerDuplicateResult, ScheduleBlock, Task } from "@timefraim/shared";
 import { startTransition } from "react";
 import type { PlannerScheduleBlockUpdateInput } from "@/features/planner/types";
 
@@ -20,6 +20,12 @@ export function filterQueueTasks(tasks: Task[], search: string) {
 
     return !needle || [task.title, task.notes ?? ""].join(" ").toLowerCase().includes(needle);
   });
+}
+
+export function selectDoneTasks(tasks: Task[]) {
+  return tasks
+    .filter((task) => task.status === "done")
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
 export function resolveTaskSelection(args: {
@@ -61,10 +67,20 @@ export function resolveSelectedCalendarEvent(
 
 export async function handlePlannerDragEnd(args: {
   event: DragEndEvent;
+  isAltPressed: boolean;
   onCreateScheduleBlock: (values: { taskId: string; startAt: string; endAt: string; source: "manual" }) => Promise<unknown>;
   onUpdateScheduleBlock: (scheduleBlockId: string, values: PlannerScheduleBlockUpdateInput) => Promise<unknown>;
+  onDuplicateTask: (
+    taskId: string,
+    body?: { startAt?: string; endAt?: string; plannerDate?: string },
+  ) => Promise<PlannerDuplicateResult>;
+  onDuplicateScheduleBlock: (
+    scheduleBlockId: string,
+    body: { startAt: string; endAt: string },
+  ) => Promise<PlannerDuplicateResult>;
   onQueueTaskSelected: (taskId: string) => void;
   onQueueTaskReset: (taskId: string) => void;
+  onDuplicated: (kind: "task" | "schedule-block", id: string) => void;
   onError: (message: string, error: unknown) => void;
 }) {
   const slotIso = args.event.over?.data.current?.slotIso as string | undefined;
@@ -81,6 +97,18 @@ export async function handlePlannerDragEnd(args: {
     }
 
     const endAt = new Date(new Date(slotIso).getTime() + draggedTask.estimatedMinutes * 60000).toISOString();
+
+    if (args.isAltPressed) {
+      try {
+        const result = await args.onDuplicateTask(draggedTask.id, { startAt: slotIso, endAt });
+        if (result.createdTaskId) {
+          args.onDuplicated("task", result.createdTaskId);
+        }
+      } catch (error) {
+        args.onError("Failed to duplicate the task. Please try again.", error);
+      }
+      return;
+    }
 
     try {
       startTransition(() => args.onQueueTaskSelected(draggedTask.id));
@@ -100,6 +128,18 @@ export async function handlePlannerDragEnd(args: {
   const durationMs = new Date(draggedBlock.endAt).getTime() - new Date(draggedBlock.startAt).getTime();
   const endAt = new Date(new Date(slotIso).getTime() + durationMs).toISOString();
   if (slotIso === draggedBlock.startAt && endAt === draggedBlock.endAt) {
+    return;
+  }
+
+  if (args.isAltPressed) {
+    try {
+      const result = await args.onDuplicateScheduleBlock(draggedBlock.id, { startAt: slotIso, endAt });
+      if (result.createdScheduleBlockId) {
+        args.onDuplicated("schedule-block", result.createdScheduleBlockId);
+      }
+    } catch (error) {
+      args.onError("Failed to duplicate the schedule block. Please try again.", error);
+    }
     return;
   }
 

@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import type { Task } from "@timefraim/shared";
 import { getTaskLifecycleValue } from "@/features/planner/task-presentation";
 import type {
@@ -104,5 +105,5 @@ function getActionErrorMessage(message: string, error: unknown) {
 export function showActionError(message: string, error: unknown) {
   const displayMessage = getActionErrorMessage(message, error);
   console.error(displayMessage, error);
-  window.alert(displayMessage);
+  toast.error(displayMessage, { duration: 8000 });
 }

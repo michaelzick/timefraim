@@ -5,9 +5,11 @@ export const draftKindSchema = z.enum([
   "task.create",
   "task.update",
   "task.delete",
+  "task.duplicate",
   "schedule_block.create",
   "schedule_block.update",
   "schedule_block.delete",
+  "schedule_block.duplicate",
   "calendar_event.dismiss",
   "calendar_event.update",
   "timer.start",
@@ -47,12 +49,16 @@ export function formatDraftSummary(kind: DraftKind, payload: Record<string, unkn
       return `Update task ${getPayloadString(payload.taskId)}`.trim();
     case "task.delete":
       return `Delete task ${getPayloadString(payload.taskId)}`.trim();
+    case "task.duplicate":
+      return `Duplicate task ${getPayloadString(payload.sourceTaskId)}`.trim();
     case "schedule_block.create":
       return `Schedule task ${getPayloadString(payload.taskId)} from ${getPayloadString(payload.startAt)} to ${getPayloadString(payload.endAt)}`;
     case "schedule_block.update":
       return `Move schedule block ${getPayloadString(payload.scheduleBlockId)}`;
     case "schedule_block.delete":
       return `Remove schedule block ${getPayloadString(payload.scheduleBlockId)}`;
+    case "schedule_block.duplicate":
+      return `Duplicate schedule block ${getPayloadString(payload.sourceBlockId)} to ${getPayloadString(payload.startAt)}`;
     case "calendar_event.dismiss":
       return `Hide calendar event ${getPayloadString(payload.calendarEventId)}`.trim();
     case "calendar_event.update":

@@ -40,6 +40,12 @@ export const scheduleBlockDeleteSchema = z.object({
   scheduleBlockId: z.string().uuid(),
 });
 
+export const scheduleBlockDuplicatePayloadSchema = z.object({
+  sourceBlockId: z.string().uuid(),
+  startAt: z.string().datetime(),
+  endAt: z.string().datetime(),
+});
+
 export const calendarEventViewSchema = z.object({
   id: z.string(),
   externalEventId: z.string(),
@@ -90,6 +96,7 @@ export type ScheduleBlockState = z.infer<typeof scheduleBlockStateSchema>;
 export type ScheduleBlockCreate = z.infer<typeof scheduleBlockCreateSchema>;
 export type ScheduleBlockUpdate = z.infer<typeof scheduleBlockUpdateSchema>;
 export type ScheduleBlockDelete = z.infer<typeof scheduleBlockDeleteSchema>;
+export type ScheduleBlockDuplicatePayload = z.infer<typeof scheduleBlockDuplicatePayloadSchema>;
 export type CalendarEventView = z.infer<typeof calendarEventViewSchema>;
 export type CalendarEventUpdate = z.infer<typeof calendarEventUpdateSchema>;
 export type TimerSession = z.infer<typeof timerSessionSchema>;

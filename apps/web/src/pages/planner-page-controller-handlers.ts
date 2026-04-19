@@ -1,23 +1,35 @@
-import type { DragEndEvent } from "@dnd-kit/core";
-import { startTransition, type RefObject } from "react";
+import type { PlannerDuplicateResult } from "@timefraim/shared";
+import { startTransition, type MutableRefObject, type RefObject } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import { handlePlannerDragEnd, type PlannerSelection, type SelectedTaskSource } from "@/features/planner/planner-page-selection";
+import { type PlannerSelection, type SelectedTaskSource } from "@/features/planner/planner-page-selection";
 import { EMPTY_CREATE_TASK_VALUES, showActionError, type PlannerCreateTaskValues, type PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
 import { type CalendarEventFormValues, type CreateTaskValues, type PlannerScheduleBlockUpdateInput } from "@/features/planner/types";
 import { buildCalendarEventUpdateInput, buildPlannerCreateTaskInput, buildPlannerTaskUpdateInput, confirmTimelineEventDismiss } from "@/pages/planner-page-actions";
+import { createPlannerDragEndHandler } from "@/pages/planner-drag-end-handler";
 
 export function createPlannerPageHandlers(args: {
   createTask: (values: ReturnType<typeof buildPlannerCreateTaskInput>) => Promise<unknown>;
   createTaskForm: UseFormReturn<CreateTaskValues>;
   date: string;
   detailPanelRef: RefObject<HTMLDivElement | null>;
+  isAltPressedRef: MutableRefObject<boolean>;
   onCreateScheduleBlock: (values: {
     taskId: string;
     startAt: string;
     endAt: string;
     source: "manual";
   }) => Promise<unknown>;
+  onDeleteScheduleBlock: (scheduleBlockId: string) => Promise<unknown>;
+  onDeleteTask: (taskId: string) => Promise<unknown>;
   onDismissCalendarEvent: (calendarEventId: string) => Promise<unknown>;
+  onDuplicateTask: (
+    taskId: string,
+    body?: { startAt?: string; endAt?: string; plannerDate?: string },
+  ) => Promise<PlannerDuplicateResult>;
+  onDuplicateScheduleBlock: (
+    scheduleBlockId: string,
+    body: { startAt: string; endAt: string },
+  ) => Promise<PlannerDuplicateResult>;
   onUpdateCalendarEvent: (
     calendarEventId: string,
     values: ReturnType<typeof buildCalendarEventUpdateInput>,
@@ -49,22 +61,17 @@ export function createPlannerPageHandlers(args: {
     args.createTaskForm.reset(EMPTY_CREATE_TASK_VALUES);
   }
 
-  async function handleDragEnd(event: DragEndEvent) {
-    await handlePlannerDragEnd({
-      event,
-      onCreateScheduleBlock: args.onCreateScheduleBlock,
-      onUpdateScheduleBlock: args.updateScheduleBlock,
-      onQueueTaskSelected: (taskId) => {
-        args.setSelectedTaskState({ taskId, source: "timeline" });
-        args.setPlannerSelection({ type: "timeline-task", taskId });
-      },
-      onQueueTaskReset: (taskId) => {
-        args.setSelectedTaskState({ taskId, source: "queue" });
-        args.setPlannerSelection({ type: "queue-task", taskId });
-      },
-      onError: showActionError,
-    });
-  }
+  const handleDragEnd = createPlannerDragEndHandler({
+    isAltPressedRef: args.isAltPressedRef,
+    onCreateScheduleBlock: args.onCreateScheduleBlock,
+    onDeleteScheduleBlock: args.onDeleteScheduleBlock,
+    onDeleteTask: args.onDeleteTask,
+    onDuplicateTask: args.onDuplicateTask,
+    onDuplicateScheduleBlock: args.onDuplicateScheduleBlock,
+    updateScheduleBlock: args.updateScheduleBlock,
+    setPlannerSelection: args.setPlannerSelection,
+    setSelectedTaskState: args.setSelectedTaskState,
+  });
 
   function handleSelectQueueTask(taskId: string) {
     startTransition(() => {

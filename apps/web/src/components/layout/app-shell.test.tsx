@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { AppShell } from "@/components/layout/app-shell";
-import { buildAuthSession, buildDayPlan, buildTogglSettings } from "@/test/fixtures";
+import { buildAuthSession, buildDayPlan, buildTogglSettings, noopDuplicate } from "@/test/fixtures";
 
 vi.mock("@/pages/planner-page", () => ({
   PlannerPage: () => <div>planner route</div>,
@@ -54,6 +54,8 @@ describe("AppShell", () => {
             onDeleteTask: noopAsync,
             onDismissCalendarEvent: noopAsync,
             onUpdateCalendarEvent: noopAsync,
+            onDuplicateTask: noopDuplicate,
+            onDuplicateScheduleBlock: noopDuplicate,
             onStartTimer: noopAsync,
             onStartEventTimer: noopAsync,
             onStopTimer: noopAsync,

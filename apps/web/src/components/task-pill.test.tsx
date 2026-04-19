@@ -16,10 +16,16 @@ vi.mock("@dnd-kit/core", () => ({
 describe("TaskPill", () => {
   it("keeps custom task controls visibly clickable", () => {
     const { container } = render(
-      <TaskPill task={buildTask()} active={false} onSelect={vi.fn()} onDelete={vi.fn()} />,
+      <TaskPill
+        task={buildTask()}
+        active={false}
+        onSelect={vi.fn()}
+        onDelete={vi.fn()}
+        onDuplicate={vi.fn()}
+      />,
     );
 
     expect(container.firstElementChild).toHaveClass("cursor-pointer");
-    expect(screen.getByRole("button", { name: /delete plan launch week/i })).toHaveClass("cursor-pointer");
+    expect(screen.getByRole("button", { name: /more actions for plan launch week/i })).toHaveClass("cursor-pointer");
   });
 });

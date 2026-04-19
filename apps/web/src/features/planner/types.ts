@@ -1,4 +1,10 @@
-import type { DayPlan, TaskPriority, TaskStatus, TogglIntegrationSettings } from "@timefraim/shared";
+import type {
+  DayPlan,
+  PlannerDuplicateResult,
+  TaskPriority,
+  TaskStatus,
+  TogglIntegrationSettings,
+} from "@timefraim/shared";
 
 export type TaskLifecycleValue = "active" | "done";
 
@@ -55,6 +61,14 @@ export type PlannerPageProps = {
   onCreateScheduleBlock: (values: PlannerScheduleBlockInput) => Promise<unknown>;
   onUpdateScheduleBlock: (scheduleBlockId: string, values: PlannerScheduleBlockUpdateInput) => Promise<unknown>;
   onDeleteScheduleBlock: (scheduleBlockId: string) => Promise<unknown>;
+  onDuplicateTask: (
+    taskId: string,
+    body?: { startAt?: string; endAt?: string; plannerDate?: string },
+  ) => Promise<PlannerDuplicateResult>;
+  onDuplicateScheduleBlock: (
+    scheduleBlockId: string,
+    body: { startAt: string; endAt: string },
+  ) => Promise<PlannerDuplicateResult>;
   onDismissCalendarEvent: (calendarEventId: string) => Promise<unknown>;
   onUpdateCalendarEvent: (calendarEventId: string, values: PlannerCalendarEventUpdateInput) => Promise<unknown>;
   onStartTimer: (taskId: string) => Promise<unknown>;

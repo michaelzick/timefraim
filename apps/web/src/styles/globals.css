@@ -84,3 +84,24 @@ select {
 ::selection {
   background: rgba(255, 111, 59, 0.28);
 }
+
+@keyframes adhd-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 111, 59, 0.55), 0 0 0 2px var(--accent);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 111, 59, 0), 0 0 0 2px var(--accent);
+  }
+}
+
+.adhd-pulse {
+  animation: adhd-pulse 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adhd-pulse {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px rgba(255, 111, 59, 0.35);
+  }
+}

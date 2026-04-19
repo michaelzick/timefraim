@@ -4,6 +4,10 @@ import {
   applyCalendarEventUpdateDraft,
 } from "./planner-calendar-changes.js";
 import {
+  applyScheduleBlockDuplicateDraft,
+  applyTaskDuplicateDraft,
+} from "./planner-duplicate-changes.js";
+import {
   applyScheduleBlockCreateDraft,
   applyScheduleBlockDeleteDraft,
   applyScheduleBlockUpdateDraft,
@@ -24,12 +28,16 @@ export async function applyDraftChange(context: DraftHandlerContext): Promise<Sy
       return applyTaskUpdateDraft(context);
     case "task.delete":
       return applyTaskDeleteDraft(context);
+    case "task.duplicate":
+      return applyTaskDuplicateDraft(context);
     case "schedule_block.create":
       return applyScheduleBlockCreateDraft(context);
     case "schedule_block.update":
       return applyScheduleBlockUpdateDraft(context);
     case "schedule_block.delete":
       return applyScheduleBlockDeleteDraft(context);
+    case "schedule_block.duplicate":
+      return applyScheduleBlockDuplicateDraft(context);
     case "calendar_event.dismiss":
       return applyCalendarEventDismissDraft(context);
     case "calendar_event.update":
