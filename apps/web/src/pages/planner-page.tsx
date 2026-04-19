@@ -2,6 +2,7 @@ import { DndContext, DragOverlay, pointerWithin, type DragStartEvent } from "@dn
 import { useState } from "react";
 import { ActiveDragPreview, type ActiveDragPayload } from "@/features/planner/active-drag-preview";
 import { PlannerDetailColumn, PlannerQueueColumn, PlannerTimelineColumn } from "@/features/planner/planner-page-columns";
+import { PlannerToolbar } from "@/features/planner/planner-toolbar";
 import type { PlannerPageProps } from "@/features/planner/types";
 import { usePlannerKeyboardShortcuts } from "@/pages/use-planner-keyboard-shortcuts";
 import { usePlannerPageController } from "@/pages/use-planner-page-controller";
@@ -97,19 +98,26 @@ export function PlannerPage({
       }}
       onDragCancel={clearActiveDrag}
     >
-      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
+      <div className="space-y-6">
+        <PlannerToolbar
+          date={date}
+          isSyncing={isSyncing}
+          search={search}
+          onDateChange={onDateChange}
+          onSyncCalendar={() => void onSyncCalendar()}
+          onSearchChange={setSearch}
+        />
+        <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
         <PlannerQueueColumn
           createTaskForm={createTaskForm}
           totalTasks={dayPlan.tasks.length}
           isMutating={isMutating}
           togglSettings={togglSettings}
-          search={search}
           selectedTaskId={plannerSelection.type === "queue-task" ? selectedTask?.id ?? null : null}
           activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
           tasks={filteredQueueTasks}
           doneTasks={doneTasks}
           onCreateTask={handleCreateTask}
-          onSearchChange={setSearch}
           onSelectTask={handleSelectQueueTask}
           onDeleteTask={(taskId, title) => mutationHandlers.handleQueueTaskDelete(taskId, title)}
           onDuplicateTask={(task) => mutationHandlers.handleDuplicateTask(task)}
@@ -120,11 +128,8 @@ export function PlannerPage({
         <PlannerTimelineColumn
           date={date}
           dayPlan={dayPlan}
-          isSyncing={isSyncing}
           selectedTimelineTaskId={selectedTimelineTaskId}
           selectedTimelineCalendarEventId={selectedTimelineCalendarEventId}
-          onDateChange={onDateChange}
-          onSyncCalendar={() => void onSyncCalendar()}
           onSelectTask={handleSelectTimelineTask}
           onSelectCalendarEvent={handleSelectCalendarEvent}
           onDismissCalendarEvent={(calendarEventId, title) => void handleDismissCalendarEvent(calendarEventId, title)}
@@ -152,6 +157,7 @@ export function PlannerPage({
           onStopTimer={() => void onStopTimer()}
           onSelectTimerTask={handleSelectTimelineTask}
         />
+        </div>
       </div>
       <DragOverlay dropAnimation={null}>
         {activeDragPayload ? <ActiveDragPreview payload={activeDragPayload} /> : null}

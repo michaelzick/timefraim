@@ -1,6 +1,7 @@
 import type { CalendarEventView, DayPlan, Task, TogglIntegrationSettings } from "@timefraim/shared";
 import type { RefObject } from "react";
 import type { UseFormReturn } from "react-hook-form";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ActiveTimerPanel } from "@/features/planner/active-timer-panel";
 import { ActivityLogCard } from "@/features/planner/activity-log-card";
 import { CalendarEventDetailCard } from "@/features/planner/calendar-event-detail-card";
@@ -47,40 +48,44 @@ export function PlannerDetailColumn({
   onSelectTimerTask,
 }: PlannerDetailColumnProps) {
   return (
-    <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
-      <ActiveTimerPanel
-        dayPlan={dayPlan}
-        togglSettings={togglSettings}
-        onStopTimer={onStopTimer}
-        onSelectTimerTask={onSelectTimerTask}
-      />
-      {selectedCalendarEvent ? (
-        <CalendarEventDetailCard
-          detailPanelRef={detailPanelRef}
-          event={selectedCalendarEvent}
-          activeTimerCalendarEventId={activeTimerCalendarEventId}
-          isMutating={isMutating}
-          togglSettings={togglSettings}
-          form={calendarEventForm}
-          onSaveEvent={onSaveCalendarEvent}
-          onStartEventTimer={onStartEventTimer}
-          onStopTimer={onStopTimer}
-        />
-      ) : (
-        <TaskDetailCard
-          detailPanelRef={detailPanelRef}
-          form={detailForm}
-          selectedTask={selectedTask}
-          activeTimerTaskId={activeTimerTaskId}
-          isMutating={isMutating}
-          togglSettings={togglSettings}
-          onDeleteTask={onDeleteTask}
-          onSaveTask={onSaveTask}
-          onStartTimer={onStartTimer}
-          onStopTimer={onStopTimer}
-        />
-      )}
-      <ActivityLogCard dayPlan={dayPlan} />
+    <div className="xl:sticky xl:top-6 xl:self-start">
+      <ScrollArea className="xl:h-[calc(100vh-3rem)]">
+        <div className="space-y-6 xl:pr-2">
+          <ActiveTimerPanel
+            dayPlan={dayPlan}
+            togglSettings={togglSettings}
+            onStopTimer={onStopTimer}
+            onSelectTimerTask={onSelectTimerTask}
+          />
+          {selectedCalendarEvent ? (
+            <CalendarEventDetailCard
+              detailPanelRef={detailPanelRef}
+              event={selectedCalendarEvent}
+              activeTimerCalendarEventId={activeTimerCalendarEventId}
+              isMutating={isMutating}
+              togglSettings={togglSettings}
+              form={calendarEventForm}
+              onSaveEvent={onSaveCalendarEvent}
+              onStartEventTimer={onStartEventTimer}
+              onStopTimer={onStopTimer}
+            />
+          ) : (
+            <TaskDetailCard
+              detailPanelRef={detailPanelRef}
+              form={detailForm}
+              selectedTask={selectedTask}
+              activeTimerTaskId={activeTimerTaskId}
+              isMutating={isMutating}
+              togglSettings={togglSettings}
+              onDeleteTask={onDeleteTask}
+              onSaveTask={onSaveTask}
+              onStartTimer={onStartTimer}
+              onStopTimer={onStopTimer}
+            />
+          )}
+          <ActivityLogCard dayPlan={dayPlan} />
+        </div>
+      </ScrollArea>
     </div>
   );
 }

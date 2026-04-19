@@ -244,11 +244,15 @@ describe("PlannerPage", () => {
     expect(screen.queryByText("No pending AI drafts. MCP proposals will land here for approval.")).not.toBeInTheDocument();
   });
 
-  it("renders the refreshed planner header", () => {
+  it("renders the planner toolbar with date, sync, and filter controls", () => {
     render(<PlannerPage {...buildPlannerPageProps()} />);
 
-    expect(screen.getByRole("heading", { name: "Focus on what matters today." })).toBeInTheDocument();
-    expect(screen.queryByText("Timebox the right work, then protect it.")).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /planner toolbar/i })).toBeInTheDocument();
+    expect(screen.getByLabelText("Planner date")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sync calendar/i })).toBeInTheDocument();
+    expect(screen.getByLabelText("Filter tasks")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Focus on what matters today." })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Tasks ready to place" })).not.toBeInTheDocument();
   });
 
   it("shows the idle ActiveTimerPanel prompt when no timer is running", () => {
@@ -262,7 +266,7 @@ describe("PlannerPage", () => {
   it("renders the activity log without tabs in the right rail", () => {
     render(<PlannerPage {...buildPlannerPageProps()} />);
 
-    expect(screen.getByRole("heading", { name: "Today's changes" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Today's changes/ })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Timer" })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Activity" })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Drafts" })).not.toBeInTheDocument();
