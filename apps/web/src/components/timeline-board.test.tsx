@@ -78,7 +78,6 @@ describe("TimelineBoard", () => {
 
     expect(screen.getByText("Google Calendar")).toBeInTheDocument();
     expect(screen.getByText("High")).toBeInTheDocument();
-    expect(screen.getByText("Drop a task onto the timeline")).toBeInTheDocument();
     expect(screen.queryByText(/synced/i)).not.toBeInTheDocument();
 
     const item = getTimelineItem("Team sync");

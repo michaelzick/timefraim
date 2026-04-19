@@ -11,7 +11,6 @@ import {
   TimelineScheduleBlock,
   type TimelineBlockRunState,
 } from "@/components/timeline-schedule-block";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 function TimelineSlot({
@@ -84,9 +83,6 @@ export function TimelineBoard({
 
   return (
     <div className="relative rounded-[28px] border border-white/10 bg-[rgba(255,255,255,0.02)] pl-20 pr-4">
-      <div className="absolute left-5 top-5 z-10 flex items-center gap-2">
-        <Badge>Drop a task onto the timeline</Badge>
-      </div>
       <div className="relative" style={{ height: containerHeight }}>
         {slots.map((slot) => (
           <TimelineSlot key={slot.id} slot={slot} label={slot.label} />
