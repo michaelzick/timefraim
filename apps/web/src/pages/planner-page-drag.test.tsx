@@ -1,9 +1,9 @@
 import type { ComponentProps, ReactNode } from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { PlannerPage } from "@/pages/planner-page";
-import { buildDayPlan, buildTask, buildTogglSettings, noopDuplicate } from "@/test/fixtures";
+import { buildDayPlan, buildDuplicateResult, buildTask, buildTogglSettings, noopDuplicate } from "@/test/fixtures";
 
 vi.mock("@dnd-kit/core", () => ({
   DndContext: ({
@@ -179,5 +179,43 @@ describe("PlannerPage drag behavior", () => {
         endAt: "2026-04-06T18:00:00.000Z",
       });
     });
+  });
+
+  it("duplicates the underlying task when option-dragging a scheduled block", async () => {
+    const user = userEvent.setup();
+    const onDuplicateTask = vi.fn().mockResolvedValue(
+      buildDuplicateResult({
+        kind: "task.duplicate",
+        createdTaskId: "task-2f8f9660-0000-4000-8000-000000000002",
+        createdScheduleBlockId: "block-2",
+      }),
+    );
+    const onDuplicateScheduleBlock = vi.fn().mockResolvedValue(
+      buildDuplicateResult({
+        kind: "schedule_block.duplicate",
+        createdScheduleBlockId: "block-2",
+      }),
+    );
+
+    render(
+      <PlannerPage
+        {...buildPlannerPageProps({ onDuplicateTask, onDuplicateScheduleBlock })}
+      />,
+    );
+
+    fireEvent.keyDown(window, { key: "Alt", altKey: true });
+    await user.click(screen.getByRole("button", { name: /trigger scheduled drag/i }));
+    fireEvent.keyUp(window, { key: "Alt", altKey: false });
+
+    await waitFor(() => {
+      expect(onDuplicateTask).toHaveBeenCalledWith(
+        "task-1f8f9660-0000-4000-8000-000000000001",
+        {
+          startAt: "2026-04-06T17:15:00.000Z",
+          endAt: "2026-04-06T18:00:00.000Z",
+        },
+      );
+    });
+    expect(onDuplicateScheduleBlock).not.toHaveBeenCalled();
   });
 });

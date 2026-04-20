@@ -115,7 +115,7 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
       entityType: "schedule_block",
       entityId: block.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: { ...context.draft.payload, taskTitle: task.title },
     },
     context.client,
   );
@@ -129,6 +129,7 @@ export async function applyScheduleBlockUpdateDraft(context: DraftHandlerContext
   if (!existingBlock) {
     throw new Error(`Schedule block ${payload.scheduleBlockId} not found`);
   }
+  const task = await context.repository.getTask(existingBlock.taskId, context.client);
 
   const block = await updateScheduleBlockWithValidation(context, {
     existingBlock,
@@ -145,7 +146,7 @@ export async function applyScheduleBlockUpdateDraft(context: DraftHandlerContext
       entityType: "schedule_block",
       entityId: block.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: { ...context.draft.payload, taskTitle: task?.title ?? null },
     },
     context.client,
   );
@@ -179,7 +180,7 @@ export async function applyScheduleBlockDeleteDraft(context: DraftHandlerContext
       entityType: "schedule_block",
       entityId: existingBlock.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: { ...context.draft.payload, taskTitle: task?.title ?? null },
     },
     context.client,
   );

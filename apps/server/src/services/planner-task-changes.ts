@@ -31,7 +31,7 @@ export async function applyTaskCreateDraft(context: DraftHandlerContext) {
       entityType: "task",
       entityId: task.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: { ...context.draft.payload, taskTitle: task.title },
     },
     context.client,
   );
@@ -88,7 +88,7 @@ export async function applyTaskUpdateDraft(context: DraftHandlerContext) {
       entityType: "task",
       entityId: task.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: { ...context.draft.payload, taskTitle: task.title },
     },
     context.client,
   );
@@ -130,7 +130,7 @@ export async function applyTaskDeleteDraft(context: DraftHandlerContext) {
       entityType: "task",
       entityId: task.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: { ...context.draft.payload, taskTitle: task.title },
     },
     context.client,
   );

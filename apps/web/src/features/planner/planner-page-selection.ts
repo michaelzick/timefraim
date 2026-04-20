@@ -133,9 +133,9 @@ export async function handlePlannerDragEnd(args: {
 
   if (args.isAltPressed) {
     try {
-      const result = await args.onDuplicateScheduleBlock(draggedBlock.id, { startAt: slotIso, endAt });
-      if (result.createdScheduleBlockId) {
-        args.onDuplicated("schedule-block", result.createdScheduleBlockId);
+      const result = await args.onDuplicateTask(draggedBlock.taskId, { startAt: slotIso, endAt });
+      if (result.createdTaskId) {
+        args.onDuplicated("task", result.createdTaskId);
       }
     } catch (error) {
       args.onError("Failed to duplicate the schedule block. Please try again.", error);

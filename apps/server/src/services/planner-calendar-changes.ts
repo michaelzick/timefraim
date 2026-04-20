@@ -18,7 +18,7 @@ export async function applyCalendarEventDismissDraft(context: DraftHandlerContex
       entityType: "calendar_event",
       entityId: calendarEvent.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: { ...context.draft.payload, calendarEventTitle: calendarEvent.title },
     },
     context.client,
   );
@@ -47,7 +47,7 @@ export async function applyCalendarEventUpdateDraft(context: DraftHandlerContext
       entityType: "calendar_event",
       entityId: calendarEvent.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: { ...context.draft.payload, calendarEventTitle: calendarEvent.title },
     },
     context.client,
   );
