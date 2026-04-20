@@ -87,7 +87,11 @@ export async function duplicateTaskInContext(context: DraftHandlerContext): Prom
       entityType: "task",
       entityId: newTask.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: {
+        ...context.draft.payload,
+        sourceTaskTitle: sourceTask.title,
+        taskTitle: newTask.title,
+      },
     },
     context.client,
   );
@@ -103,6 +107,7 @@ export async function duplicateScheduleBlockInContext(
   if (!sourceBlock) {
     throw new Error(`Schedule block ${payload.sourceBlockId} not found`);
   }
+  const task = await context.repository.getTask(sourceBlock.taskId, context.client);
 
   const range = {
     startAt: startOfDay(payload.startAt.slice(0, 10)).toISOString(),
@@ -141,7 +146,7 @@ export async function duplicateScheduleBlockInContext(
       entityType: "schedule_block",
       entityId: block.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: { ...context.draft.payload, taskTitle: task?.title ?? null },
     },
     context.client,
   );

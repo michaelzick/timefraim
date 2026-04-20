@@ -11,6 +11,7 @@ import { pool, withTransaction } from "../db/pool.js";
 import { PlannerRepository } from "../repositories/planner-repository.js";
 import { endOfDay, startOfDay, todayIsoDate } from "../utils/date.js";
 import { applyPlannerDraft } from "./planner-service-apply.js";
+import { resolveAuditLogDisplaySummaries } from "./planner-audit-log-display.js";
 import { syncPlannerGoogleCalendar } from "./planner-service-calendar.js";
 import {
   duplicateScheduleBlockForUser,
@@ -88,7 +89,7 @@ export class PlannerService {
       scheduleBlocks,
       calendarEvents,
       drafts,
-      auditLogs,
+      auditLogs: resolveAuditLogDisplaySummaries(auditLogs, { tasks, scheduleBlocks, calendarEvents }),
       activeTimer,
       integrationStatus,
     });

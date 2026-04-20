@@ -11,6 +11,7 @@ export const auditLogSchema = z.object({
   entityType: z.string(),
   entityId: z.string(),
   diffSummary: z.string(),
+  displaySummary: z.string(),
   payload: z.record(z.string(), z.unknown()),
   createdAt: z.string().datetime(),
 });

@@ -116,6 +116,7 @@ export function mapAuditLog(row: QueryResultRow) {
     entityType: row.entity_type,
     entityId: row.entity_id,
     diffSummary: row.diff_summary,
+    displaySummary: row.diff_summary,
     payload: row.payload,
     createdAt: asIso(row.created_at),
   });

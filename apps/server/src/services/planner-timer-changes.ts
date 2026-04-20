@@ -44,7 +44,7 @@ export async function applyTimerStartDraft(context: DraftHandlerContext) {
       entityType: "timer_session",
       entityId: timer.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: { ...context.draft.payload, taskTitle: task.title },
     },
     context.client,
   );
@@ -72,7 +72,7 @@ export async function applyTimerStartEventDraft(context: DraftHandlerContext) {
       entityType: "timer_session",
       entityId: timer.id,
       diffSummary: context.draft.diffSummary,
-      payload: context.draft.payload,
+      payload: { ...context.draft.payload, calendarEventTitle: calendarEvent.title },
     },
     context.client,
   );

@@ -2,6 +2,7 @@ import type { DayPlan } from "@timefraim/shared";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { formatDateTime } from "@/lib/utils";
 
 type ActivityLogCardProps = {
   dayPlan: DayPlan;
@@ -41,10 +42,10 @@ export function ActivityLogCard({ dayPlan }: ActivityLogCardProps) {
                     {entry.actorRole}
                   </span>
                   <span className="text-xs text-[var(--muted)]">
-                    {new Date(entry.createdAt).toLocaleTimeString()}
+                    {formatDateTime(entry.createdAt)}
                   </span>
                 </div>
-                <p className="text-sm text-white">{entry.diffSummary}</p>
+                <p className="text-sm text-white">{entry.displaySummary}</p>
               </div>
             ))
           )}
