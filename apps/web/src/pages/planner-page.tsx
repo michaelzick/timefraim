@@ -116,14 +116,12 @@ export function PlannerPage({
           selectedTaskId={plannerSelection.type === "queue-task" ? selectedTask?.id ?? null : null}
           activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
           tasks={filteredQueueTasks}
-          doneTasks={doneTasks}
           onCreateTask={handleCreateTask}
           onSelectTask={handleSelectQueueTask}
           onDeleteTask={(taskId, title) => mutationHandlers.handleQueueTaskDelete(taskId, title)}
           onDuplicateTask={(task) => mutationHandlers.handleDuplicateTask(task)}
           onStartTaskTimer={(taskId) => mutationHandlers.handleStartTaskTimer(taskId)}
           onMarkTaskDone={(task) => mutationHandlers.handleMarkTaskDone(task)}
-          onReactivateDoneTask={(task) => mutationHandlers.handleReactivateDoneTask(task)}
         />
         <PlannerTimelineColumn
           date={date}
@@ -145,6 +143,7 @@ export function PlannerPage({
           selectedTask={selectedTask}
           selectedCalendarEvent={selectedCalendarEvent}
           dayPlan={dayPlan}
+          doneTasks={doneTasks}
           activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
           activeTimerCalendarEventId={dayPlan.activeTimer?.calendarEventId ?? null}
           isMutating={isMutating}
@@ -156,6 +155,7 @@ export function PlannerPage({
           onStartEventTimer={(calendarEventId) => void onStartEventTimer(calendarEventId)}
           onStopTimer={() => void onStopTimer()}
           onSelectTimerTask={handleSelectTimelineTask}
+          onReactivateDoneTask={(task) => mutationHandlers.handleReactivateDoneTask(task)}
         />
         </div>
       </div>

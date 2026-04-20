@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ActiveTimerPanel } from "@/features/planner/active-timer-panel";
 import { ActivityLogCard } from "@/features/planner/activity-log-card";
 import { CalendarEventDetailCard } from "@/features/planner/calendar-event-detail-card";
+import { DoneTodayCard } from "@/features/planner/done-today-card";
 import { TaskDetailCard } from "@/features/planner/task-detail-card";
 import type { CalendarEventFormValues, TaskFormValues } from "@/features/planner/types";
 
@@ -15,6 +16,7 @@ type PlannerDetailColumnProps = {
   selectedTask: Task | null;
   selectedCalendarEvent: CalendarEventView | null;
   dayPlan: DayPlan;
+  doneTasks: Task[];
   activeTimerTaskId: string | null;
   activeTimerCalendarEventId: string | null;
   isMutating: boolean;
@@ -26,6 +28,7 @@ type PlannerDetailColumnProps = {
   onStartEventTimer: (calendarEventId: string) => void;
   onStopTimer: () => void;
   onSelectTimerTask?: (taskId: string) => void;
+  onReactivateDoneTask: (task: Task) => void;
 };
 
 export function PlannerDetailColumn({
@@ -35,6 +38,7 @@ export function PlannerDetailColumn({
   selectedTask,
   selectedCalendarEvent,
   dayPlan,
+  doneTasks,
   activeTimerTaskId,
   activeTimerCalendarEventId,
   isMutating,
@@ -46,6 +50,7 @@ export function PlannerDetailColumn({
   onStartEventTimer,
   onStopTimer,
   onSelectTimerTask,
+  onReactivateDoneTask,
 }: PlannerDetailColumnProps) {
   return (
     <div className="xl:sticky xl:top-6 xl:self-start">
@@ -82,6 +87,9 @@ export function PlannerDetailColumn({
               onStartTimer={onStartTimer}
               onStopTimer={onStopTimer}
             />
+          )}
+          {doneTasks.length > 0 && (
+            <DoneTodayCard tasks={doneTasks} onReactivate={onReactivateDoneTask} />
           )}
           <ActivityLogCard dayPlan={dayPlan} />
         </div>
