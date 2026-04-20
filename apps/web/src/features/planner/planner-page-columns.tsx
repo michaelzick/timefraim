@@ -15,14 +15,12 @@ type PlannerQueueColumnProps = {
   selectedTaskId: string | null;
   activeTimerTaskId: string | null;
   tasks: Task[];
-  doneTasks: Task[];
   onCreateTask: (values: CreateTaskValues) => Promise<void>;
   onSelectTask: (taskId: string) => void;
   onDeleteTask: (taskId: string, title: string) => void;
   onDuplicateTask: (task: Task) => void;
   onStartTaskTimer: (taskId: string) => void;
   onMarkTaskDone: (task: Task) => void;
-  onReactivateDoneTask: (task: Task) => void;
 };
 
 export function PlannerQueueColumn({
@@ -33,14 +31,12 @@ export function PlannerQueueColumn({
   selectedTaskId,
   activeTimerTaskId,
   tasks,
-  doneTasks,
   onCreateTask,
   onSelectTask,
   onDeleteTask,
   onDuplicateTask,
   onStartTaskTimer,
   onMarkTaskDone,
-  onReactivateDoneTask,
 }: PlannerQueueColumnProps) {
   return (
     <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
@@ -55,13 +51,11 @@ export function PlannerQueueColumn({
         selectedTaskId={selectedTaskId}
         activeTimerTaskId={activeTimerTaskId}
         tasks={tasks}
-        doneTasks={doneTasks}
         onSelectTask={onSelectTask}
         onDeleteTask={onDeleteTask}
         onDuplicateTask={onDuplicateTask}
         onStartTaskTimer={onStartTaskTimer}
         onMarkTaskDone={onMarkTaskDone}
-        onReactivateDoneTask={onReactivateDoneTask}
       />
     </div>
   );
