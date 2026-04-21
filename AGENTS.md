@@ -33,6 +33,8 @@ timefraim/
 │   └── web/             # Vite + React SPA
 ├── packages/
 │   └── shared/          # Zod schemas shared by apps
+├── skills/
+│   └── sync-agent-briefs/ # Repo-local maintenance skill for AGENTS/CLAUDE/GEMINI sync
 ├── supabase/
 │   ├── config.toml
 │   ├── seed.sql
@@ -110,6 +112,8 @@ Recent migrations (see filenames for dates): task priority, per-user Toggl conne
 Root scripts (all use `corepack pnpm` under the hood):
 
 ```bash
+pnpm agent-briefs:sync   # regenerate CLAUDE.md and GEMINI.md from AGENTS.md
+pnpm agent-briefs:check  # fail if CLAUDE.md or GEMINI.md drift from AGENTS.md
 pnpm dev           # web + server in parallel
 pnpm dev:web       # web only (5173)
 pnpm dev:server    # server only (4000)
@@ -117,7 +121,7 @@ pnpm lint          # ESLint across shared/server/web
 pnpm typecheck     # tsc --noEmit across all packages
 pnpm test          # Vitest across all packages
 pnpm build         # build shared → server → web
-pnpm check         # lint + typecheck + test + build
+pnpm check         # agent brief sync check + lint + typecheck + test + build
 ```
 
 Supabase (local):
@@ -128,7 +132,7 @@ supabase migration up    # apply pending migrations
 supabase db reset        # drop, recreate, run migrations + seed
 ```
 
-Before opening a PR, run `pnpm check` — it is the same gate CI would use.
+No change is done until `pnpm lint` and `pnpm typecheck` pass locally. Before opening a PR, run `pnpm check` — it is the same gate CI uses.
 
 ## 8. Environment
 
@@ -150,6 +154,7 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 - **Testing:** co-located `*.test.ts[x]`, Vitest runner, React Testing Library for components. `max-lines` and several type-safety rules are off in tests.
 - **Dates:** always `timestamptz` in DB, always UTC on the wire. Frontend passes timezone offset via `tz` query param.
 - **Secrets:** integration tokens encrypted via `integration-crypto.ts` before hitting the DB.
+- **Completion gate:** never mark work done while `pnpm lint` or `pnpm typecheck` fail. When structural or meaningful project facts change, update `AGENTS.md`, run `pnpm agent-briefs:sync`, and keep `CLAUDE.md` / `GEMINI.md` in lockstep.
 
 ## 10. Key files map
 
@@ -168,6 +173,7 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 | [apps/server/src/integration/toggl-track.ts](apps/server/src/integration/toggl-track.ts) | Toggl client |
 | [apps/server/src/mcp/create-mcp-server.ts](apps/server/src/mcp/create-mcp-server.ts) | MCP tools exposed to agents |
 | [packages/shared/src/index.ts](packages/shared/src/index.ts) | Shared schema barrel |
+| [skills/sync-agent-briefs/SKILL.md](skills/sync-agent-briefs/SKILL.md) | Repo-local workflow for syncing agent orientation files |
 | [supabase/migrations/](supabase/migrations/) | Schema evolution |
 | [eslint.config.mjs](eslint.config.mjs) | Lint rules incl. `max-lines: 200` |
 
@@ -184,6 +190,6 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 - Changing root `package.json` scripts, ESLint rules that affect structure (e.g. `max-lines`), or environment variables in `.env.example`.
 - Changing a file listed in [Key files map](#10-key-files-map), or adding something that belongs in it.
 
-**Also update the two sibling files** — [CLAUDE.md](CLAUDE.md) and [GEMINI.md](GEMINI.md) — in the same edit so every harness reads the same truth. If the three files ever diverge, treat it as a bug and reconcile.
+Treat `AGENTS.md` as the canonical source for the mirrored harness briefs. After updating it, run `pnpm agent-briefs:sync` and `pnpm agent-briefs:check` so [CLAUDE.md](CLAUDE.md) and [GEMINI.md](GEMINI.md) stay aligned.
 
 Do **not** use this file for ephemeral notes (in-flight TODOs, session state, debugging logs). It is a map, not a journal.

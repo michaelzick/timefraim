@@ -12,6 +12,8 @@
     "packages/*"
   ],
   "scripts": {
+    "agent-briefs:sync": "node skills/sync-agent-briefs/scripts/sync-agent-briefs.mjs",
+    "agent-briefs:check": "node skills/sync-agent-briefs/scripts/sync-agent-briefs.mjs --check",
     "dev": "corepack pnpm -r --parallel --filter @timefraim/server --filter @timefraim/web dev",
     "dev:web": "corepack pnpm --filter @timefraim/web dev",
     "dev:server": "corepack pnpm --filter @timefraim/server dev",
@@ -19,7 +21,7 @@
     "typecheck": "corepack pnpm --filter @timefraim/shared typecheck && corepack pnpm --filter @timefraim/server typecheck && corepack pnpm --filter @timefraim/web typecheck",
     "build": "corepack pnpm --filter @timefraim/shared build && corepack pnpm --filter @timefraim/server build && corepack pnpm --filter @timefraim/web build",
     "test": "corepack pnpm --filter @timefraim/shared test && corepack pnpm --filter @timefraim/server test && corepack pnpm --filter @timefraim/web test",
-    "check": "corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test && corepack pnpm build"
+    "check": "corepack pnpm agent-briefs:check && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test && corepack pnpm build"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.1",
