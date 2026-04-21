@@ -71,14 +71,14 @@ describe("useScheduleBlockEndNotification", () => {
     expect(ctor).toHaveBeenCalledTimes(1);
   });
 
-  it("skips blocks whose end time is more than 10 minutes stale", async () => {
+  it("skips blocks that ended before notifications were enabled", async () => {
     const { ctor } = stubNotification("granted");
     const task = buildTask({ id: "task-1", title: "Stale focus" });
     const block: ScheduleBlock = {
       id: "block-stale",
       taskId: task.id,
       startAt: "2026-04-20T07:00:00.000Z",
-      endAt: "2026-04-20T07:30:00.000Z",
+      endAt: "2026-04-20T08:30:00.000Z",
       source: "manual",
       state: "confirmed",
       googleEventId: null,
@@ -93,6 +93,32 @@ describe("useScheduleBlockEndNotification", () => {
     });
 
     expect(ctor).not.toHaveBeenCalled();
+  });
+
+  it("fires a delayed notification after the browser regains focus", async () => {
+    const { ctor } = stubNotification("granted");
+    const task = buildTask({ id: "task-1", title: "Delayed focus" });
+    const block: ScheduleBlock = {
+      id: "block-delayed",
+      taskId: task.id,
+      startAt: "2026-04-20T09:00:00.000Z",
+      endAt: "2026-04-20T09:10:00.000Z",
+      source: "manual",
+      state: "confirmed",
+      googleEventId: null,
+      createdAt: "2026-04-20T08:00:00.000Z",
+      updatedAt: "2026-04-20T08:00:00.000Z",
+    };
+
+    render(<Harness enabled scheduleBlocks={[block]} tasksById={new Map([[task.id, task]])} />);
+
+    await act(async () => {
+      vi.setSystemTime(new Date("2026-04-20T10:30:00.000Z"));
+      window.dispatchEvent(new Event("focus"));
+    });
+
+    expect(ctor).toHaveBeenCalledTimes(1);
+    expect(ctor).toHaveBeenCalledWith("Task ended", expect.objectContaining({ body: "Delayed focus" }));
   });
 
   it("does not request permission automatically on mount", () => {

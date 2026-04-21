@@ -71,7 +71,7 @@ export function SettingsPage({
             <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
               <p className="text-sm font-medium text-white">Scope guardrails</p>
               <p className="mt-2 text-sm text-[var(--muted-strong)]">
-                Selected source calendars sync as blockers on the timeline, while planner-created time blocks write to the dedicated planner calendar and newly created planner tasks mirror into your default Google Tasks list.
+                Selected calendars show up as blockers on the timeline. Planner-created blocks go to the planner calendar, and new planner tasks copy to your default Google Tasks list.
               </p>
             </div>
           </div>
