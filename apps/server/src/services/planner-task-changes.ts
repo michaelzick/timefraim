@@ -1,17 +1,38 @@
 import type { TaskInput, TaskUpdate } from "@timefraim/shared";
 import type { DraftHandlerContext } from "./planner-service-types.js";
 import { updateScheduleBlockWithValidation } from "./planner-schedule-changes.js";
+import { todayIsoDate } from "../utils/date.js";
+
+function resolveCompletedOnDate(args: {
+  payloadStatus: TaskUpdate["status"] | undefined;
+  payloadCompletedOnDate: string | null | undefined;
+  currentCompletedOnDate: string | null;
+}): string | null | undefined {
+  if (typeof args.payloadStatus === "undefined") {
+    return typeof args.payloadCompletedOnDate === "undefined" ? undefined : args.payloadCompletedOnDate;
+  }
+  if (args.payloadStatus === "done") {
+    if (typeof args.payloadCompletedOnDate !== "undefined" && args.payloadCompletedOnDate !== null) {
+      return args.payloadCompletedOnDate;
+    }
+    return args.currentCompletedOnDate ?? todayIsoDate();
+  }
+  return null;
+}
 
 export async function applyTaskCreateDraft(context: DraftHandlerContext) {
   const payload = context.draft.payload as TaskInput & { plannerDate?: string };
+  const status = payload.status ?? "planned";
   const task = await context.repository.createTask(
     {
       title: payload.title,
       notes: payload.notes ?? null,
       estimatedMinutes: payload.estimatedMinutes ?? 30,
-      status: payload.status ?? "planned",
+      status,
       priority: payload.priority ?? "low",
       togglProjectId: payload.togglProjectId ?? null,
+      completedOnDate:
+        status === "done" ? payload.completedOnDate ?? todayIsoDate() : null,
     },
     context.client,
   );
@@ -45,6 +66,12 @@ export async function applyTaskUpdateDraft(context: DraftHandlerContext) {
     throw new Error(`Task ${payload.taskId} not found`);
   }
 
+  const completedOnDate = resolveCompletedOnDate({
+    payloadStatus: payload.status,
+    payloadCompletedOnDate: payload.completedOnDate,
+    currentCompletedOnDate: currentTask.completedOnDate ?? null,
+  });
+
   const task = await context.repository.updateTask(
     payload.taskId,
     {
@@ -54,6 +81,7 @@ export async function applyTaskUpdateDraft(context: DraftHandlerContext) {
       status: payload.status,
       priority: payload.priority,
       togglProjectId: payload.togglProjectId,
+      ...(typeof completedOnDate !== "undefined" ? { completedOnDate } : {}),
     },
     context.client,
   );

@@ -10,6 +10,7 @@ import { Bot, LockKeyhole, Orbit } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { env } from "@/lib/env";
 import { SettingsGoogleCalendarsCard } from "@/pages/settings-google-calendars-card";
+import { SettingsTaskEndNotificationsCard } from "@/pages/settings-task-end-notifications-card";
 import { SettingsTogglCard } from "@/pages/settings-toggl-card";
 
 export function SettingsPage({
@@ -18,10 +19,14 @@ export function SettingsPage({
   googleCalendarSettings,
   isLoadingGoogleCalendars,
   isSavingGoogleCalendars,
+  taskEndNotificationsEnabled,
+  taskEndNotificationsSupported,
+  taskEndNotificationsMessage,
   onDiscoverToggl,
   onDeleteToggl,
   onSaveToggl,
   onSaveGoogleCalendars,
+  onTaskEndNotificationsChange,
   isDiscovering,
   isSaving,
 }: {
@@ -30,10 +35,14 @@ export function SettingsPage({
   googleCalendarSettings: GoogleCalendarSettings | null;
   isLoadingGoogleCalendars: boolean;
   isSavingGoogleCalendars: boolean;
+  taskEndNotificationsEnabled: boolean;
+  taskEndNotificationsSupported: boolean;
+  taskEndNotificationsMessage: string | null;
   onDiscoverToggl: (values: TogglDiscoverInput) => Promise<TogglDiscoverResult>;
   onDeleteToggl: () => Promise<TogglIntegrationSettings>;
   onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
   onSaveGoogleCalendars: (syncCalendarIds: string[]) => Promise<unknown>;
+  onTaskEndNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
   isDiscovering: boolean;
   isSaving: boolean;
 }) {
@@ -89,6 +98,13 @@ export function SettingsPage({
       </div>
 
       <div className="space-y-6">
+        <SettingsTaskEndNotificationsCard
+          enabled={taskEndNotificationsEnabled}
+          supported={taskEndNotificationsSupported}
+          message={taskEndNotificationsMessage}
+          onChange={onTaskEndNotificationsChange}
+        />
+
         <Card>
           <div className="mb-5 flex items-center gap-3">
             <div className="rounded-2xl bg-[rgba(255,255,255,0.08)] p-3 text-white">

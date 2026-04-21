@@ -20,7 +20,6 @@ type PlannerQueueColumnProps = {
   onDeleteTask: (taskId: string, title: string) => void;
   onDuplicateTask: (task: Task) => void;
   onStartTaskTimer: (taskId: string) => void;
-  onMarkTaskDone: (task: Task) => void;
 };
 
 export function PlannerQueueColumn({
@@ -36,7 +35,6 @@ export function PlannerQueueColumn({
   onDeleteTask,
   onDuplicateTask,
   onStartTaskTimer,
-  onMarkTaskDone,
 }: PlannerQueueColumnProps) {
   return (
     <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
@@ -55,7 +53,6 @@ export function PlannerQueueColumn({
         onDeleteTask={onDeleteTask}
         onDuplicateTask={onDuplicateTask}
         onStartTaskTimer={onStartTaskTimer}
-        onMarkTaskDone={onMarkTaskDone}
       />
     </div>
   );

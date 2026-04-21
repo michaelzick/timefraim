@@ -34,6 +34,7 @@ export type LocalPlannerTaskUpdateInput = {
   priority: PlannerPriority;
   status: PlannerStatus;
   togglProjectId?: string | null;
+  completedOnDate?: string | null;
 };
 export type LocalPlannerScheduleBlockUpdateInput = { startAt: string; endAt: string };
 export type PlannerSaveTaskValues = {

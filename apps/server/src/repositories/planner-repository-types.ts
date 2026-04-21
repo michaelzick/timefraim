@@ -60,6 +60,7 @@ export type CreateTaskInput = {
   status: TaskStatus;
   priority: TaskPriority;
   togglProjectId: string | null;
+  completedOnDate?: string | null;
 };
 
 export type TaskPatch = Partial<{
@@ -70,6 +71,7 @@ export type TaskPatch = Partial<{
   priority: TaskPriority;
   togglProjectId: string | null;
   scheduledBlockId: string | null;
+  completedOnDate: string | null;
 }>;
 
 export type CreateScheduleBlockInput = {

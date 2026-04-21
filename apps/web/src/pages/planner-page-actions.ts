@@ -53,7 +53,11 @@ export function confirmTimelineBlockDelete(title: string) {
   return window.confirm(`Remove "${title}" from the timeline? The task will return to the queue.`);
 }
 
-function taskUpdateInputFor(task: Task, status: LocalPlannerTaskUpdateInput["status"]): LocalPlannerTaskUpdateInput {
+function taskUpdateInputFor(
+  task: Task,
+  status: LocalPlannerTaskUpdateInput["status"],
+  completedOnDate?: string | null,
+): LocalPlannerTaskUpdateInput {
   return {
     title: task.title,
     notes: task.notes ?? "",
@@ -61,6 +65,7 @@ function taskUpdateInputFor(task: Task, status: LocalPlannerTaskUpdateInput["sta
     priority: task.priority,
     status,
     togglProjectId: task.togglProjectId ?? null,
+    ...(typeof completedOnDate !== "undefined" ? { completedOnDate } : {}),
   };
 }
 
@@ -106,7 +111,7 @@ export function createPlannerMutationHandlers(args: {
     },
     handleReactivateDoneTask(task: Task) {
       void args
-        .onUpdateTask(task.id, taskUpdateInputFor(task, "planned"))
+        .onUpdateTask(task.id, taskUpdateInputFor(task, "planned", null))
         .catch((error) => showActionError("Failed to reactivate the task. Please try again.", error));
     },
     handleDuplicateTask(task: Task) {
@@ -132,15 +137,21 @@ export function createPlannerMutationHandlers(args: {
     },
     handleMarkTaskDone(task: Task) {
       const previousStatus = task.status;
+      const previousCompletedOnDate = task.completedOnDate ?? null;
       void args
-        .onUpdateTask(task.id, taskUpdateInputFor(task, "done"))
+        .onUpdateTask(task.id, taskUpdateInputFor(task, "done", args.date))
         .then(() => {
           toast.success("Marked done", {
             duration: 8000,
             action: {
               label: "Undo",
               onClick: () => {
-                void args.onUpdateTask(task.id, taskUpdateInputFor(task, previousStatus));
+                const restoreCompletedOn =
+                  previousStatus === "done" ? previousCompletedOnDate : null;
+                void args.onUpdateTask(
+                  task.id,
+                  taskUpdateInputFor(task, previousStatus, restoreCompletedOn),
+                );
               },
             },
           });

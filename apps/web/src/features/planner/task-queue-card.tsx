@@ -11,7 +11,6 @@ type TaskQueueCardProps = {
   onDeleteTask: (taskId: string, title: string) => void;
   onDuplicateTask: (task: Task) => void;
   onStartTaskTimer: (taskId: string) => void;
-  onMarkTaskDone: (task: Task) => void;
 };
 
 export function TaskQueueCard({
@@ -22,7 +21,6 @@ export function TaskQueueCard({
   onDeleteTask,
   onDuplicateTask,
   onStartTaskTimer,
-  onMarkTaskDone,
 }: TaskQueueCardProps) {
   return (
     <Card className="min-h-[520px]">
@@ -38,7 +36,6 @@ export function TaskQueueCard({
               onDelete={() => onDeleteTask(task.id, task.title)}
               onDuplicate={() => onDuplicateTask(task)}
               onStartTimer={() => onStartTaskTimer(task.id)}
-              onMarkDone={() => onMarkTaskDone(task)}
             />
           ))}
         </div>

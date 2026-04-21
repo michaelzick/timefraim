@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import { PlannerPage } from "@/pages/planner-page";
 import { buildDayPlan, buildTask, buildTogglSettings, noopDuplicate } from "@/test/fixtures";
@@ -48,19 +48,6 @@ vi.mock("@/components/timeline-board", () => ({
 }));
 
 const noopAsync = () => Promise.resolve(undefined);
-const resizeObserverMock = vi.fn(() => ({
-  disconnect: vi.fn(),
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-}));
-
-beforeAll(() => {
-  vi.stubGlobal("ResizeObserver", resizeObserverMock);
-});
-
-afterAll(() => {
-  vi.unstubAllGlobals();
-});
 
 function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerPage>> = {}) {
   return {

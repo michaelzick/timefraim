@@ -46,6 +46,7 @@ describe("planner-domain", () => {
       priority: "high",
       scheduledBlockId: "acfd1905-9bdb-4326-b5c4-a84d4139f814",
       togglProjectId: null,
+      completedOnDate: null,
       createdAt: "2026-04-04T08:00:00.000Z",
       updatedAt: "2026-04-04T08:00:00.000Z",
     };
@@ -92,6 +93,7 @@ describe("planner-domain", () => {
         priority: "urgent",
         scheduledBlockId: null,
         togglProjectId: null,
+        completedOnDate: null,
         createdAt: "2026-04-04T08:00:00.000Z",
         updatedAt: "2026-04-04T08:00:00.000Z",
       }),

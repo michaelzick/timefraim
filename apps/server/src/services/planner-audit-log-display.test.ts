@@ -11,6 +11,7 @@ const task: Task = {
   priority: "medium",
   scheduledBlockId: null,
   togglProjectId: null,
+  completedOnDate: null,
   createdAt: "2026-04-20T08:00:00.000Z",
   updatedAt: "2026-04-20T08:00:00.000Z",
 };

@@ -84,6 +84,14 @@ export function TimelineScheduleBlock({
               <span className="ml-2 text-xs font-normal text-[var(--muted-strong)]">
                 {formatTime(block.startAt)} to {formatTime(block.endAt)}
               </span>
+              {runState === "running" ? (
+                <span
+                  data-testid="inline-running-timer"
+                  className="ml-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--accent)]"
+                >
+                  · {formatElapsed(elapsed)}
+                </span>
+              ) : null}
             </p>
           ) : (
             <>
@@ -91,13 +99,13 @@ export function TimelineScheduleBlock({
               <p className="mt-1 text-xs text-[var(--muted-strong)]">
                 {formatTime(block.startAt)} to {formatTime(block.endAt)}
               </p>
+              {runState === "running" ? (
+                <Badge className="mt-2 border-[var(--accent)] bg-[var(--accent-soft)] font-mono uppercase tracking-[0.18em] text-[var(--accent)]">
+                  Running · {formatElapsed(elapsed)}
+                </Badge>
+              ) : null}
             </>
           )}
-          {runState === "running" ? (
-            <Badge className="mt-2 border-[var(--accent)] bg-[var(--accent-soft)] font-mono uppercase tracking-[0.18em] text-[var(--accent)]">
-              Running · {formatElapsed(elapsed)}
-            </Badge>
-          ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {runState === "done" ? (

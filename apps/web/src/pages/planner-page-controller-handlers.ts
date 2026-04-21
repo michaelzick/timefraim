@@ -3,7 +3,7 @@ import { startTransition, type MutableRefObject, type RefObject } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { type PlannerSelection, type SelectedTaskSource } from "@/features/planner/planner-page-selection";
 import { EMPTY_CREATE_TASK_VALUES, showActionError, type PlannerCreateTaskValues, type PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
-import { type CalendarEventFormValues, type CreateTaskValues, type PlannerScheduleBlockUpdateInput } from "@/features/planner/types";
+import { type CalendarEventFormValues, type CreateTaskValues, type PlannerScheduleBlockUpdateInput, type TaskFormValues } from "@/features/planner/types";
 import { buildCalendarEventUpdateInput, buildPlannerCreateTaskInput, buildPlannerTaskUpdateInput, confirmTimelineEventDismiss } from "@/pages/planner-page-actions";
 import { createPlannerDragEndHandler } from "@/pages/planner-drag-end-handler";
 
@@ -55,6 +55,7 @@ export function createPlannerPageHandlers(args: {
     values: ReturnType<typeof buildPlannerTaskUpdateInput>,
   ) => Promise<unknown>;
   activeTimerTaskId: string | null;
+  detailForm: UseFormReturn<TaskFormValues>;
 }) {
   async function handleCreateTask(values: PlannerCreateTaskValues) {
     await args.createTask(buildPlannerCreateTaskInput(values, args.date));
@@ -157,6 +158,7 @@ export function createPlannerPageHandlers(args: {
           args.activeTimerTaskId,
         ),
       );
+      args.detailForm.reset(values as TaskFormValues);
     } catch (error) {
       showActionError("Failed to save the task. Please try again.", error);
     }

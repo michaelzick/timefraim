@@ -121,7 +121,6 @@ export function PlannerPage({
           onDeleteTask={(taskId, title) => mutationHandlers.handleQueueTaskDelete(taskId, title)}
           onDuplicateTask={(task) => mutationHandlers.handleDuplicateTask(task)}
           onStartTaskTimer={(taskId) => mutationHandlers.handleStartTaskTimer(taskId)}
-          onMarkTaskDone={(task) => mutationHandlers.handleMarkTaskDone(task)}
         />
         <PlannerTimelineColumn
           date={date}

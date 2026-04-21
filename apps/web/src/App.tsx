@@ -7,7 +7,10 @@ import { LoginView } from "@/components/auth/login-view";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
 import { useAppShellData } from "@/hooks/use-app-shell-data";
+import { useScheduleBlockEndNotification } from "@/hooks/use-schedule-block-end-notification";
+import { useTaskEndNotificationPreference } from "@/hooks/use-task-end-notification-preference";
 import { useSupabaseSession } from "@/hooks/use-supabase-session";
 import { supabase } from "@/lib/supabase";
 
@@ -29,6 +32,22 @@ function AppContent() {
     togglSettingsQuery,
   } =
     useAppShellData(session);
+  const taskEndNotifications = useTaskEndNotificationPreference();
+
+  const dayPlanTasks = dayPlanQuery.data?.tasks;
+  const dayPlanScheduleBlocks = dayPlanQuery.data?.scheduleBlocks;
+  const tasksById = useMemo(() => {
+    const map = new Map<string, NonNullable<typeof dayPlanTasks>[number]>();
+    for (const task of dayPlanTasks ?? []) {
+      map.set(task.id, task);
+    }
+    return map;
+  }, [dayPlanTasks]);
+  useScheduleBlockEndNotification({
+    enabled: taskEndNotifications.enabled,
+    scheduleBlocks: dayPlanScheduleBlocks ?? [],
+    tasksById,
+  });
 
   const handleRetry = () => {
     const retry = async () => {
@@ -88,11 +107,15 @@ function AppContent() {
       isSavingToggl={plannerMutations.isSavingToggl}
       isLoadingGoogleCalendars={googleCalendarSettingsQuery.isLoading}
       isSavingGoogleCalendars={saveGoogleCalendarsMutation.isPending}
+      taskEndNotificationsEnabled={taskEndNotifications.enabled}
+      taskEndNotificationsSupported={taskEndNotifications.supported}
+      taskEndNotificationsMessage={taskEndNotifications.message}
       onDateChange={setDate}
       onDiscoverToggl={plannerMutations.actions.discoverToggl}
       onDeleteToggl={plannerMutations.actions.deleteToggl}
       onSaveToggl={plannerMutations.actions.saveToggl}
       onSaveGoogleCalendars={(ids) => saveGoogleCalendarsMutation.mutateAsync(ids)}
+      onTaskEndNotificationsChange={taskEndNotifications.setEnabledFromUserAction}
       onSignOut={handleSignOut}
       plannerPageProps={{
         isMutating: plannerMutations.isMutating,
