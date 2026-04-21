@@ -58,8 +58,12 @@ export function createPlannerPageHandlers(args: {
   detailForm: UseFormReturn<TaskFormValues>;
 }) {
   async function handleCreateTask(values: PlannerCreateTaskValues) {
-    await args.createTask(buildPlannerCreateTaskInput(values, args.date));
-    args.createTaskForm.reset(EMPTY_CREATE_TASK_VALUES);
+    try {
+      await args.createTask(buildPlannerCreateTaskInput(values, args.date));
+      args.createTaskForm.reset(EMPTY_CREATE_TASK_VALUES);
+    } catch (error) {
+      showActionError("Failed to create the task. Please try again.", error);
+    }
   }
 
   const handleDragEnd = createPlannerDragEndHandler({

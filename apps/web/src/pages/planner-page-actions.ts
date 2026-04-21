@@ -12,7 +12,7 @@ export function buildCalendarEventUpdateInput(values: CalendarEventFormValues): 
 
 export function buildPlannerCreateTaskInput(values: PlannerCreateTaskValues, date: string): LocalPlannerTaskInput {
   return {
-    title: values.title,
+    title: values.title.trim(),
     notes: values.notes || undefined,
     estimatedMinutes: Number(values.estimatedMinutes),
     priority: values.priority,

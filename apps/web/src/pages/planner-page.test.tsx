@@ -82,14 +82,20 @@ describe("PlannerPage", () => {
 
     render(<PlannerPage {...buildPlannerPageProps({ onCreateTask })} />);
 
-    await user.type(screen.getByLabelText("Task title"), "Deep work");
+    const addTaskButton = screen.getByRole("button", { name: /add task/i });
+
+    expect(addTaskButton).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Task title"), "  Deep work  ");
+    expect(addTaskButton).toBeEnabled();
+
     await user.type(screen.getByLabelText("Task notes"), "Protect a quiet block.");
     await user.clear(screen.getByLabelText("Task estimated hours"));
     await user.type(screen.getByLabelText("Task estimated hours"), "1");
     await user.clear(screen.getByLabelText("Task estimated minutes"));
     await user.type(screen.getByLabelText("Task estimated minutes"), "0");
     await user.selectOptions(screen.getByLabelText("Task priority"), "high");
-    await user.click(screen.getByRole("button", { name: /add task/i }));
+    await user.click(addTaskButton);
 
     await waitFor(() => {
       expect(onCreateTask).toHaveBeenCalledWith({
@@ -104,6 +110,58 @@ describe("PlannerPage", () => {
     });
     expect(screen.getByLabelText("Task title")).toHaveValue("");
     expect(screen.getByLabelText("Task notes")).toHaveValue("");
+  });
+
+  it("keeps task creation disabled for blank or whitespace-only titles", async () => {
+    const user = userEvent.setup();
+    const onCreateTask = vi.fn().mockResolvedValue(undefined);
+
+    render(<PlannerPage {...buildPlannerPageProps({ onCreateTask })} />);
+
+    const titleInput = screen.getByLabelText("Task title");
+    const addTaskButton = screen.getByRole("button", { name: /add task/i });
+
+    expect(addTaskButton).toBeDisabled();
+
+    await user.type(titleInput, "   ");
+    expect(addTaskButton).toBeDisabled();
+
+    await user.click(addTaskButton);
+    expect(onCreateTask).not.toHaveBeenCalled();
+  });
+
+  it("shows the refreshed task inbox copy without the retired chrome", () => {
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    expect(screen.getByPlaceholderText("Add a task")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Why this matters")).toBeInTheDocument();
+    expect(screen.queryByText("Capture")).not.toBeInTheDocument();
+    expect(screen.queryByText("2 total")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Next commitment")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Why this matters right now")).not.toBeInTheDocument();
+  });
+
+  it("shows an error and keeps the form values when task creation fails", async () => {
+    const user = userEvent.setup();
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const onCreateTask = vi.fn().mockRejectedValue(new Error("Create failed"));
+
+    render(<PlannerPage {...buildPlannerPageProps({ onCreateTask })} />);
+
+    await user.type(screen.getByLabelText("Task title"), "Deep work");
+    await user.type(screen.getByLabelText("Task notes"), "Protect a quiet block.");
+    await user.click(screen.getByRole("button", { name: /add task/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        "Failed to create the task. Please try again.",
+        { duration: 8000 },
+      );
+    });
+    expect(screen.getByLabelText("Task title")).toHaveValue("Deep work");
+    expect(screen.getByLabelText("Task notes")).toHaveValue("Protect a quiet block.");
+
+    consoleErrorSpy.mockRestore();
   });
 
   it("saves task detail updates and starts the selected timer", async () => {

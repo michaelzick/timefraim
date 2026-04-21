@@ -1,7 +1,6 @@
 import type { TogglIntegrationSettings } from "@timefraim/shared";
 import { LoaderCircle, Sparkles } from "lucide-react";
 import { Controller, type UseFormReturn } from "react-hook-form";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DurationInput } from "@/components/duration-input";
@@ -12,7 +11,6 @@ import type { CreateTaskValues } from "@/features/planner/types";
 
 type CreateTaskCardProps = {
   form: UseFormReturn<CreateTaskValues>;
-  totalTasks: number;
   isMutating: boolean;
   togglSettings: TogglIntegrationSettings;
   onSubmit: (values: CreateTaskValues) => Promise<unknown>;
@@ -32,25 +30,33 @@ function getDefaultProjectLabel(togglSettings: TogglIntegrationSettings) {
 
 export function CreateTaskCard({
   form,
-  totalTasks,
   isMutating,
   togglSettings,
   onSubmit,
 }: CreateTaskCardProps) {
+  const {
+    formState: { isValid },
+  } = form;
+  const isSubmitDisabled = isMutating || !isValid;
+
   return (
     <Card className="overflow-hidden">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Capture</p>
-          <h2 className="mt-1 text-xl font-semibold text-white">Task inbox</h2>
+          <h2 className="text-xl font-semibold text-white">Task inbox</h2>
         </div>
-        <Badge>{totalTasks} total</Badge>
       </div>
       <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
-        <Input aria-label="Task title" placeholder="Next commitment" {...form.register("title")} />
+        <Input
+          aria-label="Task title"
+          placeholder="Add a task"
+          {...form.register("title", {
+            validate: (value) => value.trim().length > 0 || "Task title is required",
+          })}
+        />
         <Textarea
           aria-label="Task notes"
-          placeholder="Why this matters right now"
+          placeholder="Why this matters"
           className="min-h-24"
           {...form.register("notes")}
         />
@@ -100,7 +106,7 @@ export function CreateTaskCard({
               : "Connect Toggl from Settings to choose a project per task."}
           </p>
         </div>
-        <Button type="submit" className="w-full" disabled={isMutating}>
+        <Button type="submit" className="w-full" disabled={isSubmitDisabled}>
           {isMutating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           Add task
         </Button>

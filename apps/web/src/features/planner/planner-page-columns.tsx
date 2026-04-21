@@ -9,7 +9,6 @@ export { PlannerDetailColumn } from "@/features/planner/planner-detail-column";
 
 type PlannerQueueColumnProps = {
   createTaskForm: UseFormReturn<CreateTaskValues>;
-  totalTasks: number;
   isMutating: boolean;
   togglSettings: TogglIntegrationSettings;
   selectedTaskId: string | null;
@@ -24,7 +23,6 @@ type PlannerQueueColumnProps = {
 
 export function PlannerQueueColumn({
   createTaskForm,
-  totalTasks,
   isMutating,
   togglSettings,
   selectedTaskId,
@@ -40,7 +38,6 @@ export function PlannerQueueColumn({
     <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
       <CreateTaskCard
         form={createTaskForm}
-        totalTasks={totalTasks}
         isMutating={isMutating}
         togglSettings={togglSettings}
         onSubmit={onCreateTask}
@@ -104,4 +101,3 @@ export function PlannerTimelineColumn({
     />
   );
 }
-
