@@ -31,11 +31,15 @@ type AppShellProps = {
   isSavingToggl: boolean;
   isLoadingGoogleCalendars: boolean;
   isSavingGoogleCalendars: boolean;
+  taskEndNotificationsEnabled: boolean;
+  taskEndNotificationsSupported: boolean;
+  taskEndNotificationsMessage: string | null;
   onDateChange: (nextDate: string) => void;
   onDiscoverToggl: (values: TogglDiscoverInput) => Promise<TogglDiscoverResult>;
   onDeleteToggl: () => Promise<TogglIntegrationSettings>;
   onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
   onSaveGoogleCalendars: (syncCalendarIds: string[]) => Promise<unknown>;
+  onTaskEndNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
   onSignOut: () => void;
   plannerPageProps: Omit<PlannerPageProps, "date" | "dayPlan" | "onDateChange">;
 };
@@ -58,11 +62,15 @@ export function AppShell({
   isSavingToggl,
   isLoadingGoogleCalendars,
   isSavingGoogleCalendars,
+  taskEndNotificationsEnabled,
+  taskEndNotificationsSupported,
+  taskEndNotificationsMessage,
   onDateChange,
   onDiscoverToggl,
   onDeleteToggl,
   onSaveToggl,
   onSaveGoogleCalendars,
+  onTaskEndNotificationsChange,
   onSignOut,
   plannerPageProps,
 }: AppShellProps) {
@@ -97,6 +105,10 @@ export function AppShell({
                   onDiscoverToggl={onDiscoverToggl}
                   onDeleteToggl={onDeleteToggl}
                   onSaveGoogleCalendars={onSaveGoogleCalendars}
+                  taskEndNotificationsEnabled={taskEndNotificationsEnabled}
+                  taskEndNotificationsSupported={taskEndNotificationsSupported}
+                  taskEndNotificationsMessage={taskEndNotificationsMessage}
+                  onTaskEndNotificationsChange={onTaskEndNotificationsChange}
                   isSaving={isSavingToggl}
                 />
               }

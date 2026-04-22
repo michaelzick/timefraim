@@ -1,5 +1,5 @@
 import type { Task, TogglIntegrationSettings } from "@timefraim/shared";
-import { Play, Square, Trash2 } from "lucide-react";
+import { Play, Save, Square, Trash2 } from "lucide-react";
 import type { RefObject } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { DurationInput } from "@/components/duration-input";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   PRIORITY_OPTIONS,
   TASK_LIFECYCLE_OPTIONS,
@@ -124,7 +125,16 @@ export function TaskDetailCard({
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Button type="submit" disabled={isMutating}>
+            <Button
+              type="submit"
+              disabled={isMutating}
+              variant={form.formState.isDirty ? "default" : "ghost"}
+              className={cn(
+                !form.formState.isDirty &&
+                  "border border-[rgba(255,111,59,0.32)] bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[rgba(255,111,59,0.22)] hover:text-[var(--accent)]",
+              )}
+            >
+              <Save className="h-4 w-4" />
               Save
             </Button>
             {activeTimerTaskId === selectedTask.id ? (

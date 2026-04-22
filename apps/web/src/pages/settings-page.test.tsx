@@ -19,6 +19,30 @@ describe("SettingsPage", () => {
     vi.restoreAllMocks();
   });
 
+  it("shows the public MCP endpoint that Claude and ChatGPT should use", () => {
+    render(
+      <SettingsPage
+        authSession={buildAuthSession()}
+        togglSettings={buildTogglSettings()}
+        onDiscoverToggl={vi.fn()}
+        onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
+        onSaveToggl={vi.fn().mockResolvedValue(buildTogglSettings())}
+        isDiscovering={false}
+        isSaving={false}
+        googleCalendarSettings={null}
+        isLoadingGoogleCalendars={false}
+        isSavingGoogleCalendars={false}
+        onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+        taskEndNotificationsEnabled={false}
+        taskEndNotificationsSupported
+        taskEndNotificationsMessage={null}
+        onTaskEndNotificationsChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("https://example.ngrok.app/mcp")).toBeInTheDocument();
+  });
+
   it("submits Toggl settings and clears the API token field", async () => {
     const user = userEvent.setup();
     const togglSettings = buildTogglSettings({ connected: false, hasSavedToken: false, apiTokenHint: null, workspaceId: null, workspaceName: null, defaultProjectId: null, defaultProjectName: null, availableWorkspaces: [], availableProjects: [], lastValidatedAt: null });
@@ -46,6 +70,10 @@ describe("SettingsPage", () => {
         isLoadingGoogleCalendars={false}
         isSavingGoogleCalendars={false}
         onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+        taskEndNotificationsEnabled={false}
+        taskEndNotificationsSupported
+        taskEndNotificationsMessage={null}
+        onTaskEndNotificationsChange={vi.fn()}
       />,
     );
 
@@ -105,6 +133,10 @@ describe("SettingsPage", () => {
         isLoadingGoogleCalendars={false}
         isSavingGoogleCalendars={false}
         onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+        taskEndNotificationsEnabled={false}
+        taskEndNotificationsSupported
+        taskEndNotificationsMessage={null}
+        onTaskEndNotificationsChange={vi.fn()}
       />,
     );
 
@@ -127,5 +159,37 @@ describe("SettingsPage", () => {
     });
     expect(consoleSpy).toHaveBeenCalled();
     expect(screen.getByPlaceholderText(/paste toggl api token/i)).toHaveValue("test-token");
+  });
+
+  it("renders the saved task-end pop-up preference and forwards checkbox changes", async () => {
+    const user = userEvent.setup();
+    const onTaskEndNotificationsChange = vi.fn();
+
+    render(
+      <SettingsPage
+        authSession={buildAuthSession()}
+        togglSettings={buildTogglSettings()}
+        onDiscoverToggl={vi.fn()}
+        onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
+        onSaveToggl={vi.fn().mockResolvedValue(buildTogglSettings())}
+        isDiscovering={false}
+        isSaving={false}
+        googleCalendarSettings={null}
+        isLoadingGoogleCalendars={false}
+        isSavingGoogleCalendars={false}
+        onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+        taskEndNotificationsEnabled
+        taskEndNotificationsSupported
+        taskEndNotificationsMessage={null}
+        onTaskEndNotificationsChange={onTaskEndNotificationsChange}
+      />,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: /show browser pop-ups when a task ends/i });
+    expect(checkbox).toBeChecked();
+
+    await user.click(checkbox);
+
+    expect(onTaskEndNotificationsChange).toHaveBeenCalledWith(false);
   });
 });

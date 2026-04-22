@@ -62,9 +62,10 @@ export function usePlannerPageController({
 
   const createTaskForm = useForm<CreateTaskValues>({
     defaultValues: EMPTY_CREATE_TASK_VALUES,
+    mode: "onChange",
   });
   const filteredQueueTasks = useMemo(() => filterQueueTasks(dayPlan.tasks, deferredSearch), [dayPlan.tasks, deferredSearch]);
-  const doneTasks = useMemo(() => selectDoneTasks(dayPlan.tasks), [dayPlan.tasks]);
+  const doneTasks = useMemo(() => selectDoneTasks(dayPlan.tasks, date), [dayPlan.tasks, date]);
   const resolvedTaskSelection = useMemo(
     () =>
       resolveTaskSelection({
@@ -154,6 +155,7 @@ export function usePlannerPageController({
     updateScheduleBlock,
     updateTask,
     activeTimerTaskId: dayPlan.activeTimer?.taskId ?? null,
+    detailForm,
   });
 
   return {

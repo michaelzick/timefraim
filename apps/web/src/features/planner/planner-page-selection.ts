@@ -22,9 +22,9 @@ export function filterQueueTasks(tasks: Task[], search: string) {
   });
 }
 
-export function selectDoneTasks(tasks: Task[]) {
+export function selectDoneTasks(tasks: Task[], date: string) {
   return tasks
-    .filter((task) => task.status === "done")
+    .filter((task) => task.status === "done" && task.completedOnDate === date)
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 

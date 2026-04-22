@@ -50,6 +50,7 @@ const baseTask: Task = {
   priority: "high",
   scheduledBlockId: "3f441c84-f3c7-4f40-8e88-8f2a6520f528",
   togglProjectId: null,
+  completedOnDate: null,
   createdAt: "2026-04-06T08:00:00.000Z",
   updatedAt: "2026-04-06T08:00:00.000Z",
 };

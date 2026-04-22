@@ -10,6 +10,7 @@ import { Bot, LockKeyhole, Orbit } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { env } from "@/lib/env";
 import { SettingsGoogleCalendarsCard } from "@/pages/settings-google-calendars-card";
+import { SettingsTaskEndNotificationsCard } from "@/pages/settings-task-end-notifications-card";
 import { SettingsTogglCard } from "@/pages/settings-toggl-card";
 
 export function SettingsPage({
@@ -18,10 +19,14 @@ export function SettingsPage({
   googleCalendarSettings,
   isLoadingGoogleCalendars,
   isSavingGoogleCalendars,
+  taskEndNotificationsEnabled,
+  taskEndNotificationsSupported,
+  taskEndNotificationsMessage,
   onDiscoverToggl,
   onDeleteToggl,
   onSaveToggl,
   onSaveGoogleCalendars,
+  onTaskEndNotificationsChange,
   isDiscovering,
   isSaving,
 }: {
@@ -30,13 +35,20 @@ export function SettingsPage({
   googleCalendarSettings: GoogleCalendarSettings | null;
   isLoadingGoogleCalendars: boolean;
   isSavingGoogleCalendars: boolean;
+  taskEndNotificationsEnabled: boolean;
+  taskEndNotificationsSupported: boolean;
+  taskEndNotificationsMessage: string | null;
   onDiscoverToggl: (values: TogglDiscoverInput) => Promise<TogglDiscoverResult>;
   onDeleteToggl: () => Promise<TogglIntegrationSettings>;
   onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
   onSaveGoogleCalendars: (syncCalendarIds: string[]) => Promise<unknown>;
+  onTaskEndNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
   isDiscovering: boolean;
   isSaving: boolean;
 }) {
+  const mcpBaseUrl = (authSession.integrationStatus.tunnelBaseUrl ?? env.apiBaseUrl).replace(/\/$/, "");
+  const mcpEndpoint = `${mcpBaseUrl}/mcp`;
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-6">
@@ -62,7 +74,7 @@ export function SettingsPage({
             <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
               <p className="text-sm font-medium text-white">Scope guardrails</p>
               <p className="mt-2 text-sm text-[var(--muted-strong)]">
-                Selected source calendars sync as blockers on the timeline, while planner-created time blocks write to the dedicated planner calendar and newly created planner tasks mirror into your default Google Tasks list.
+                Selected calendars show up as blockers on the timeline. Planner-created blocks go to the planner calendar, and new planner tasks copy to your default Google Tasks list.
               </p>
             </div>
           </div>
@@ -89,6 +101,13 @@ export function SettingsPage({
       </div>
 
       <div className="space-y-6">
+        <SettingsTaskEndNotificationsCard
+          enabled={taskEndNotificationsEnabled}
+          supported={taskEndNotificationsSupported}
+          message={taskEndNotificationsMessage}
+          onChange={onTaskEndNotificationsChange}
+        />
+
         <Card>
           <div className="mb-5 flex items-center gap-3">
             <div className="rounded-2xl bg-[rgba(255,255,255,0.08)] p-3 text-white">
@@ -101,8 +120,11 @@ export function SettingsPage({
           </div>
           <div className="space-y-4 text-sm text-[var(--muted-strong)]">
             <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
-              <p className="font-medium text-white">Remote endpoint</p>
-              <p className="mt-2 break-all">{env.apiBaseUrl}/mcp</p>
+              <p className="font-medium text-white">MCP endpoint</p>
+              <p className="mt-2 break-all">{mcpEndpoint}</p>
+              <p className="mt-2 text-xs text-[var(--muted)]">
+                Use the public URL here when connecting Claude or ChatGPT from outside this machine.
+              </p>
             </div>
             <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
               <p className="font-medium text-white">Access profiles</p>

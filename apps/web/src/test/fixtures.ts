@@ -23,6 +23,7 @@ export function buildTask(overrides: Partial<Task> = {}): Task {
     priority: "medium",
     scheduledBlockId: null,
     togglProjectId: null,
+    completedOnDate: null,
     createdAt: "2026-04-06T08:00:00.000Z",
     updatedAt: "2026-04-06T08:00:00.000Z",
     ...overrides,

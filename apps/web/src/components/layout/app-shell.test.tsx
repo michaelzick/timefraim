@@ -44,7 +44,11 @@ describe("AppShell", () => {
           googleCalendarSettings={null}
           isLoadingGoogleCalendars={false}
           isSavingGoogleCalendars={false}
+          taskEndNotificationsEnabled={false}
+          taskEndNotificationsSupported
+          taskEndNotificationsMessage={null}
           onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+          onTaskEndNotificationsChange={vi.fn()}
           plannerPageProps={{
             isMutating: false,
             isSyncing: false,

@@ -9,7 +9,6 @@ export { PlannerDetailColumn } from "@/features/planner/planner-detail-column";
 
 type PlannerQueueColumnProps = {
   createTaskForm: UseFormReturn<CreateTaskValues>;
-  totalTasks: number;
   isMutating: boolean;
   togglSettings: TogglIntegrationSettings;
   selectedTaskId: string | null;
@@ -20,12 +19,10 @@ type PlannerQueueColumnProps = {
   onDeleteTask: (taskId: string, title: string) => void;
   onDuplicateTask: (task: Task) => void;
   onStartTaskTimer: (taskId: string) => void;
-  onMarkTaskDone: (task: Task) => void;
 };
 
 export function PlannerQueueColumn({
   createTaskForm,
-  totalTasks,
   isMutating,
   togglSettings,
   selectedTaskId,
@@ -36,13 +33,11 @@ export function PlannerQueueColumn({
   onDeleteTask,
   onDuplicateTask,
   onStartTaskTimer,
-  onMarkTaskDone,
 }: PlannerQueueColumnProps) {
   return (
     <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
       <CreateTaskCard
         form={createTaskForm}
-        totalTasks={totalTasks}
         isMutating={isMutating}
         togglSettings={togglSettings}
         onSubmit={onCreateTask}
@@ -55,7 +50,6 @@ export function PlannerQueueColumn({
         onDeleteTask={onDeleteTask}
         onDuplicateTask={onDuplicateTask}
         onStartTaskTimer={onStartTaskTimer}
-        onMarkTaskDone={onMarkTaskDone}
       />
     </div>
   );
@@ -107,4 +101,3 @@ export function PlannerTimelineColumn({
     />
   );
 }
-

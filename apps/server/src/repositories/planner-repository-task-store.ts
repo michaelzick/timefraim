@@ -43,10 +43,18 @@ export class PlannerRepositoryTaskStore {
 
   async createTask(input: CreateTaskInput, db: Queryable) {
     const result = await db.query(
-      `insert into public.tasks (title, notes, estimated_minutes, status, priority, toggl_project_id)
-       values ($1, $2, $3, $4, $5, $6)
+      `insert into public.tasks (title, notes, estimated_minutes, status, priority, toggl_project_id, completed_on_date)
+       values ($1, $2, $3, $4, $5, $6, $7)
        returning *`,
-      [input.title, input.notes, input.estimatedMinutes, input.status, input.priority, input.togglProjectId],
+      [
+        input.title,
+        input.notes,
+        input.estimatedMinutes,
+        input.status,
+        input.priority,
+        input.togglProjectId,
+        input.completedOnDate ?? null,
+      ],
     );
     return mapTask(result.rows[0]);
   }
@@ -66,6 +74,7 @@ export class PlannerRepositoryTaskStore {
     if (typeof patch.priority !== "undefined") assign("priority", patch.priority);
     if (typeof patch.togglProjectId !== "undefined") assign("toggl_project_id", patch.togglProjectId);
     if (typeof patch.scheduledBlockId !== "undefined") assign("scheduled_block_id", patch.scheduledBlockId);
+    if (typeof patch.completedOnDate !== "undefined") assign("completed_on_date", patch.completedOnDate);
 
     if (fields.length === 0) {
       const current = await this.getTask(taskId, db);

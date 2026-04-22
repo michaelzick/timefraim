@@ -9,6 +9,8 @@ export const taskStatusSchema = z.enum([
 ]);
 export const taskPrioritySchema = z.enum(["low", "medium", "high", "urgent"]);
 
+const plannerDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
 export const taskSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
@@ -18,6 +20,7 @@ export const taskSchema = z.object({
   priority: taskPrioritySchema,
   scheduledBlockId: z.string().uuid().nullable().optional(),
   togglProjectId: z.string().nullable().optional(),
+  completedOnDate: z.string().regex(plannerDateRegex).nullable().default(null),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -29,7 +32,8 @@ export const taskInputSchema = z.object({
   status: taskStatusSchema.default("planned"),
   priority: taskPrioritySchema.default("low"),
   togglProjectId: z.string().optional().nullable(),
-  plannerDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  completedOnDate: z.string().regex(plannerDateRegex).nullable().optional(),
+  plannerDate: z.string().regex(plannerDateRegex).optional(),
 });
 
 export const taskUpdateSchema = taskInputSchema.partial().extend({
@@ -40,7 +44,7 @@ export const taskDuplicatePayloadSchema = z.object({
   sourceTaskId: z.string().uuid(),
   startAt: z.string().datetime().optional(),
   endAt: z.string().datetime().optional(),
-  plannerDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  plannerDate: z.string().regex(plannerDateRegex).optional(),
 });
 
 export type Task = z.infer<typeof taskSchema>;

@@ -12,6 +12,13 @@ import type { QueryResultRow } from "pg";
 import { asIso } from "../utils/date.js";
 import type { CalendarEventRecord, UserTogglConnectionRecord } from "./planner-repository-types.js";
 
+function toDateOnly(value: unknown): string | null {
+  if (!value) return null;
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (typeof value === "string") return value.slice(0, 10);
+  return null;
+}
+
 export function mapTask(row: QueryResultRow) {
   return taskSchema.parse({
     id: row.id,
@@ -22,6 +29,7 @@ export function mapTask(row: QueryResultRow) {
     priority: row.priority,
     scheduledBlockId: row.scheduled_block_id,
     togglProjectId: row.toggl_project_id,
+    completedOnDate: toDateOnly(row.completed_on_date),
     createdAt: asIso(row.created_at),
     updatedAt: asIso(row.updated_at),
   });

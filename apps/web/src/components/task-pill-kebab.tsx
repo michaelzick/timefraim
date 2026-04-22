@@ -1,4 +1,4 @@
-import { Check, Copy, MoreVertical, Play, Trash2 } from "lucide-react";
+import { Check, Copy, MoreVertical, Play, Trash2, type LucideIcon } from "lucide-react";
 import type { PointerEvent } from "react";
 import {
   DropdownMenu,
@@ -14,9 +14,19 @@ export type TaskPillKebabProps = {
   onStartTimer?: () => void;
   onMarkDone?: () => void;
   onDelete?: () => void;
+  deleteLabel?: string;
+  deleteIcon?: LucideIcon;
 };
 
-export function TaskPillKebab({ label, onDuplicate, onStartTimer, onMarkDone, onDelete }: TaskPillKebabProps) {
+export function TaskPillKebab({
+  label,
+  onDuplicate,
+  onStartTimer,
+  onMarkDone,
+  onDelete,
+  deleteLabel = "Delete",
+  deleteIcon: DeleteIcon = Trash2,
+}: TaskPillKebabProps) {
   const stopPointer = (event: PointerEvent<HTMLElement>) => {
     event.stopPropagation();
   };
@@ -49,7 +59,7 @@ export function TaskPillKebab({ label, onDuplicate, onStartTimer, onMarkDone, on
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="danger" onSelect={onDelete}>
-              <Trash2 className="h-4 w-4" /> Delete
+              <DeleteIcon className="h-4 w-4" /> {deleteLabel}
             </DropdownMenuItem>
           </>
         ) : null}

@@ -108,55 +108,53 @@ export function PlannerPage({
           onSearchChange={setSearch}
         />
         <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
-        <PlannerQueueColumn
-          createTaskForm={createTaskForm}
-          totalTasks={dayPlan.tasks.length}
-          isMutating={isMutating}
-          togglSettings={togglSettings}
-          selectedTaskId={plannerSelection.type === "queue-task" ? selectedTask?.id ?? null : null}
-          activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
-          tasks={filteredQueueTasks}
-          onCreateTask={handleCreateTask}
-          onSelectTask={handleSelectQueueTask}
-          onDeleteTask={(taskId, title) => mutationHandlers.handleQueueTaskDelete(taskId, title)}
-          onDuplicateTask={(task) => mutationHandlers.handleDuplicateTask(task)}
-          onStartTaskTimer={(taskId) => mutationHandlers.handleStartTaskTimer(taskId)}
-          onMarkTaskDone={(task) => mutationHandlers.handleMarkTaskDone(task)}
-        />
-        <PlannerTimelineColumn
-          date={date}
-          dayPlan={dayPlan}
-          selectedTimelineTaskId={selectedTimelineTaskId}
-          selectedTimelineCalendarEventId={selectedTimelineCalendarEventId}
-          onSelectTask={handleSelectTimelineTask}
-          onSelectCalendarEvent={handleSelectCalendarEvent}
-          onDismissCalendarEvent={(calendarEventId, title) => void handleDismissCalendarEvent(calendarEventId, title)}
-          onDeleteScheduleBlock={(blockId, title) => mutationHandlers.handleDeleteTimelineBlock(blockId, title)}
-          onDuplicateTask={(task) => mutationHandlers.handleDuplicateTask(task)}
-          onStartTaskTimer={(taskId) => mutationHandlers.handleStartTaskTimer(taskId)}
-          onMarkTaskDone={(task) => mutationHandlers.handleMarkTaskDone(task)}
-        />
-        <PlannerDetailColumn
-          detailPanelRef={detailPanelRef}
-          detailForm={detailForm}
-          calendarEventForm={calendarEventForm}
-          selectedTask={selectedTask}
-          selectedCalendarEvent={selectedCalendarEvent}
-          dayPlan={dayPlan}
-          doneTasks={doneTasks}
-          activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
-          activeTimerCalendarEventId={dayPlan.activeTimer?.calendarEventId ?? null}
-          isMutating={isMutating}
-          togglSettings={togglSettings}
-          onDeleteTask={() => void mutationHandlers.handleDeleteSelectedTask()}
-          onSaveTask={handleSaveTask}
-          onSaveCalendarEvent={handleSaveCalendarEvent}
-          onStartTimer={(taskId) => void onStartTimer(taskId)}
-          onStartEventTimer={(calendarEventId) => void onStartEventTimer(calendarEventId)}
-          onStopTimer={() => void onStopTimer()}
-          onSelectTimerTask={handleSelectTimelineTask}
-          onReactivateDoneTask={(task) => mutationHandlers.handleReactivateDoneTask(task)}
-        />
+          <PlannerQueueColumn
+            createTaskForm={createTaskForm}
+            isMutating={isMutating}
+            togglSettings={togglSettings}
+            selectedTaskId={plannerSelection.type === "queue-task" ? selectedTask?.id ?? null : null}
+            activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
+            tasks={filteredQueueTasks}
+            onCreateTask={handleCreateTask}
+            onSelectTask={handleSelectQueueTask}
+            onDeleteTask={(taskId, title) => mutationHandlers.handleQueueTaskDelete(taskId, title)}
+            onDuplicateTask={(task) => mutationHandlers.handleDuplicateTask(task)}
+            onStartTaskTimer={(taskId) => mutationHandlers.handleStartTaskTimer(taskId)}
+          />
+          <PlannerTimelineColumn
+            date={date}
+            dayPlan={dayPlan}
+            selectedTimelineTaskId={selectedTimelineTaskId}
+            selectedTimelineCalendarEventId={selectedTimelineCalendarEventId}
+            onSelectTask={handleSelectTimelineTask}
+            onSelectCalendarEvent={handleSelectCalendarEvent}
+            onDismissCalendarEvent={(calendarEventId, title) => void handleDismissCalendarEvent(calendarEventId, title)}
+            onDeleteScheduleBlock={(blockId, title) => mutationHandlers.handleDeleteTimelineBlock(blockId, title)}
+            onDuplicateTask={(task) => mutationHandlers.handleDuplicateTask(task)}
+            onStartTaskTimer={(taskId) => mutationHandlers.handleStartTaskTimer(taskId)}
+            onMarkTaskDone={(task) => mutationHandlers.handleMarkTaskDone(task)}
+          />
+          <PlannerDetailColumn
+            detailPanelRef={detailPanelRef}
+            detailForm={detailForm}
+            calendarEventForm={calendarEventForm}
+            selectedTask={selectedTask}
+            selectedCalendarEvent={selectedCalendarEvent}
+            dayPlan={dayPlan}
+            doneTasks={doneTasks}
+            activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
+            activeTimerCalendarEventId={dayPlan.activeTimer?.calendarEventId ?? null}
+            isMutating={isMutating}
+            togglSettings={togglSettings}
+            onDeleteTask={() => void mutationHandlers.handleDeleteSelectedTask()}
+            onSaveTask={handleSaveTask}
+            onSaveCalendarEvent={handleSaveCalendarEvent}
+            onStartTimer={(taskId) => void onStartTimer(taskId)}
+            onStartEventTimer={(calendarEventId) => void onStartEventTimer(calendarEventId)}
+            onStopTimer={() => void onStopTimer()}
+            onSelectTimerTask={handleSelectTimelineTask}
+            onReactivateDoneTask={(task) => mutationHandlers.handleReactivateDoneTask(task)}
+          />
         </div>
       </div>
       <DragOverlay dropAnimation={null}>
