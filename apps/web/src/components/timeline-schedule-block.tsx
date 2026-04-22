@@ -1,7 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { ScheduleBlock, Task } from "@timefraim/shared";
-import { Check } from "lucide-react";
+import { Check, Undo2 } from "lucide-react";
 import { TaskPillKebab } from "@/components/task-pill-kebab";
 import { getTimelinePlacement, isShortBlock } from "@/components/timeline-geometry";
 import { Badge } from "@/components/ui/badge";
@@ -124,6 +124,8 @@ export function TimelineScheduleBlock({
               onStartTimer={onStartTaskTimer ? () => onStartTaskTimer(task.id) : undefined}
               onMarkDone={onMarkTaskDone ? () => onMarkTaskDone(task) : undefined}
               onDelete={() => onDeleteScheduleBlock(block.id, title)}
+              deleteLabel="Remove"
+              deleteIcon={Undo2}
             />
           ) : null}
         </div>

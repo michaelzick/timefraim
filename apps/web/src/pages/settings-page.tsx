@@ -46,6 +46,9 @@ export function SettingsPage({
   isDiscovering: boolean;
   isSaving: boolean;
 }) {
+  const mcpBaseUrl = (authSession.integrationStatus.tunnelBaseUrl ?? env.apiBaseUrl).replace(/\/$/, "");
+  const mcpEndpoint = `${mcpBaseUrl}/mcp`;
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-6">
@@ -117,8 +120,11 @@ export function SettingsPage({
           </div>
           <div className="space-y-4 text-sm text-[var(--muted-strong)]">
             <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
-              <p className="font-medium text-white">Remote endpoint</p>
-              <p className="mt-2 break-all">{env.apiBaseUrl}/mcp</p>
+              <p className="font-medium text-white">MCP endpoint</p>
+              <p className="mt-2 break-all">{mcpEndpoint}</p>
+              <p className="mt-2 text-xs text-[var(--muted)]">
+                Use the public URL here when connecting Claude or ChatGPT from outside this machine.
+              </p>
             </div>
             <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
               <p className="font-medium text-white">Access profiles</p>

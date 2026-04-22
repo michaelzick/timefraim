@@ -19,6 +19,30 @@ describe("SettingsPage", () => {
     vi.restoreAllMocks();
   });
 
+  it("shows the public MCP endpoint that Claude and ChatGPT should use", () => {
+    render(
+      <SettingsPage
+        authSession={buildAuthSession()}
+        togglSettings={buildTogglSettings()}
+        onDiscoverToggl={vi.fn()}
+        onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
+        onSaveToggl={vi.fn().mockResolvedValue(buildTogglSettings())}
+        isDiscovering={false}
+        isSaving={false}
+        googleCalendarSettings={null}
+        isLoadingGoogleCalendars={false}
+        isSavingGoogleCalendars={false}
+        onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+        taskEndNotificationsEnabled={false}
+        taskEndNotificationsSupported
+        taskEndNotificationsMessage={null}
+        onTaskEndNotificationsChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("https://example.ngrok.app/mcp")).toBeInTheDocument();
+  });
+
   it("submits Toggl settings and clears the API token field", async () => {
     const user = userEvent.setup();
     const togglSettings = buildTogglSettings({ connected: false, hasSavedToken: false, apiTokenHint: null, workspaceId: null, workspaceName: null, defaultProjectId: null, defaultProjectName: null, availableWorkspaces: [], availableProjects: [], lastValidatedAt: null });
