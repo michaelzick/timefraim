@@ -13,6 +13,8 @@ import { useScheduleBlockEndNotification } from "@/hooks/use-schedule-block-end-
 import { useTaskEndNotificationPreference } from "@/hooks/use-task-end-notification-preference";
 import { useSupabaseSession } from "@/hooks/use-supabase-session";
 import { supabase } from "@/lib/supabase";
+import { ThemeProvider } from "@/theme/theme-provider";
+import { useTheme } from "@/theme/use-theme";
 
 const queryClient = new QueryClient();
 
@@ -74,7 +76,7 @@ function AppContent() {
         <div className="mx-auto flex min-h-screen max-w-[640px] items-center px-6">
           <Card className="w-full p-8">
             <Badge>Planner load failed</Badge>
-            <h1 className="mt-5 text-3xl font-semibold text-white">TimeFraim could not finish loading.</h1>
+            <h1 className="mt-5 text-3xl font-semibold text-[var(--heading)]">TimeFraim could not finish loading.</h1>
             <p className="mt-4 text-base leading-7 text-[var(--muted-strong)]">{queryErrorMessage}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button onClick={handleRetry}>
@@ -140,24 +142,34 @@ function AppContent() {
   );
 }
 
-export default function App() {
+function AppFrame() {
+  const { resolvedTheme } = useTheme();
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AppContent />
         <Toaster
-          theme="dark"
+          theme={resolvedTheme}
           position="bottom-right"
           closeButton
           toastOptions={{
             classNames: {
               toast:
-                "border border-white/10 bg-[rgba(8,12,24,0.92)] text-[var(--text)] backdrop-blur-xl shadow-[0_24px_80px_rgba(5,8,18,0.55)]",
-              actionButton: "bg-[var(--accent)] text-[var(--surface)]",
+                "border border-[var(--panel-border)] bg-[var(--overlay)] text-[var(--text)] backdrop-blur-xl shadow-[var(--shadow-elevated)]",
+              actionButton: "bg-[var(--accent)] text-[var(--accent-foreground)]",
             },
           }}
         />
       </BrowserRouter>
     </QueryClientProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppFrame />
+    </ThemeProvider>
   );
 }

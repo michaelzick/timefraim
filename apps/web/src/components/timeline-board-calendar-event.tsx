@@ -9,7 +9,7 @@ import { cn, formatTime } from "@/lib/utils";
 const FALLBACK_TIMELINE_EVENT_BORDER = "#6374ad";
 
 function getCalendarEventForegroundColor() {
-  return "#ffffff";
+  return "var(--heading)";
 }
 
 export function TimelineBoardCalendarEvent({
@@ -49,7 +49,7 @@ export function TimelineBoardCalendarEvent({
   return (
     <div
       key={event.id}
-      className={cn("absolute left-3 right-3 cursor-pointer rounded-[24px] border p-4 text-sm", isSelected && "ring-2 ring-white")}
+      className={cn("absolute left-3 right-3 cursor-pointer rounded-[24px] border p-4 text-sm", isSelected && "ring-2 ring-[var(--accent)]")}
       style={cardStyle}
       onClick={() => onSelectCalendarEvent(event.id)}
     >
@@ -79,7 +79,7 @@ export function TimelineBoardCalendarEvent({
             type="button"
             variant="ghost"
             size="sm"
-            className={cn("h-8 px-2", "hover:bg-white/10")}
+            className="h-8 px-2"
             style={{ color: foregroundColor }}
             onClick={(clickEvent) => {
               clickEvent.stopPropagation();

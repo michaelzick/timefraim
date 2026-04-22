@@ -59,20 +59,20 @@ export function SettingsPage({
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Google Calendar</p>
-              <h1 className="mt-1 text-2xl font-semibold text-white">Calendar visibility and sync</h1>
+              <h1 className="mt-1 text-2xl font-semibold text-[var(--heading)]">Calendar visibility and sync</h1>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
-              <p className="text-sm font-medium text-white">Auth status</p>
+            <div className="rounded-[24px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] p-4">
+              <p className="text-sm font-medium text-[var(--heading)]">Auth status</p>
               <p className="mt-2 text-sm text-[var(--muted-strong)]">
                 {authSession.integrationStatus.googleConnected
                   ? `Connected as ${authSession.integrationStatus.googleEmail}`
                   : "Not connected yet. Sign in with Google from the planner home page."}
               </p>
             </div>
-            <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
-              <p className="text-sm font-medium text-white">Scope guardrails</p>
+            <div className="rounded-[24px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] p-4">
+              <p className="text-sm font-medium text-[var(--heading)]">Scope guardrails</p>
               <p className="mt-2 text-sm text-[var(--muted-strong)]">
                 Selected calendars show up as blockers on the timeline. Planner-created blocks go to the planner calendar, and new planner tasks copy to your default Google Tasks list.
               </p>
@@ -110,24 +110,24 @@ export function SettingsPage({
 
         <Card>
           <div className="mb-5 flex items-center gap-3">
-            <div className="rounded-2xl bg-[rgba(255,255,255,0.08)] p-3 text-white">
+            <div className="rounded-2xl bg-[var(--panel-subtle)] p-3 text-[var(--heading)]">
               <Bot className="h-5 w-5" />
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">MCP access</p>
-              <h2 className="mt-1 text-xl font-semibold text-white">ChatGPT and Claude</h2>
+              <h2 className="mt-1 text-xl font-semibold text-[var(--heading)]">ChatGPT and Claude</h2>
             </div>
           </div>
           <div className="space-y-4 text-sm text-[var(--muted-strong)]">
-            <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
-              <p className="font-medium text-white">MCP endpoint</p>
+            <div className="rounded-[24px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] p-4">
+              <p className="font-medium text-[var(--heading)]">MCP endpoint</p>
               <p className="mt-2 break-all">{mcpEndpoint}</p>
               <p className="mt-2 text-xs text-[var(--muted)]">
                 Use the public URL here when connecting Claude or ChatGPT from outside this machine.
               </p>
             </div>
-            <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
-              <p className="font-medium text-white">Access profiles</p>
+            <div className="rounded-[24px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] p-4">
+              <p className="font-medium text-[var(--heading)]">Access profiles</p>
               <ul className="mt-2 space-y-2">
                 <li>Full access token configured: {authSession.integrationStatus.mcpFullAccessConfigured ? "yes" : "no"}</li>
                 <li>Read-only token configured: {authSession.integrationStatus.mcpReadOnlyConfigured ? "yes" : "no"}</li>
@@ -139,12 +139,12 @@ export function SettingsPage({
 
         <Card>
           <div className="mb-5 flex items-center gap-3">
-            <div className="rounded-2xl bg-[rgba(255,255,255,0.08)] p-3 text-white">
+            <div className="rounded-2xl bg-[var(--panel-subtle)] p-3 text-[var(--heading)]">
               <LockKeyhole className="h-5 w-5" />
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Guardrails</p>
-              <h2 className="mt-1 text-xl font-semibold text-white">What AI can do</h2>
+              <h2 className="mt-1 text-xl font-semibold text-[var(--heading)]">What AI can do</h2>
             </div>
           </div>
           <ul className="space-y-3 text-sm text-[var(--muted-strong)]">

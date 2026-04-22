@@ -43,7 +43,7 @@ export function CreateTaskCard({
     <Card className="overflow-hidden">
       <div className="mb-4">
         <div>
-          <h2 className="text-xl font-semibold text-white">Task inbox</h2>
+          <h2 className="text-xl font-semibold text-[var(--heading)]">Task inbox</h2>
         </div>
       </div>
       <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
@@ -74,7 +74,7 @@ export function CreateTaskCard({
           />
           <select
             aria-label="Task priority"
-            className="h-11 rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)]"
+            className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
             {...form.register("priority")}
           >
             {PRIORITY_OPTIONS.map((priority) => (
@@ -87,7 +87,7 @@ export function CreateTaskCard({
         <div className="space-y-2">
           <select
             aria-label="Task Toggl project"
-            className="h-11 w-full rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)]"
+            className="h-11 w-full rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
             disabled={!togglSettings.connected}
             {...form.register("togglProjectId")}
           >

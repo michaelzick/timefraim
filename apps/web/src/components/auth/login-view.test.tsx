@@ -21,6 +21,11 @@ describe("LoginView", () => {
     const user = userEvent.setup();
     render(<LoginView />);
 
+    expect(screen.getByRole("heading", { name: /build a realistic plan for your day/i })).toBeInTheDocument();
+    expect(
+      screen.getByText(/timefraim keeps tasks, calendar blocks, and timers in one place so you can focus on what's next\./i),
+    ).toBeInTheDocument();
+
     await user.click(screen.getByRole("button", { name: /continue with google/i }));
 
     await waitFor(() => {

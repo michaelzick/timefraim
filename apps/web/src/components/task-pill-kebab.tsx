@@ -34,7 +34,7 @@ export function TaskPillKebab({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="cursor-pointer rounded-full p-1 text-[var(--muted)] transition hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+        className="cursor-pointer rounded-full p-1 text-[var(--muted)] transition hover:bg-[var(--panel-hover)] hover:text-[var(--heading)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
         aria-label={`More actions for ${label}`}
         onClick={(event) => event.stopPropagation()}
         onPointerDown={stopPointer}

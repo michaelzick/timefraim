@@ -43,7 +43,7 @@ export function TaskPill({
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform) }}
       className={cn(
-        "group w-full cursor-pointer rounded-[24px] border p-4 text-left transition hover:border-white/30",
+        "group w-full cursor-pointer rounded-[24px] border p-4 text-left transition hover:border-[var(--panel-border-strong)]",
         getTaskPriorityCardClass(task.priority),
         active && "ring-2 ring-[rgba(255,111,59,0.28)]",
         isDragging && "opacity-65",
@@ -92,7 +92,7 @@ export function TaskPill({
       <div className="space-y-2">
         <h3
           className={cn(
-            "font-medium text-white",
+            "font-medium text-[var(--heading)]",
             runState === "running" && "flex items-center gap-2",
             runState === "done" && "line-through",
           )}

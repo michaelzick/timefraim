@@ -65,7 +65,7 @@ export function TimelineScheduleBlock({
         "absolute left-8 right-8 z-10 cursor-pointer overflow-hidden rounded-[24px] border p-4 transition",
         getTaskPriorityTimelineBlockClass(priority),
         isDragging && "opacity-75",
-        isSelected && "ring-2 ring-white",
+        isSelected && "ring-2 ring-[var(--accent)]",
         runState === "running" && "adhd-pulse",
         runState === "done" && "opacity-45",
       )}
@@ -74,12 +74,12 @@ export function TimelineScheduleBlock({
       {...attributes}
     >
       {runState === "done" ? (
-        <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-emerald-400" />
+        <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-[var(--success-text)]" />
       ) : null}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {isShortBlock(block.startAt, block.endAt) ? (
-            <p className={cn("truncate font-semibold text-white", runState === "done" && "line-through")}>
+            <p className={cn("truncate font-semibold text-[var(--heading)]", runState === "done" && "line-through")}>
               {title}
               <span className="ml-2 text-xs font-normal text-[var(--muted-strong)]">
                 {formatTime(block.startAt)} to {formatTime(block.endAt)}
@@ -95,7 +95,7 @@ export function TimelineScheduleBlock({
             </p>
           ) : (
             <>
-              <p className={cn("truncate font-semibold text-white", runState === "done" && "line-through")}>{title}</p>
+              <p className={cn("truncate font-semibold text-[var(--heading)]", runState === "done" && "line-through")}>{title}</p>
               <p className="mt-1 text-xs text-[var(--muted-strong)]">
                 {formatTime(block.startAt)} to {formatTime(block.endAt)}
               </p>
@@ -111,7 +111,7 @@ export function TimelineScheduleBlock({
           {runState === "done" ? (
             <span
               aria-label="Completed"
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--success-soft)] text-[var(--success-text)]"
             >
               <Check className="h-4 w-4" />
             </span>

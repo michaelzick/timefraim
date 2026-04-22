@@ -50,13 +50,14 @@ timefraim/
 
 ### 4.1 apps/web (frontend, port 5173)
 
-- **Entry:** `src/main.tsx` → `src/App.tsx` (auth guard + QueryClientProvider + BrowserRouter).
+- **Entry:** `src/main.tsx` → `src/App.tsx` (theme provider + auth guard + QueryClientProvider + BrowserRouter + toaster).
 - **Pages:** `src/pages/planner-page.tsx`, `src/pages/settings-page.tsx`.
 - **Feature code:** `src/features/planner/` — task cards, calendar cards, timeline board, column layout.
 - **Reusable UI:** `src/components/ui/` (shadcn-style primitives), `src/components/layout/app-shell.tsx`.
+- **Theme:** `src/theme/` — local light/dark/system preference, document class management, and resolved theme hook.
 - **Hooks:** `src/hooks/` — `use-planner-mutations.ts` (optimistic updates), `use-app-shell-data.ts`, `use-supabase-session.ts`, `use-planner-page-controller.ts`.
 - **API clients & config:** `src/lib/` — `api-planner.ts`, `api-integrations.ts`, `api-client.ts`, `env.ts`, `supabase.ts`.
-- **Styles:** `src/styles/` (Tailwind globals).
+- **Styles:** `src/styles/` (Tailwind globals) plus `index.html` for the pre-hydration theme resolver.
 - **State model:** React Query owns server state; React Hook Form owns forms; Supabase client owns auth session.
 
 ### 4.2 apps/server (backend, port 4000)
@@ -161,11 +162,12 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 | Path | What lives here |
 |---|---|
 | [apps/web/src/App.tsx](apps/web/src/App.tsx) | Root layout, auth guard, query client, router |
+| [apps/web/src/theme/theme-provider.tsx](apps/web/src/theme/theme-provider.tsx) | Client theme preference, resolved mode tracking, and `<html>` class sync |
 | [apps/web/src/pages/planner-page.tsx](apps/web/src/pages/planner-page.tsx) | Main scheduling UI |
 | [apps/web/src/pages/settings-page.tsx](apps/web/src/pages/settings-page.tsx) | Integration configuration UI |
 | [apps/web/src/hooks/use-planner-mutations.ts](apps/web/src/hooks/use-planner-mutations.ts) | Task/schedule/timer mutations |
 | [apps/web/src/lib/api-planner.ts](apps/web/src/lib/api-planner.ts) | Planner HTTP client |
-| [apps/web/src/features/planner/timeline-board.tsx](apps/web/src/features/planner/timeline-board.tsx) | Timeline rendering |
+| [apps/web/src/components/timeline-board.tsx](apps/web/src/components/timeline-board.tsx) | Timeline rendering |
 | [apps/server/src/index.ts](apps/server/src/index.ts) | Server entry, route + MCP registration |
 | [apps/server/src/services/planner-service.ts](apps/server/src/services/planner-service.ts) | Business-logic orchestrator |
 | [apps/server/src/repositories/planner-repository.ts](apps/server/src/repositories/planner-repository.ts) | Data access entry point |

@@ -2,6 +2,7 @@ import { stepLocalDate } from "@timefraim/shared";
 import { ChevronLeft, ChevronRight, LoaderCircle, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getTodayDate } from "@/lib/utils";
 
 type PlannerToolbarProps = {
   date: string;
@@ -20,10 +21,13 @@ export function PlannerToolbar({
   onSyncCalendar,
   onSearchChange,
 }: PlannerToolbarProps) {
+  const today = getTodayDate();
+  const isToday = date === today;
+
   return (
     <section
       aria-label="Planner toolbar"
-      className="flex flex-col gap-4 rounded-[32px] border border-white/10 bg-[rgba(8,12,24,0.82)] p-4 shadow-[0_24px_80px_rgba(5,8,18,0.55)] backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between"
+      className="flex flex-col gap-4 rounded-[32px] border border-[var(--panel-border)] bg-[var(--panel-elevated)] p-4 shadow-[var(--shadow-elevated)] backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between"
     >
       <div className="flex flex-wrap items-center gap-2">
         <Button
@@ -31,7 +35,7 @@ export function PlannerToolbar({
           variant="ghost"
           size="sm"
           aria-label="Previous day"
-          className="h-11 w-11 p-0 text-[var(--muted-strong)] hover:bg-white/10 hover:text-white"
+          className="h-11 w-11 p-0"
           onClick={() => onDateChange(stepLocalDate(date, -1))}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -45,10 +49,19 @@ export function PlannerToolbar({
         />
         <Button
           type="button"
+          variant="secondary"
+          aria-label="Jump to today"
+          disabled={isToday}
+          onClick={() => onDateChange(today)}
+        >
+          Today
+        </Button>
+        <Button
+          type="button"
           variant="ghost"
           size="sm"
           aria-label="Next day"
-          className="h-11 w-11 p-0 text-[var(--muted-strong)] hover:bg-white/10 hover:text-white"
+          className="h-11 w-11 p-0"
           onClick={() => onDateChange(stepLocalDate(date, 1))}
         >
           <ChevronRight className="h-4 w-4" />

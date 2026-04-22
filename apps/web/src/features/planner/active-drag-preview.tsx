@@ -39,7 +39,7 @@ function QueueTaskPreview({ task, isCopy }: { task: Task; isCopy: boolean }) {
         <GripVertical className="h-4 w-4 text-[var(--muted)]" />
       </div>
       <div className="space-y-2">
-        <h3 className="truncate font-medium text-white">{task.title}</h3>
+        <h3 className="truncate font-medium text-[var(--heading)]">{task.title}</h3>
         <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
           <Clock3 className="h-3.5 w-3.5" />
           <span>{task.estimatedMinutes} min</span>
@@ -54,13 +54,13 @@ function ScheduleBlockPreview({ task, isCopy }: { task: Task | undefined; isCopy
   return (
     <div
       className={cn(
-        "pointer-events-none relative w-[360px] rounded-[24px] border p-4 shadow-[0_32px_80px_rgba(5,8,18,0.65)] backdrop-blur-xl",
+        "pointer-events-none relative w-[360px] rounded-[24px] border p-4 opacity-75 shadow-[0_32px_80px_rgba(5,8,18,0.65)] backdrop-blur-xl",
         getTaskPriorityTimelineBlockClass(priority),
       )}
     >
       {isCopy ? <DuplicateBadge /> : null}
       <div className="flex items-start justify-between gap-3">
-        <p className="truncate font-semibold text-white">{task?.title ?? "Scheduled task"}</p>
+        <p className="truncate font-semibold text-[var(--heading)]">{task?.title ?? "Scheduled task"}</p>
         <Badge className={getTaskPriorityBadgeClass(priority)}>{formatTaskPriority(priority)}</Badge>
       </div>
     </div>
@@ -69,7 +69,7 @@ function ScheduleBlockPreview({ task, isCopy }: { task: Task | undefined; isCopy
 
 function DuplicateBadge() {
   return (
-    <span className="absolute -top-2 -right-2 flex items-center gap-1 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--surface)] shadow">
+    <span className="absolute -top-2 -right-2 flex items-center gap-1 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-foreground)] shadow">
       <Copy className="h-3 w-3" />
       Duplicate
     </span>

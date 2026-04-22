@@ -29,7 +29,7 @@ function TimelineSlot({
     <div
       ref={setNodeRef}
       className={cn(
-        "absolute inset-x-0 border-t border-white/8",
+        "absolute inset-x-0 border-t border-[var(--timeline-grid)]",
         isOver && "bg-[rgba(255,111,59,0.08)]",
       )}
       style={{ top: slot.top, height: SLOT_HEIGHT }}
@@ -82,7 +82,7 @@ export function TimelineBoard({
   const slots = buildTimelineSlots(date);
 
   return (
-    <div className="relative rounded-[28px] border border-white/10 bg-[rgba(255,255,255,0.02)] pl-20 pr-4">
+    <div className="relative rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] pl-20 pr-4">
       <div className="relative" style={{ height: containerHeight }}>
         {slots.map((slot) => (
           <TimelineSlot key={slot.id} slot={slot} label={slot.label} />

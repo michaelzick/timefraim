@@ -22,7 +22,7 @@ export function SettingsTogglCatalogFields({
     <div className="grid gap-4 md:grid-cols-2">
       <select
         aria-label="Toggl workspace"
-        className="h-11 rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)]"
+        className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
         {...register("workspaceId")}
       >
         <option value="" className="bg-[var(--panel)]">
@@ -38,7 +38,7 @@ export function SettingsTogglCatalogFields({
       </select>
       <select
         aria-label="Toggl default project"
-        className="h-11 rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+        className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
         disabled={!watchedWorkspaceId}
         {...register("defaultProjectId")}
       >

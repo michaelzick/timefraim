@@ -37,10 +37,10 @@ export function LoginView() {
     <div className="mx-auto flex min-h-screen max-w-[560px] items-center px-6">
       <Card className="w-full p-8">
         <Badge>Single-user planner</Badge>
-        <h1 className="mt-5 text-4xl font-semibold text-white">Sculpt your day before it gets stolen.</h1>
+        <h1 className="mt-5 text-4xl font-semibold text-[var(--heading)]">Build a realistic plan for your day.</h1>
         <p className="mt-4 text-base leading-7 text-[var(--muted-strong)]">
-          TimeFraim reads your primary Google Calendar, mirrors created tasks into Google Tasks, creates
-          app-managed focus blocks, syncs Toggl timers, and exposes a guarded MCP endpoint for Claude and ChatGPT.
+          TimeFraim keeps tasks, calendar blocks, and timers in one place so you can focus on what&apos;s next. Sign in
+          with Google to open your planner.
         </p>
         <Button
           className="mt-8 w-full"

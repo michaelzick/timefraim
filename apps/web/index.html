@@ -4,6 +4,58 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TimeFraim</title>
+    <style>
+      html {
+        transition: none !important;
+      }
+
+      html.theme-resolving *,
+      html.theme-resolving *::before,
+      html.theme-resolving *::after {
+        transition: none !important;
+        animation: none !important;
+      }
+    </style>
+    <script>
+      (function () {
+        try {
+          document.documentElement.classList.add("theme-resolving");
+
+          var key = "ui-theme";
+          var value = null;
+
+          try {
+            value = localStorage.getItem(key);
+          } catch {}
+
+          if (!value) {
+            try {
+              var cookieMatch = document.cookie.match("(^|; )" + key + "=([^;]*)");
+              if (cookieMatch) {
+                value = decodeURIComponent(cookieMatch[2]);
+              }
+            } catch {}
+          }
+
+          if (!/^(light|dark|system)$/.test(value || "")) {
+            value = "system";
+          }
+
+          var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var resolvedTheme = value === "system" ? (prefersDark ? "dark" : "light") : value;
+          var root = document.documentElement;
+
+          root.classList.remove("light", "dark");
+          root.classList.add(resolvedTheme);
+          root.style.colorScheme = resolvedTheme;
+        } catch {}
+        finally {
+          try {
+            document.documentElement.classList.remove("theme-resolving");
+          } catch {}
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
