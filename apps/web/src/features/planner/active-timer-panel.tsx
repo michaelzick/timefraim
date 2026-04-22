@@ -47,7 +47,7 @@ export function ActiveTimerPanel({
       <p className="mt-3 font-mono text-4xl font-semibold tabular-nums text-[var(--accent)]">
         {formatElapsed(elapsed)}
       </p>
-      <p className="mt-3 text-sm font-medium text-white">{heading}</p>
+      <p className="mt-3 text-sm font-medium text-[var(--heading)]">{heading}</p>
       <p className="mt-1 text-xs text-[var(--muted)]">
         Started at {formatTime(activeTimer.startedAt)}
       </p>
@@ -59,7 +59,7 @@ export function ActiveTimerPanel({
         {activeTimer.taskId && onSelectTimerTask ? (
           <button
             type="button"
-            className="cursor-pointer text-sm text-[var(--muted-strong)] underline-offset-4 hover:text-white hover:underline"
+            className="cursor-pointer text-sm text-[var(--muted-strong)] underline-offset-4 hover:text-[var(--heading)] hover:underline"
             onClick={() => onSelectTimerTask(activeTimer.taskId as string)}
           >
             Open task

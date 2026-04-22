@@ -12,12 +12,12 @@ export function DoneTodayRail({ tasks, onReactivate }: DoneTodayRailProps) {
       {tasks.map((task) => (
         <li
           key={task.id}
-          className="flex items-center justify-between gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-3 py-2"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--panel-border)] bg-[var(--panel-subtle)] px-3 py-2"
         >
           <div className="flex min-w-0 items-center gap-2">
             <span
               aria-hidden
-              className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300"
+              className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--success-soft)] text-[var(--success-text)]"
             >
               <Check className="h-3 w-3" />
             </span>
@@ -25,7 +25,7 @@ export function DoneTodayRail({ tasks, onReactivate }: DoneTodayRailProps) {
           </div>
           <button
             type="button"
-            className="cursor-pointer rounded-full px-2 py-1 text-xs text-[var(--muted)] hover:bg-white/10 hover:text-white"
+            className="cursor-pointer rounded-full px-2 py-1 text-xs text-[var(--muted)] hover:bg-[var(--panel-hover)] hover:text-[var(--heading)]"
             onClick={() => onReactivate(task)}
             aria-label={`Reactivate ${task.title}`}
           >

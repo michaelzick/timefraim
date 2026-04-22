@@ -84,14 +84,14 @@ describe("TimelineBoard", () => {
     expect(item.style.backgroundColor).toBe("transparent");
     expect(item.style.borderColor).toBe("rgb(99, 116, 173)");
     expect(item.style.borderWidth).toBe("3px");
-    expect(item.style.color).toBe("rgb(255, 255, 255)");
+    expect(item.style.color).toBe("var(--heading)");
     expect(getTimelineItem("Ship planner polish")).toHaveClass(
       "bg-[var(--priority-high-block)]",
       "shadow-[0_22px_54px_rgba(230,60,60,0.26)]",
     );
   });
 
-  it("keeps resolved Google colors opaque while using white text", () => {
+  it("keeps resolved Google colors opaque while using theme-aware text", () => {
     render(
       <TimelineBoard
         date="2026-04-06"
@@ -126,12 +126,12 @@ describe("TimelineBoard", () => {
     expect(item.style.backgroundColor).toBe("transparent");
     expect(item.style.borderColor).toBe("rgb(159, 225, 231)");
     expect(item.style.borderWidth).toBe("3px");
-    expect(item.style.color).toBe("rgb(255, 255, 255)");
-    expect(screen.getByText("Google Calendar")).toHaveStyle({ color: "rgb(255, 255, 255)" });
-    expect(screen.getByRole("button", { name: /hide/i })).toHaveStyle({ color: "rgb(255, 255, 255)" });
+    expect(item.style.color).toBe("var(--heading)");
+    expect(screen.getByText("Google Calendar")).toHaveStyle({ color: "var(--heading)" });
+    expect(screen.getByRole("button", { name: /hide/i })).toHaveStyle({ color: "var(--heading)" });
   });
 
-  it("uses white text even when Google only provides a light background", () => {
+  it("uses theme-aware text even when Google only provides a light background", () => {
     render(
       <TimelineBoard
         date="2026-04-06"
@@ -166,9 +166,9 @@ describe("TimelineBoard", () => {
     expect(item.style.backgroundColor).toBe("transparent");
     expect(item.style.borderColor).toBe("rgb(246, 192, 38)");
     expect(item.style.borderWidth).toBe("3px");
-    expect(item.style.color).toBe("rgb(255, 255, 255)");
-    expect(screen.getByText("Google Calendar")).toHaveStyle({ color: "rgb(255, 255, 255)" });
-    expect(screen.getByRole("button", { name: /hide/i })).toHaveStyle({ color: "rgb(255, 255, 255)" });
+    expect(item.style.color).toBe("var(--heading)");
+    expect(screen.getByText("Google Calendar")).toHaveStyle({ color: "var(--heading)" });
+    expect(screen.getByRole("button", { name: /hide/i })).toHaveStyle({ color: "var(--heading)" });
   });
 
   it("dismisses a calendar event without selecting it first", async () => {

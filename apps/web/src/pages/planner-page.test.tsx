@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
@@ -294,10 +294,40 @@ describe("PlannerPage", () => {
 
     expect(screen.getByRole("region", { name: /planner toolbar/i })).toBeInTheDocument();
     expect(screen.getByLabelText("Planner date")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /jump to today/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sync calendar/i })).toBeInTheDocument();
     expect(screen.getByLabelText("Filter tasks")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Focus on what matters today." })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Tasks ready to place" })).not.toBeInTheDocument();
+  });
+
+  it("jumps to the current date from the toolbar", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(2026, 3, 20, 12, 0, 0));
+      const onDateChange = vi.fn();
+
+      render(<PlannerPage {...buildPlannerPageProps({ date: "2026-04-06", onDateChange })} />);
+
+      fireEvent.click(screen.getByRole("button", { name: /jump to today/i }));
+
+      expect(onDateChange).toHaveBeenCalledWith("2026-04-20");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("disables the Today button when the viewed date is already today", () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(2026, 3, 20, 12, 0, 0));
+
+      render(<PlannerPage {...buildPlannerPageProps({ date: "2026-04-20" })} />);
+
+      expect(screen.getByRole("button", { name: /jump to today/i })).toBeDisabled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("shows the idle ActiveTimerPanel prompt when no timer is running", () => {

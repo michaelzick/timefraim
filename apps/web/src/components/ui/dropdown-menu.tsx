@@ -16,7 +16,7 @@ export const DropdownMenuContent = forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-[180px] overflow-hidden rounded-2xl border border-white/10 bg-[rgba(8,12,24,0.95)] p-1 text-sm text-white shadow-[0_24px_60px_rgba(5,8,18,0.55)] backdrop-blur-xl",
+        "z-50 min-w-[180px] overflow-hidden rounded-2xl border border-[var(--panel-border)] bg-[var(--overlay)] p-1 text-sm text-[var(--text)] shadow-[var(--shadow-elevated)] backdrop-blur-xl",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className,
       )}
@@ -34,7 +34,7 @@ export const DropdownMenuItem = forwardRef<
     ref={ref}
     className={cn(
       "relative flex cursor-pointer select-none items-center gap-2 rounded-xl px-3 py-2 outline-none transition",
-      "focus:bg-white/10 data-[highlighted]:bg-white/10",
+      "focus:bg-[var(--panel-hover)] data-[highlighted]:bg-[var(--panel-hover)]",
       variant === "danger" && "text-red-300 focus:bg-red-500/15 data-[highlighted]:bg-red-500/15",
       className,
     )}
@@ -49,7 +49,7 @@ export const DropdownMenuSeparator = forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Separator
     ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-white/10", className)}
+    className={cn("-mx-1 my-1 h-px bg-[var(--panel-border)]", className)}
     {...props}
   />
 ));

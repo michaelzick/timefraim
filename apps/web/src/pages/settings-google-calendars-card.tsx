@@ -62,13 +62,13 @@ export function SettingsGoogleCalendarsCard({
         {settings.availableCalendars.map((cal) => (
           <label
             key={cal.id}
-            className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-white hover:bg-white/6"
+            className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--panel-border)] bg-[var(--panel-subtle)] px-4 py-3 text-sm text-[var(--heading)] hover:bg-[var(--panel-hover)]"
           >
             <input
               type="checkbox"
               checked={effectiveSelection.includes(cal.id)}
               onChange={(e) => handleToggle(cal.id, e.target.checked)}
-              className="h-4 w-4 shrink-0 rounded border-white/20 bg-transparent accent-[var(--accent)]"
+              className="h-4 w-4 shrink-0 rounded border-[var(--panel-border-strong)] bg-transparent accent-[var(--accent)]"
             />
             <span className="flex items-center gap-2 truncate">
               {cal.backgroundColor && (

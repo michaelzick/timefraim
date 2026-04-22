@@ -40,12 +40,12 @@ export function SettingsTogglIntro() {
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Toggl Track</p>
-          <h2 className="mt-1 text-2xl font-semibold text-white">Timer connection</h2>
+          <h2 className="mt-1 text-2xl font-semibold text-[var(--heading)]">Timer connection</h2>
         </div>
       </div>
 
-      <div className="rounded-[24px] border border-white/10 bg-white/4 p-4 text-sm text-[var(--muted-strong)]">
-        <p className="font-medium text-white">What you need</p>
+      <div className="rounded-[24px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] p-4 text-sm text-[var(--muted-strong)]">
+        <p className="font-medium text-[var(--heading)]">What you need</p>
         <p className="mt-2">
           Add a Toggl Track API token, choose a workspace, then optionally set a workspace default project. TimeFraim
           stores the token encrypted and only shows the masked ending on future visits.
@@ -102,8 +102,8 @@ export function SettingsTogglConnectionState({
           </p>
         </div>
       ) : (
-        <div className="rounded-[20px] border border-white/10 bg-white/4 p-4 text-sm text-[var(--muted-strong)]">
-          Saved token: <span className="text-white">{togglSettings.apiTokenHint}</span>
+        <div className="rounded-[20px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] p-4 text-sm text-[var(--muted-strong)]">
+          Saved token: <span className="text-[var(--heading)]">{togglSettings.apiTokenHint}</span>
         </div>
       )}
     </>

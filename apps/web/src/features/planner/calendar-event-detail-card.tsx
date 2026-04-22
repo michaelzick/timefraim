@@ -42,22 +42,22 @@ export function CalendarEventDetailCard({
       <div className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Focus</p>
-          <h2 className="mt-1 text-xl font-semibold text-white">Calendar event</h2>
+          <h2 className="mt-1 text-xl font-semibold text-[var(--heading)]">Calendar event</h2>
         </div>
         <Badge
           className="normal-case tracking-[0.08em]"
           style={{
             borderColor: event.backgroundColor ?? "#6374ad",
             backgroundColor: "transparent",
-            color: "#ffffff",
+            color: "var(--heading)",
           }}
         >
           {event.sourceCalendarName ?? "Google Calendar"}
         </Badge>
       </div>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSaveEvent)}>
-        <div className="rounded-[24px] border border-white/10 bg-white/4 p-4">
-          <p className="text-sm font-medium text-white">{event.title}</p>
+        <div className="rounded-[24px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] p-4">
+          <p className="text-sm font-medium text-[var(--heading)]">{event.title}</p>
           <p className="mt-2 text-sm text-[var(--muted-strong)]">
             {formatTime(event.startAt)} to {formatTime(event.endAt)}
           </p>
@@ -65,7 +65,7 @@ export function CalendarEventDetailCard({
         <div className="space-y-2">
           <select
             aria-label="Event Toggl project"
-            className="h-11 w-full rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-11 w-full rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={!togglSettings.connected}
             {...form.register("togglProjectId")}
           >

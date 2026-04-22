@@ -51,7 +51,7 @@ export function TaskDetailCard({
       <div className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Focus</p>
-          <h2 className="mt-1 text-xl font-semibold text-white">Task detail</h2>
+          <h2 className="mt-1 text-xl font-semibold text-[var(--heading)]">Task detail</h2>
         </div>
         <Badge className={selectedTask ? getTaskPriorityBadgeClass(selectedTask.priority) : "normal-case tracking-[0.08em]"}>
           {selectedTask ? formatTaskPriority(selectedTask.priority) : "None"}
@@ -75,7 +75,7 @@ export function TaskDetailCard({
             />
             <select
               aria-label="Detail priority"
-              className="h-11 rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)]"
+              className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
               {...form.register("priority")}
             >
               {PRIORITY_OPTIONS.map((priority) => (
@@ -87,7 +87,7 @@ export function TaskDetailCard({
           </div>
           <select
             aria-label="Detail lifecycle"
-            className="h-11 w-full rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)]"
+            className="h-11 w-full rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
             {...form.register("lifecycle")}
           >
             {TASK_LIFECYCLE_OPTIONS.map((value) => (
@@ -99,7 +99,7 @@ export function TaskDetailCard({
           <div className="space-y-2">
             <select
               aria-label="Detail Toggl project"
-              className="h-11 w-full rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] px-4 text-sm text-white outline-none focus:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 w-full rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!togglSettings.connected}
               {...form.register("togglProjectId")}
             >
@@ -131,7 +131,7 @@ export function TaskDetailCard({
               variant={form.formState.isDirty ? "default" : "ghost"}
               className={cn(
                 !form.formState.isDirty &&
-                  "border border-[rgba(255,111,59,0.32)] bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[rgba(255,111,59,0.22)] hover:text-[var(--accent)]",
+                  "border border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent-soft-strong)] hover:text-[var(--accent)]",
               )}
             >
               <Save className="h-4 w-4" />
@@ -157,7 +157,7 @@ export function TaskDetailCard({
           <Button
             type="button"
             variant="secondary"
-            className="w-full border-[rgba(255,111,59,0.28)] text-[var(--accent)] hover:bg-[rgba(255,111,59,0.12)]"
+            className="w-full border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-soft)]"
             onClick={onDeleteTask}
             disabled={isMutating}
           >

@@ -15,7 +15,7 @@ export function DoneTodayCard({ tasks, onReactivate }: DoneTodayCardProps) {
     <Card>
       <button
         type="button"
-        className="flex w-full cursor-pointer items-center gap-2 text-xs uppercase tracking-[0.22em] text-[var(--muted)] hover:text-white"
+        className="flex w-full cursor-pointer items-center gap-2 text-xs uppercase tracking-[0.22em] text-[var(--muted)] hover:text-[var(--heading)]"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
       >
