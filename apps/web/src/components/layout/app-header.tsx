@@ -1,5 +1,5 @@
 import type { AuthSession } from "@timefraim/shared";
-import { CalendarDays, Settings2 } from "lucide-react";
+import { CalendarDays, LogOut, Settings2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,8 @@ export function AppHeader({ authSession, onSignOut }: AppHeaderProps) {
           </NavLink>
         </nav>
         <ThemeSwitcher />
-        <Button variant="secondary" onClick={onSignOut}>
+        <Button type="button" variant="ghost" size="sm" onClick={onSignOut}>
+          <LogOut className="h-4 w-4" />
           Sign out
         </Button>
       </div>

@@ -35,25 +35,25 @@ html.dark {
   --timeline-grid: rgba(255, 255, 255, 0.08);
   --selection: rgba(255, 111, 59, 0.28);
   --scroll-thumb: rgba(255, 255, 255, 0.18);
-  --priority-low-block: #393b7e60;
+  --priority-low-block: #2f347c;
   --priority-low-border: rgba(98, 100, 170, 0.45);
   --priority-low-soft: rgba(98, 100, 170, 0.20);
-  --priority-low-card: rgba(98, 100, 170, 0.14);
+  --priority-low-card: #242b63;
   --priority-low-text: #b8bbff;
-  --priority-medium-block: #00fbff60;
+  --priority-medium-block: #0a6f79;
   --priority-medium-border: rgba(0, 230, 235, 0.45);
   --priority-medium-soft: rgba(0, 230, 235, 0.20);
-  --priority-medium-card: rgba(0, 230, 235, 0.14);
+  --priority-medium-card: #084f58;
   --priority-medium-text: #a8fdff;
-  --priority-high-block: #8b202060;
+  --priority-high-block: #7c1f1f;
   --priority-high-border: rgba(180, 60, 60, 0.50);
   --priority-high-soft: rgba(180, 60, 60, 0.22);
-  --priority-high-card: rgba(180, 60, 60, 0.16);
+  --priority-high-card: #5c1717;
   --priority-high-text: #ffb0b0;
-  --priority-urgent-block: #9e15a060;
+  --priority-urgent-block: #8d1b63;
   --priority-urgent-border: rgba(200, 40, 200, 0.55);
   --priority-urgent-soft: rgba(200, 40, 200, 0.25);
-  --priority-urgent-card: rgba(200, 40, 200, 0.18);
+  --priority-urgent-card: #641246;
   --priority-urgent-text: #ffb8ff;
 }
 
@@ -86,26 +86,26 @@ html.light {
   --timeline-grid: rgba(24, 39, 75, 0.10);
   --selection: rgba(255, 111, 59, 0.22);
   --scroll-thumb: rgba(24, 39, 75, 0.22);
-  --priority-low-block: rgba(99, 102, 241, 0.18);
-  --priority-low-border: rgba(99, 102, 241, 0.28);
+  --priority-low-block: #dbe4ff;
+  --priority-low-border: rgba(99, 102, 241, 0.35);
   --priority-low-soft: rgba(99, 102, 241, 0.12);
-  --priority-low-card: rgba(99, 102, 241, 0.10);
+  --priority-low-card: #eef2ff;
   --priority-low-text: #4338ca;
-  --priority-medium-block: rgba(8, 145, 178, 0.20);
-  --priority-medium-border: rgba(8, 145, 178, 0.28);
+  --priority-medium-block: #c9f4fb;
+  --priority-medium-border: rgba(8, 145, 178, 0.34);
   --priority-medium-soft: rgba(8, 145, 178, 0.12);
-  --priority-medium-card: rgba(8, 145, 178, 0.10);
+  --priority-medium-card: #e7fbff;
   --priority-medium-text: #155e75;
-  --priority-high-block: rgba(220, 38, 38, 0.18);
-  --priority-high-border: rgba(220, 38, 38, 0.26);
+  --priority-high-block: #ffd6d6;
+  --priority-high-border: rgba(220, 38, 38, 0.32);
   --priority-high-soft: rgba(220, 38, 38, 0.12);
-  --priority-high-card: rgba(220, 38, 38, 0.10);
+  --priority-high-card: #fff0f0;
   --priority-high-text: #991b1b;
-  --priority-urgent-block: rgba(192, 38, 211, 0.18);
-  --priority-urgent-border: rgba(192, 38, 211, 0.26);
-  --priority-urgent-soft: rgba(192, 38, 211, 0.12);
-  --priority-urgent-card: rgba(192, 38, 211, 0.10);
-  --priority-urgent-text: #86198f;
+  --priority-urgent-block: #ffd7c4;
+  --priority-urgent-border: rgba(234, 88, 12, 0.34);
+  --priority-urgent-soft: rgba(249, 115, 22, 0.12);
+  --priority-urgent-card: #fff0e8;
+  --priority-urgent-text: #9a3412;
 }
 
 * {

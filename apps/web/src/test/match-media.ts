@@ -19,12 +19,12 @@ function createMediaQueryList(query: string): MediaQueryList {
     removeEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
       listeners.delete(listener as Listener);
     },
-    addListener: (listener: ((this: MediaQueryList, ev: MediaQueryListEvent) => any) | null) => {
+    addListener: (listener: ((this: MediaQueryList, ev: MediaQueryListEvent) => void) | null) => {
       if (listener) {
         listeners.add(listener);
       }
     },
-    removeListener: (listener: ((this: MediaQueryList, ev: MediaQueryListEvent) => any) | null) => {
+    removeListener: (listener: ((this: MediaQueryList, ev: MediaQueryListEvent) => void) | null) => {
       if (listener) {
         listeners.delete(listener);
       }

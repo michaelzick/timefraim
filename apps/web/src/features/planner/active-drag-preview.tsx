@@ -54,7 +54,7 @@ function ScheduleBlockPreview({ task, isCopy }: { task: Task | undefined; isCopy
   return (
     <div
       className={cn(
-        "pointer-events-none relative w-[360px] rounded-[24px] border p-4 shadow-[0_32px_80px_rgba(5,8,18,0.65)] backdrop-blur-xl",
+        "pointer-events-none relative w-[360px] rounded-[24px] border p-4 opacity-75 shadow-[0_32px_80px_rgba(5,8,18,0.65)] backdrop-blur-xl",
         getTaskPriorityTimelineBlockClass(priority),
       )}
     >
