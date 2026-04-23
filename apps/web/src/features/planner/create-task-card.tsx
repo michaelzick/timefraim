@@ -4,6 +4,7 @@ import { Controller, type UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DurationInput } from "@/components/duration-input";
+import { DurationPresets } from "@/components/duration-presets";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PRIORITY_OPTIONS, formatTaskPriority } from "@/features/planner/task-presentation";
@@ -60,30 +61,37 @@ export function CreateTaskCard({
           className="min-h-24"
           {...form.register("notes")}
         />
-        <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
-          <Controller
-            control={form.control}
-            name="estimatedMinutes"
-            render={({ field }) => (
-              <DurationInput
+        <Controller
+          control={form.control}
+          name="estimatedMinutes"
+          render={({ field }) => (
+            <div className="space-y-3">
+              <DurationPresets
                 valueMinutes={field.value}
-                onChange={field.onChange}
+                onSelect={field.onChange}
                 ariaLabelPrefix="Task"
               />
-            )}
-          />
-          <select
-            aria-label="Task priority"
-            className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
-            {...form.register("priority")}
-          >
-            {PRIORITY_OPTIONS.map((priority) => (
-              <option key={priority} value={priority} className="bg-[var(--panel)]">
-                {formatTaskPriority(priority)}
-              </option>
-            ))}
-          </select>
-        </div>
+              <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
+                <DurationInput
+                  valueMinutes={field.value}
+                  onChange={field.onChange}
+                  ariaLabelPrefix="Task"
+                />
+                <select
+                  aria-label="Task priority"
+                  className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+                  {...form.register("priority")}
+                >
+                  {PRIORITY_OPTIONS.map((priority) => (
+                    <option key={priority} value={priority} className="bg-[var(--panel)]">
+                      {formatTaskPriority(priority)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+        />
         <div className="space-y-2">
           <select
             aria-label="Task Toggl project"

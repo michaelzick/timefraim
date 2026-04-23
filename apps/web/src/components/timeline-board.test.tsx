@@ -84,7 +84,7 @@ describe("TimelineBoard", () => {
     expect(item.style.backgroundColor).toBe("transparent");
     expect(item.style.borderColor).toBe("rgb(99, 116, 173)");
     expect(item.style.borderWidth).toBe("3px");
-    expect(item.style.color).toBe("var(--heading)");
+    expect(item.style.color).toBe("var(--planner-surface-title)");
     expect(getTimelineItem("Ship planner polish")).toHaveClass(
       "bg-[var(--priority-high-block)]",
       "shadow-[0_22px_54px_rgba(230,60,60,0.26)]",
@@ -126,9 +126,9 @@ describe("TimelineBoard", () => {
     expect(item.style.backgroundColor).toBe("transparent");
     expect(item.style.borderColor).toBe("rgb(159, 225, 231)");
     expect(item.style.borderWidth).toBe("3px");
-    expect(item.style.color).toBe("var(--heading)");
-    expect(screen.getByText("Google Calendar")).toHaveStyle({ color: "var(--heading)" });
-    expect(screen.getByRole("button", { name: /hide/i })).toHaveStyle({ color: "var(--heading)" });
+    expect(item.style.color).toBe("var(--planner-surface-title)");
+    expect(screen.getByText("Google Calendar")).toHaveStyle({ color: "var(--planner-surface-title)" });
+    expect(screen.getByRole("button", { name: /hide/i })).toHaveStyle({ color: "var(--planner-surface-title)" });
   });
 
   it("uses theme-aware text even when Google only provides a light background", () => {
@@ -166,9 +166,9 @@ describe("TimelineBoard", () => {
     expect(item.style.backgroundColor).toBe("transparent");
     expect(item.style.borderColor).toBe("rgb(246, 192, 38)");
     expect(item.style.borderWidth).toBe("3px");
-    expect(item.style.color).toBe("var(--heading)");
-    expect(screen.getByText("Google Calendar")).toHaveStyle({ color: "var(--heading)" });
-    expect(screen.getByRole("button", { name: /hide/i })).toHaveStyle({ color: "var(--heading)" });
+    expect(item.style.color).toBe("var(--planner-surface-title)");
+    expect(screen.getByText("Google Calendar")).toHaveStyle({ color: "var(--planner-surface-title)" });
+    expect(screen.getByRole("button", { name: /hide/i })).toHaveStyle({ color: "var(--planner-surface-title)" });
   });
 
   it("dismisses a calendar event without selecting it first", async () => {
@@ -210,5 +210,41 @@ describe("TimelineBoard", () => {
 
     expect(onDismissCalendarEvent).toHaveBeenCalledWith("calendar-1", "Team sync");
     expect(onSelectCalendarEvent).not.toHaveBeenCalled();
+  });
+
+  it.each(["light", "dark"] as const)("uses the white selected border for calendar events in %s mode", (theme) => {
+    document.documentElement.className = theme;
+
+    render(
+      <TimelineBoard
+        date="2026-04-06"
+        tasks={[]}
+        scheduleBlocks={[]}
+        calendarEvents={[
+          {
+            id: "calendar-1",
+            externalEventId: "google-1",
+            title: "Team sync",
+            startAt: "2026-04-06T15:00:00.000Z",
+            endAt: "2026-04-06T15:30:00.000Z",
+            isAppManaged: false,
+            backgroundColor: "#9fe1e7",
+            foregroundColor: null,
+            sourceCalendarId: null,
+            sourceCalendarName: null,
+            togglProjectId: null,
+          },
+        ]}
+        activeTimer={null}
+        selectedTaskId={null}
+        selectedCalendarEventId="calendar-1"
+        onDismissCalendarEvent={vi.fn()}
+        onSelectTask={vi.fn()}
+        onSelectCalendarEvent={vi.fn()}
+        onDeleteScheduleBlock={vi.fn()}
+      />,
+    );
+
+    expect(getTimelineItem("Team sync").style.borderColor).toBe("var(--timeline-selection-ring)");
   });
 });

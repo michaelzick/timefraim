@@ -65,7 +65,7 @@ export function TimelineScheduleBlock({
         "absolute left-8 right-8 z-10 cursor-pointer overflow-hidden rounded-[24px] border p-4 transition",
         getTaskPriorityTimelineBlockClass(priority),
         isDragging && "opacity-75",
-        isSelected && "ring-2 ring-[var(--accent)]",
+        isSelected && "border-[var(--timeline-selection-ring)]",
         runState === "running" && "adhd-pulse",
         runState === "done" && "opacity-45",
       )}
@@ -79,9 +79,14 @@ export function TimelineScheduleBlock({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {isShortBlock(block.startAt, block.endAt) ? (
-            <p className={cn("truncate font-semibold text-[var(--heading)]", runState === "done" && "line-through")}>
+            <p
+              className={cn(
+                "truncate font-semibold text-[var(--planner-surface-title)]",
+                runState === "done" && "line-through",
+              )}
+            >
               {title}
-              <span className="ml-2 text-xs font-normal text-[var(--muted-strong)]">
+              <span className="ml-2 text-xs font-normal text-[var(--planner-surface-meta)]">
                 {formatTime(block.startAt)} to {formatTime(block.endAt)}
               </span>
               {runState === "running" ? (
@@ -95,8 +100,15 @@ export function TimelineScheduleBlock({
             </p>
           ) : (
             <>
-              <p className={cn("truncate font-semibold text-[var(--heading)]", runState === "done" && "line-through")}>{title}</p>
-              <p className="mt-1 text-xs text-[var(--muted-strong)]">
+              <p
+                className={cn(
+                  "truncate font-semibold text-[var(--planner-surface-title)]",
+                  runState === "done" && "line-through",
+                )}
+              >
+                {title}
+              </p>
+              <p className="mt-1 text-xs text-[var(--planner-surface-meta)]">
                 {formatTime(block.startAt)} to {formatTime(block.endAt)}
               </p>
               {runState === "running" ? (

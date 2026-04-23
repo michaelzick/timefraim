@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
@@ -90,10 +90,10 @@ describe("PlannerPage", () => {
     expect(addTaskButton).toBeEnabled();
 
     await user.type(screen.getByLabelText("Task notes"), "Protect a quiet block.");
-    await user.clear(screen.getByLabelText("Task estimated hours"));
-    await user.type(screen.getByLabelText("Task estimated hours"), "1");
-    await user.clear(screen.getByLabelText("Task estimated minutes"));
-    await user.type(screen.getByLabelText("Task estimated minutes"), "0");
+    const taskPresets = screen.getByRole("group", { name: /task common durations/i });
+    await user.click(within(taskPresets).getByRole("button", { name: "1 hr" }));
+    expect(screen.getByLabelText("Task estimated hours")).toHaveValue(1);
+    expect(screen.getByLabelText("Task estimated minutes")).toHaveValue(0);
     await user.selectOptions(screen.getByLabelText("Task priority"), "high");
     await user.click(addTaskButton);
 

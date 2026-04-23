@@ -9,7 +9,7 @@ import { cn, formatTime } from "@/lib/utils";
 const FALLBACK_TIMELINE_EVENT_BORDER = "#6374ad";
 
 function getCalendarEventForegroundColor() {
-  return "var(--heading)";
+  return "var(--planner-surface-title)";
 }
 
 export function TimelineBoardCalendarEvent({
@@ -36,7 +36,7 @@ export function TimelineBoardCalendarEvent({
     top: placement.top,
     height: placement.height,
     backgroundColor: "transparent",
-    borderColor: borderColorSource,
+    borderColor: isSelected ? "var(--timeline-selection-ring)" : borderColorSource,
     borderWidth: "3px",
     color: foregroundColor,
   };
@@ -49,7 +49,7 @@ export function TimelineBoardCalendarEvent({
   return (
     <div
       key={event.id}
-      className={cn("absolute left-3 right-3 cursor-pointer rounded-[24px] border p-4 text-sm", isSelected && "ring-2 ring-[var(--accent)]")}
+      className={cn("absolute left-3 right-3 cursor-pointer rounded-[24px] border p-4 text-sm")}
       style={cardStyle}
       onClick={() => onSelectCalendarEvent(event.id)}
     >
@@ -58,14 +58,14 @@ export function TimelineBoardCalendarEvent({
           {isShortBlock(event.startAt, event.endAt) ? (
             <p className="truncate font-medium">
               {event.title}
-              <span className="ml-2 text-xs font-normal opacity-80">
+              <span className="ml-2 text-xs font-normal text-[var(--planner-surface-meta)]">
                 {formatTime(event.startAt)} to {formatTime(event.endAt)}
               </span>
             </p>
           ) : (
             <>
               <p className="truncate font-medium">{event.title}</p>
-              <p className="mt-1 text-xs opacity-80">
+              <p className="mt-1 text-xs text-[var(--planner-surface-meta)]">
                 {formatTime(event.startAt)} to {formatTime(event.endAt)}
               </p>
             </>

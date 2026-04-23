@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRef } from "react";
 import { useForm } from "react-hook-form";
@@ -45,5 +45,19 @@ describe("TaskDetailCard save button", () => {
     const saveButton = screen.getByRole("button", { name: /save/i });
     expect(saveButton.className).not.toContain("bg-[var(--accent-soft)]");
     expect(saveButton.querySelector("svg")).not.toBeNull();
+  });
+
+  it("quick-selects common durations and marks the form dirty", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    const presets = screen.getByRole("group", { name: /detail common durations/i });
+    await user.click(within(presets).getByRole("button", { name: "1.5 hr" }));
+
+    expect(screen.getByLabelText("Detail estimated hours")).toHaveValue(1);
+    expect(screen.getByLabelText("Detail estimated minutes")).toHaveValue(30);
+
+    const saveButton = screen.getByRole("button", { name: /save/i });
+    expect(saveButton.className).not.toContain("bg-[var(--accent-soft)]");
   });
 });

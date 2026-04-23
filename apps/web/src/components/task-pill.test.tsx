@@ -28,4 +28,17 @@ describe("TaskPill", () => {
     expect(container.firstElementChild).toHaveClass("cursor-pointer");
     expect(screen.getByRole("button", { name: /more actions for plan launch week/i })).toHaveClass("cursor-pointer");
   });
+
+  it("uses the shared planner surface foreground tokens for queue cards", () => {
+    render(
+      <TaskPill
+        task={buildTask()}
+        active={false}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: /plan launch week/i })).toHaveClass("text-[var(--planner-surface-title)]");
+    expect(screen.getByText(/45 min/i).parentElement).toHaveClass("text-[var(--planner-surface-meta)]");
+  });
 });

@@ -27,4 +27,16 @@ describe("AppHeader", () => {
 
     expect(onSignOut).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps the active planner nav pill on the accent foreground token", () => {
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/"]}>
+          <AppHeader authSession={buildAuthSession()} onSignOut={vi.fn()} />
+        </MemoryRouter>
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByRole("link", { name: /planner/i })).toHaveClass("text-[var(--accent-foreground)]");
+  });
 });

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DurationInput } from "@/components/duration-input";
+import { DurationPresets } from "@/components/duration-presets";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -61,30 +62,37 @@ export function TaskDetailCard({
         <form className="space-y-4" onSubmit={form.handleSubmit(onSaveTask)}>
           <Input aria-label="Detail title" {...form.register("title")} />
           <Textarea aria-label="Detail notes" {...form.register("notes")} />
-          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
-            <Controller
-              control={form.control}
-              name="estimatedMinutes"
-              render={({ field }) => (
-                <DurationInput
+          <Controller
+            control={form.control}
+            name="estimatedMinutes"
+            render={({ field }) => (
+              <div className="space-y-3">
+                <DurationPresets
                   valueMinutes={field.value}
-                  onChange={field.onChange}
+                  onSelect={field.onChange}
                   ariaLabelPrefix="Detail"
                 />
-              )}
-            />
-            <select
-              aria-label="Detail priority"
-              className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
-              {...form.register("priority")}
-            >
-              {PRIORITY_OPTIONS.map((priority) => (
-                <option key={priority} value={priority}>
-                  {formatTaskPriority(priority)}
-                </option>
-              ))}
-            </select>
-          </div>
+                <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
+                  <DurationInput
+                    valueMinutes={field.value}
+                    onChange={field.onChange}
+                    ariaLabelPrefix="Detail"
+                  />
+                  <select
+                    aria-label="Detail priority"
+                    className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+                    {...form.register("priority")}
+                  >
+                    {PRIORITY_OPTIONS.map((priority) => (
+                      <option key={priority} value={priority}>
+                        {formatTaskPriority(priority)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          />
           <select
             aria-label="Detail lifecycle"
             className="h-11 w-full rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
@@ -92,9 +100,9 @@ export function TaskDetailCard({
           >
             {TASK_LIFECYCLE_OPTIONS.map((value) => (
               <option key={value} value={value}>
-              {formatTaskLifecycle(value)}
-            </option>
-          ))}
+                {formatTaskLifecycle(value)}
+              </option>
+            ))}
           </select>
           <div className="space-y-2">
             <select

@@ -36,11 +36,11 @@ function QueueTaskPreview({ task, isCopy }: { task: Task; isCopy: boolean }) {
       {isCopy ? <DuplicateBadge /> : null}
       <div className="mb-3 flex items-center justify-between gap-3">
         <Badge className={getTaskPriorityBadgeClass(task.priority)}>{formatTaskPriority(task.priority)}</Badge>
-        <GripVertical className="h-4 w-4 text-[var(--muted)]" />
+        <GripVertical className="h-4 w-4 text-[var(--planner-surface-meta)]" />
       </div>
       <div className="space-y-2">
-        <h3 className="truncate font-medium text-[var(--heading)]">{task.title}</h3>
-        <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
+        <h3 className="truncate font-medium text-[var(--planner-surface-title)]">{task.title}</h3>
+        <div className="flex items-center gap-2 text-xs text-[var(--planner-surface-meta)]">
           <Clock3 className="h-3.5 w-3.5" />
           <span>{task.estimatedMinutes} min</span>
         </div>
@@ -60,7 +60,9 @@ function ScheduleBlockPreview({ task, isCopy }: { task: Task | undefined; isCopy
     >
       {isCopy ? <DuplicateBadge /> : null}
       <div className="flex items-start justify-between gap-3">
-        <p className="truncate font-semibold text-[var(--heading)]">{task?.title ?? "Scheduled task"}</p>
+        <p className="truncate font-semibold text-[var(--planner-surface-title)]">
+          {task?.title ?? "Scheduled task"}
+        </p>
         <Badge className={getTaskPriorityBadgeClass(priority)}>{formatTaskPriority(priority)}</Badge>
       </div>
     </div>
