@@ -3,6 +3,10 @@ import { CSS } from "@dnd-kit/utilities";
 import type { ScheduleBlock, Task } from "@timefraim/shared";
 import { Check, Undo2 } from "lucide-react";
 import { TaskPillKebab } from "@/components/task-pill-kebab";
+import {
+  TimelineResizeHandle,
+  useTimelineBlockResize,
+} from "@/components/timeline-resize-handle";
 import { getTimelinePlacement, isShortBlock } from "@/components/timeline-geometry";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,6 +30,7 @@ type TimelineScheduleBlockProps = {
   onDuplicateTask?: (task: Task) => void;
   onStartTaskTimer?: (taskId: string) => void;
   onMarkTaskDone?: (task: Task) => void;
+  onResizeTaskDuration?: (task: Task, durationMinutes: number) => void;
   onSelectTask: (taskId: string) => void;
 };
 
@@ -40,6 +45,7 @@ export function TimelineScheduleBlock({
   onDuplicateTask,
   onStartTaskTimer,
   onMarkTaskDone,
+  onResizeTaskDuration,
   onSelectTask,
 }: TimelineScheduleBlockProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -47,7 +53,18 @@ export function TimelineScheduleBlock({
     data: { dragType: "schedule-block", scheduleBlock: block, task },
   });
   const elapsed = useElapsedSeconds(runState === "running" ? runningStartedAt : null);
-  const placement = getTimelinePlacement(date, block.startAt, block.endAt);
+  const resize = useTimelineBlockResize({
+    block,
+    date,
+    disabled: !task || !onResizeTaskDuration,
+    onResizeEnd: (durationMinutes) => {
+      if (task && onResizeTaskDuration) {
+        onResizeTaskDuration(task, durationMinutes);
+      }
+    },
+  });
+  const displayEndAt = resize.previewEndAt ?? block.endAt;
+  const placement = getTimelinePlacement(date, block.startAt, displayEndAt);
   const priority = task?.priority ?? "medium";
   const title = task?.title ?? "Scheduled task";
 
@@ -62,9 +79,10 @@ export function TimelineScheduleBlock({
         transform: CSS.Translate.toString(transform),
       }}
       className={cn(
-        "absolute left-8 right-8 z-10 cursor-pointer overflow-hidden rounded-[24px] border p-4 transition",
+        "absolute left-8 right-8 z-10 cursor-pointer overflow-hidden rounded-[24px] border px-4 pb-7 pt-4 transition",
         getTaskPriorityTimelineBlockClass(priority),
         isDragging && "opacity-75",
+        resize.isResizing && "ring-2 ring-[var(--timeline-selection-ring)]",
         isSelected && "border-[var(--timeline-selection-ring)]",
         runState === "running" && "adhd-pulse",
         runState === "done" && "opacity-45",
@@ -78,7 +96,7 @@ export function TimelineScheduleBlock({
       ) : null}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          {isShortBlock(block.startAt, block.endAt) ? (
+          {isShortBlock(block.startAt, displayEndAt) ? (
             <p
               className={cn(
                 "truncate font-semibold text-[var(--planner-surface-title)]",
@@ -87,7 +105,7 @@ export function TimelineScheduleBlock({
             >
               {title}
               <span className="ml-2 text-xs font-normal text-[var(--planner-surface-meta)]">
-                {formatTime(block.startAt)} to {formatTime(block.endAt)}
+                {formatTime(block.startAt)} to {formatTime(displayEndAt)}
               </span>
               {runState === "running" ? (
                 <span
@@ -109,7 +127,7 @@ export function TimelineScheduleBlock({
                 {title}
               </p>
               <p className="mt-1 text-xs text-[var(--planner-surface-meta)]">
-                {formatTime(block.startAt)} to {formatTime(block.endAt)}
+                {formatTime(block.startAt)} to {formatTime(displayEndAt)}
               </p>
               {runState === "running" ? (
                 <Badge className="mt-2 border-[var(--accent)] bg-[var(--accent-soft)] font-mono uppercase tracking-[0.18em] text-[var(--accent)]">
@@ -142,6 +160,14 @@ export function TimelineScheduleBlock({
           ) : null}
         </div>
       </div>
+      {task && onResizeTaskDuration ? (
+        <TimelineResizeHandle
+          currentDurationMinutes={resize.currentDurationMinutes}
+          isResizing={resize.isResizing}
+          previewDurationMinutes={resize.previewDurationMinutes}
+          {...resize.resizeHandleProps}
+        />
+      ) : null}
     </div>
   );
 }

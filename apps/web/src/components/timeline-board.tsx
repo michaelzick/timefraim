@@ -62,6 +62,7 @@ export function TimelineBoard({
   onDuplicateTask,
   onStartTaskTimer,
   onMarkTaskDone,
+  onResizeTaskDuration,
 }: {
   date: string;
   tasks: Task[];
@@ -77,6 +78,7 @@ export function TimelineBoard({
   onDuplicateTask?: (task: Task) => void;
   onStartTaskTimer?: (taskId: string) => void;
   onMarkTaskDone?: (task: Task) => void;
+  onResizeTaskDuration?: (task: Task, durationMinutes: number) => void;
 }) {
   const containerHeight = getTimelineContainerHeight();
   const slots = buildTimelineSlots(date);
@@ -114,6 +116,7 @@ export function TimelineBoard({
               onDuplicateTask={onDuplicateTask}
               onStartTaskTimer={onStartTaskTimer}
               onMarkTaskDone={onMarkTaskDone}
+              onResizeTaskDuration={onResizeTaskDuration}
               onSelectTask={onSelectTask}
             />
           );
