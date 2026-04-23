@@ -36,4 +36,9 @@ describe("globals.css planner tokens", () => {
     expect(lightThemeBlock).toContain("--calendar-event-meta: var(--muted-strong);");
     expect(lightThemeBlock).toContain("--accent-foreground: #ffffff;");
   });
+
+  it("limits the anchor color reset to unclassed links", () => {
+    expect(globalsCss).toContain("a:not([class]) {");
+    expect(globalsCss).not.toContain("\na {\n  color: inherit;");
+  });
 });
