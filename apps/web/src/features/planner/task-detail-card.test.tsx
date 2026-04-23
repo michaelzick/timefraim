@@ -61,10 +61,11 @@ describe("TaskDetailCard save button", () => {
     render(<Harness />);
 
     const presets = screen.getByRole("group", { name: /detail common durations/i });
-    await user.click(within(presets).getByRole("button", { name: "1.5 hr" }));
+    expect(within(presets).getByRole("button", { name: "45 min" })).toBeInTheDocument();
+    await user.click(within(presets).getByRole("button", { name: "1 hr" }));
 
     expect(screen.getByLabelText("Detail estimated hours")).toHaveValue(1);
-    expect(screen.getByLabelText("Detail estimated minutes")).toHaveValue(30);
+    expect(screen.getByLabelText("Detail estimated minutes")).toHaveValue(0);
 
     const saveButton = screen.getByRole("button", { name: /save/i });
     expect(saveButton.className).not.toContain("bg-[var(--accent-soft)]");

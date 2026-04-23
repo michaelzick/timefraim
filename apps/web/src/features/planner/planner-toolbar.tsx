@@ -73,7 +73,7 @@ export function PlannerToolbar({
           {isSyncing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
           Sync calendar
         </Button>
-        {linkedGoogleEmail ? <Badge>Synced with {linkedGoogleEmail}</Badge> : null}
+        {linkedGoogleEmail ? <Badge className="ml-3">Synced with {linkedGoogleEmail}</Badge> : null}
       </div>
       <Input
         aria-label="Filter tasks"

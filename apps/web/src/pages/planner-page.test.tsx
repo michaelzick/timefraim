@@ -92,9 +92,9 @@ describe("PlannerPage", () => {
 
     await user.type(screen.getByLabelText("Task notes"), "Protect a quiet block.");
     const taskPresets = screen.getByRole("group", { name: /task common durations/i });
-    await user.click(within(taskPresets).getByRole("button", { name: "1 hr" }));
-    expect(screen.getByLabelText("Task estimated hours")).toHaveValue(1);
-    expect(screen.getByLabelText("Task estimated minutes")).toHaveValue(0);
+    await user.click(within(taskPresets).getByRole("button", { name: "45 min" }));
+    expect(screen.getByLabelText("Task estimated hours")).toHaveValue(0);
+    expect(screen.getByLabelText("Task estimated minutes")).toHaveValue(45);
     await user.selectOptions(screen.getByLabelText("Task priority"), "high");
     await user.click(addTaskButton);
 
@@ -102,7 +102,7 @@ describe("PlannerPage", () => {
       expect(onCreateTask).toHaveBeenCalledWith({
         title: "Deep work",
         notes: "Protect a quiet block.",
-        estimatedMinutes: 60,
+        estimatedMinutes: 45,
         priority: "high",
         status: "planned",
         togglProjectId: null,

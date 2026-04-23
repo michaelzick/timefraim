@@ -27,7 +27,7 @@ describe("AppHeader", () => {
     expect(onSignOut).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps the active planner nav pill white and removes the sync badge", () => {
+  it("keeps the active planner nav pill on the accent foreground token and removes the sync badge", () => {
     render(
       <ThemeProvider>
         <MemoryRouter initialEntries={["/"]}>
@@ -36,11 +36,11 @@ describe("AppHeader", () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getByRole("link", { name: /planner/i })).toHaveClass("text-white");
+    expect(screen.getByRole("link", { name: /planner/i })).toHaveClass("text-[var(--accent-foreground)]");
     expect(screen.queryByText(/synced with/i)).not.toBeInTheDocument();
   });
 
-  it("keeps the active settings nav pill white", () => {
+  it("keeps the active settings nav pill on the accent foreground token", () => {
     render(
       <ThemeProvider>
         <MemoryRouter initialEntries={["/settings"]}>
@@ -49,6 +49,6 @@ describe("AppHeader", () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getByRole("link", { name: /settings/i })).toHaveClass("text-white");
+    expect(screen.getByRole("link", { name: /settings/i })).toHaveClass("text-[var(--accent-foreground)]");
   });
 });

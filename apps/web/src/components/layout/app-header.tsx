@@ -20,7 +20,7 @@ export function AppHeader({ onSignOut }: AppHeaderProps) {
           <NavLink
             to="/"
             className={({ isActive }) =>
-              `inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ${isActive ? "bg-[var(--accent)] text-white" : "text-[var(--muted)]"}`
+              `inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${isActive ? "bg-[var(--accent)] text-[var(--accent-foreground)] shadow-[0_12px_30px_rgba(255,111,59,0.35)] hover:brightness-105" : "text-[var(--muted)] hover:bg-[var(--panel-hover)] hover:text-[var(--heading)]"}`
             }
           >
             <CalendarDays className="h-4 w-4" />
@@ -29,7 +29,7 @@ export function AppHeader({ onSignOut }: AppHeaderProps) {
           <NavLink
             to="/settings"
             className={({ isActive }) =>
-              `inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ${isActive ? "bg-[var(--accent)] text-white" : "text-[var(--muted)]"}`
+              `inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${isActive ? "bg-[var(--accent)] text-[var(--accent-foreground)] shadow-[0_12px_30px_rgba(255,111,59,0.35)] hover:brightness-105" : "text-[var(--muted)] hover:bg-[var(--panel-hover)] hover:text-[var(--heading)]"}`
             }
           >
             <Settings2 className="h-4 w-4" />
