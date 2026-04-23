@@ -87,7 +87,7 @@ describe("TimelineBoard", () => {
     expect(item.style.color).toBe("var(--calendar-event-title)");
     expect(getTimelineItem("Ship planner polish")).toHaveClass(
       "bg-[var(--priority-high-block)]",
-      "shadow-[0_22px_54px_rgba(230,60,60,0.26)]",
+      "shadow-[0_22px_54px_rgba(145,84,181,0.28)]",
     );
   });
 

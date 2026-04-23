@@ -15,11 +15,14 @@ describe("globals.css planner tokens", () => {
 
     expect(lightThemeBlock).toContain("--priority-low-block: #2f347c;");
     expect(lightThemeBlock).toContain("--priority-medium-block: #0a6f79;");
-    expect(lightThemeBlock).toContain("--priority-high-block: #7c1f1f;");
+    expect(lightThemeBlock).toContain("--priority-high-block: #692b8b;");
     expect(lightThemeBlock).toContain("--priority-urgent-block: #8d1b63;");
     expect(lightThemeBlock).toContain("--priority-low-card: #242b63;");
     expect(lightThemeBlock).toContain("--priority-medium-card: #084f58;");
-    expect(lightThemeBlock).toContain("--priority-high-card: #5c1717;");
+    expect(lightThemeBlock).toContain("--priority-high-border: rgba(185, 124, 219, 0.52);");
+    expect(lightThemeBlock).toContain("--priority-high-soft: rgba(185, 124, 219, 0.20);");
+    expect(lightThemeBlock).toContain("--priority-high-card: #53226e;");
+    expect(lightThemeBlock).toContain("--priority-high-text: #efccff;");
     expect(lightThemeBlock).toContain("--priority-urgent-card: #641246;");
   });
 
