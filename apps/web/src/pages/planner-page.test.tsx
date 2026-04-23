@@ -353,12 +353,11 @@ describe("PlannerPage", () => {
     }
   });
 
-  it("shows the idle ActiveTimerPanel prompt when no timer is running", () => {
+  it("hides the timer panel when no timer is running", () => {
     render(<PlannerPage {...buildPlannerPageProps()} />);
 
-    expect(
-      screen.getByText("No timer running — pick a task to start one."),
-    ).toBeInTheDocument();
+    expect(screen.queryByText("No timer running — pick a task to start one.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Running")).not.toBeInTheDocument();
   });
 
   it("renders the activity log without tabs in the right rail", () => {
