@@ -1,6 +1,8 @@
 import {
   googleCalendarSettingsUpdateSchema,
   googleConnectSchema,
+  openAiConnectSchema,
+  openAiImageGenerateSchema,
   togglConnectSchema,
   togglDiscoverInputSchema,
 } from "@timefraim/shared";
@@ -27,6 +29,38 @@ export function registerIntegrationRoutes(app: FastifyInstance, plannerService: 
         return null;
       }
       return plannerService.discoverTogglConnection(payload);
+    }),
+  );
+
+  app.get(
+    "/api/integrations/openai",
+    withAuthenticatedRoute(async () => plannerService.getOpenAiImageSettings()),
+  );
+
+  app.post(
+    "/api/integrations/openai/connect",
+    withAuthenticatedRoute(async (request, reply) => {
+      const payload = parseWithReply(reply, openAiConnectSchema, request.body);
+      if (!payload) {
+        return null;
+      }
+      return plannerService.saveOpenAiConnection(payload.apiKey);
+    }),
+  );
+
+  app.delete(
+    "/api/integrations/openai/connect",
+    withAuthenticatedRoute(async () => plannerService.deleteOpenAiConnection()),
+  );
+
+  app.post(
+    "/api/integrations/openai/images",
+    withAuthenticatedRoute(async (request, reply) => {
+      const payload = parseWithReply(reply, openAiImageGenerateSchema, request.body);
+      if (!payload) {
+        return null;
+      }
+      return plannerService.generateOpenAiImage(payload.prompt);
     }),
   );
 

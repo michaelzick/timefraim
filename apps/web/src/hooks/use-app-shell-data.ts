@@ -1,14 +1,49 @@
 import type { Session } from "@supabase/supabase-js";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useEffectEvent, useMemo, useState } from "react";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
+} from "@tanstack/react-query";
+import type {
+  AuthSession,
+  DayPlan,
+  GoogleCalendarSettings,
+  OpenAiGeneratedImage,
+  OpenAiImageSettings,
+  TogglIntegrationSettings,
+} from "@timefraim/shared";
+import { useEffect, useEffectEvent, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { api } from "@/lib/api";
 import { env } from "@/lib/env";
-import { supabase } from "@/lib/supabase";
-import { getTodayDate, getTimezoneOffsetForDate } from "@/lib/utils";
 import { useGoogleSessionSync } from "@/hooks/use-google-session-sync";
 import { usePlannerMutations } from "@/hooks/use-planner-mutations";
+import { supabase } from "@/lib/supabase";
+import { getTodayDate, getTimezoneOffsetForDate } from "@/lib/utils";
 
-export function useAppShellData(session: Session | null) {
+type AppQueryResult<TData> = UseQueryResult<TData, Error>;
+type AppMutationResult<TData, TVariables = void> = UseMutationResult<TData, Error, TVariables, unknown>;
+
+type UseAppShellDataResult = {
+  authQuery: AppQueryResult<AuthSession>;
+  date: string;
+  dayPlanQuery: AppQueryResult<DayPlan>;
+  deleteOpenAiConnectionMutation: AppMutationResult<OpenAiImageSettings>;
+  generateOpenAiImageMutation: AppMutationResult<OpenAiGeneratedImage, string>;
+  googleCalendarSettingsQuery: AppQueryResult<GoogleCalendarSettings>;
+  loading: boolean;
+  openAiImageSettingsQuery: AppQueryResult<OpenAiImageSettings>;
+  plannerMutations: ReturnType<typeof usePlannerMutations>;
+  queryError: Error | null;
+  queryErrorMessage: string;
+  saveGoogleCalendarsMutation: AppMutationResult<GoogleCalendarSettings, string[]>;
+  saveOpenAiConnectionMutation: AppMutationResult<OpenAiImageSettings, string>;
+  setDate: Dispatch<SetStateAction<string>>;
+  togglSettingsQuery: AppQueryResult<TogglIntegrationSettings>;
+};
+
+export function useAppShellData(session: Session | null): UseAppShellDataResult {
   const [date, setDate] = useState(getTodayDate());
   const token = session?.access_token ?? "";
   const queryClient = useQueryClient();
@@ -61,6 +96,12 @@ export function useAppShellData(session: Session | null) {
     queryFn: () => api.getGoogleCalendarSettings(token),
     retry: false,
   });
+  const openAiImageSettingsQuery = useQuery({
+    queryKey: ["openai-image-settings", token],
+    enabled: Boolean(token),
+    queryFn: () => api.getOpenAiImageSettings(token),
+    retry: false,
+  });
 
   const saveGoogleCalendarsMutation = useMutation({
     mutationFn: (syncCalendarIds: string[]) =>
@@ -68,6 +109,21 @@ export function useAppShellData(session: Session | null) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["google-calendar-settings", token] });
     },
+  });
+  const saveOpenAiConnectionMutation = useMutation({
+    mutationFn: (apiKey: string) => api.saveOpenAiConnection(token, { apiKey }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["openai-image-settings", token] });
+    },
+  });
+  const deleteOpenAiConnectionMutation = useMutation({
+    mutationFn: () => api.deleteOpenAiConnection(token),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["openai-image-settings", token] });
+    },
+  });
+  const generateOpenAiImageMutation = useMutation({
+    mutationFn: (prompt: string) => api.generateOpenAiImage(token, { prompt }),
   });
 
   const plannerMutations = usePlannerMutations({
@@ -89,10 +145,14 @@ export function useAppShellData(session: Session | null) {
     dayPlanQuery,
     googleCalendarSettingsQuery,
     loading,
+    openAiImageSettingsQuery,
     plannerMutations,
     queryError,
     queryErrorMessage,
+    saveOpenAiConnectionMutation,
     saveGoogleCalendarsMutation,
+    deleteOpenAiConnectionMutation,
+    generateOpenAiImageMutation,
     setDate,
     togglSettingsQuery,
   };

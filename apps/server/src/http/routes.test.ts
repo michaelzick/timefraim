@@ -18,6 +18,7 @@ function createPlannerServiceMock() {
   return {
     applyChange: vi.fn().mockResolvedValue({ status: "applied", kind: "task.create", diffSummary: "Create task" }),
     confirmDraft: vi.fn().mockResolvedValue({ id: "draft-1" }),
+    deleteOpenAiConnection: vi.fn().mockResolvedValue({ connected: false, apiKeyHint: null, model: "gpt-image-2" }),
     deleteTogglConnection: vi.fn().mockResolvedValue({ connected: false }),
     discoverTogglConnection: vi.fn().mockResolvedValue({ availableProjects: [], availableWorkspaces: [] }),
     getDayPlan: vi.fn().mockResolvedValue({ tasks: [] }),
@@ -36,9 +37,17 @@ function createPlannerServiceMock() {
       mcpReadOnlyConfigured: true,
       tunnelBaseUrl: "https://example.ngrok.app",
     }),
+    getOpenAiImageSettings: vi.fn().mockResolvedValue({ connected: false, apiKeyHint: null, model: "gpt-image-2" }),
     getTogglSettings: vi.fn().mockResolvedValue({ connected: true }),
+    generateOpenAiImage: vi.fn().mockResolvedValue({
+      imageBase64: "base64-image-data",
+      mimeType: "image/png",
+      revisedPrompt: null,
+      model: "gpt-image-2",
+    }),
     rejectDraft: vi.fn().mockResolvedValue({ id: "draft-1" }),
     saveGoogleSession: vi.fn().mockResolvedValue({ ok: true }),
+    saveOpenAiConnection: vi.fn().mockResolvedValue({ connected: true, apiKeyHint: "••••1234", model: "gpt-image-2" }),
     saveTogglConnection: vi.fn().mockResolvedValue({ ok: true }),
     syncGoogleCalendar: vi.fn().mockResolvedValue([]),
   };
@@ -127,6 +136,40 @@ describe("HTTP routes", () => {
       workspaceId: "workspace-2",
       defaultProjectId: "project-7",
     });
+
+    await app.close();
+  });
+
+  it("validates OpenAI image payloads and forwards valid requests", async () => {
+    const { app, plannerService } = await createApp(registerIntegrationRoutes);
+    requireAuthenticatedUser.mockResolvedValue({
+      id: "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
+      email: "allowed@example.com",
+      displayName: "Allowed User",
+      avatarUrl: null,
+    });
+
+    const invalidConnectResponse = await app.inject({
+      method: "POST",
+      url: "/api/integrations/openai/connect",
+      payload: {},
+    });
+    const validConnectResponse = await app.inject({
+      method: "POST",
+      url: "/api/integrations/openai/connect",
+      payload: { apiKey: "sk-test-1234" },
+    });
+    const validGenerateResponse = await app.inject({
+      method: "POST",
+      url: "/api/integrations/openai/images",
+      payload: { prompt: "Paint a sunrise over the ocean." },
+    });
+
+    expect(invalidConnectResponse.statusCode).toBe(400);
+    expect(validConnectResponse.statusCode).toBe(200);
+    expect(validGenerateResponse.statusCode).toBe(200);
+    expect(plannerService.saveOpenAiConnection).toHaveBeenCalledWith("sk-test-1234");
+    expect(plannerService.generateOpenAiImage).toHaveBeenCalledWith("Paint a sunrise over the ocean.");
 
     await app.close();
   });

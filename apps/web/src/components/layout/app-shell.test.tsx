@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { AppShell } from "@/components/layout/app-shell";
-import { buildAuthSession, buildDayPlan, buildTogglSettings, noopDuplicate } from "@/test/fixtures";
+import { buildAuthSession, buildDayPlan, buildOpenAiImageSettings, buildTogglSettings, noopDuplicate } from "@/test/fixtures";
 import { ThemeProvider } from "@/theme/theme-provider";
 
 vi.mock("@/pages/planner-page", () => ({
@@ -25,6 +25,14 @@ const noopDiscover = () =>
     availableProjects: [],
   });
 const noopTogglSettings = () => Promise.resolve(buildTogglSettings());
+const noopOpenAiSettings = () => Promise.resolve(buildOpenAiImageSettings());
+const noopGeneratedImage = () =>
+  Promise.resolve({
+    imageBase64: "base64-image-data",
+    mimeType: "image/png" as const,
+    revisedPrompt: null,
+    model: "gpt-image-2" as const,
+  });
 
 describe("AppShell", () => {
   it("renders the signed-in shell and lazy route content", async () => {
@@ -36,16 +44,23 @@ describe("AppShell", () => {
             date="2026-04-06"
             dayPlan={buildDayPlan()}
             togglSettings={buildTogglSettings()}
+            openAiImageSettings={buildOpenAiImageSettings()}
             isDiscoveringToggl={false}
             isSavingToggl={false}
             onDateChange={vi.fn()}
             onDiscoverToggl={noopDiscover}
             onDeleteToggl={noopTogglSettings}
+            onDeleteOpenAiConnection={noopOpenAiSettings}
+            onGenerateOpenAiImage={noopGeneratedImage}
             onSaveToggl={noopTogglSettings}
+            onSaveOpenAiConnection={noopOpenAiSettings}
             onSignOut={vi.fn()}
             googleCalendarSettings={null}
             isLoadingGoogleCalendars={false}
+            isLoadingOpenAiImageSettings={false}
             isSavingGoogleCalendars={false}
+            isSavingOpenAiImage={false}
+            isGeneratingOpenAiImage={false}
             taskEndNotificationsEnabled={false}
             taskEndNotificationsSupported
             taskEndNotificationsMessage={null}

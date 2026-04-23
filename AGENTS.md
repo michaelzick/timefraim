@@ -12,7 +12,7 @@ Sibling files [CLAUDE.md](CLAUDE.md) (Claude Code) and [GEMINI.md](GEMINI.md) (G
 
 Primary flows:
 - Planner: three-column layout (task queue / timeline / detail panel) with drag-and-drop scheduling.
-- Settings: connect Google Calendar (multi-calendar, colors) and Toggl (workspace + per-task project overrides).
+- Settings: connect Google Calendar (multi-calendar, colors), Toggl (workspace + per-task project overrides), and OpenAI Images (encrypted API key + GPT Image 2 preview generation).
 - Draft-first mutations: AI-proposed changes land as `sync_drafts` rows; the user confirms before they apply.
 
 ## 2. Tech stack
@@ -21,7 +21,7 @@ Primary flows:
 - **Backend:** Fastify 5 + TypeScript on Node ≥ 24.
 - **Database:** PostgreSQL via local Supabase (host ports `55331`–`55337`), accessed with `pg` (parameterized queries).
 - **Shared contracts:** Zod schemas in `packages/shared` consumed by both apps.
-- **Integrations:** Google Calendar (`googleapis`), Toggl Track REST, MCP (`@modelcontextprotocol/sdk`) over HTTP Streamable transport.
+- **Integrations:** Google Calendar (`googleapis`), Toggl Track REST, OpenAI Images (`gpt-image-2` via `fetch`), MCP (`@modelcontextprotocol/sdk`) over HTTP Streamable transport.
 - **Tooling:** pnpm 10.11.0 workspaces, ESLint flat config, Vitest, React Testing Library.
 
 ## 3. Monorepo layout
@@ -52,6 +52,7 @@ timefraim/
 
 - **Entry:** `src/main.tsx` → `src/App.tsx` (theme provider + auth guard + QueryClientProvider + BrowserRouter + toaster).
 - **Pages:** `src/pages/planner-page.tsx`, `src/pages/settings-page.tsx`.
+- **Settings integrations:** `src/pages/settings-google-calendars-card.tsx`, `src/pages/settings-toggl-card.tsx`, `src/pages/settings-openai-image-card.tsx`.
 - **Feature code:** `src/features/planner/` — task cards, calendar cards, timeline board, column layout.
 - **Reusable UI:** `src/components/ui/` (shadcn-style primitives), `src/components/layout/app-shell.tsx`.
 - **Theme:** `src/theme/` — local light/dark/system preference, document class management, and resolved theme hook.
@@ -66,8 +67,8 @@ timefraim/
 - **Config:** `src/config/env.ts` (Zod-validated env).
 - **HTTP routes:** `src/http/` — `routes.ts` + modular `register-*-routes.ts` (planner, integration, auth, timer, draft). `auth.ts` verifies Supabase JWT. `route-helpers.ts` holds shared middleware.
 - **Repositories (data access):** `src/repositories/` — `planner-repository.ts` composes per-domain stores (`planner-repository-task-store.ts`, `-schedule-store.ts`, `-calendar-store.ts`, `-timer-store.ts`, `-integration-store.ts`, `-draft-store.ts`). Row → domain mapping in `planner-repository-mappers.ts`; row types in `planner-repository-types.ts`.
-- **Services (business logic):** `src/services/` — `planner-service.ts` orchestrates; `planner-service-google-integrations.ts` and `planner-service-toggl-integrations.ts` handle external calls; `planner-domain.ts` applies drafts; `planner-*-changes.ts` compute diffs; `planner-service-apply.ts` confirms drafts; `planner-side-effects.ts` handles audit logs + external syncs.
-- **Integrations:** `src/integration/` — `google-calendar.ts` (+ `-helpers.ts`), `google-auth.ts`, `google-tasks.ts`, `toggl-track.ts` (+ `-catalog.ts`, `-client.ts`), `integration-crypto.ts` (AES for stored tokens).
+- **Services (business logic):** `src/services/` — `planner-service.ts` orchestrates; `planner-service-google-integrations.ts`, `planner-service-toggl-integrations.ts`, and `planner-service-openai-images.ts` handle external calls; `planner-domain.ts` applies drafts; `planner-*-changes.ts` compute diffs; `planner-service-apply.ts` confirms drafts; `planner-side-effects.ts` handles audit logs + external syncs.
+- **Integrations:** `src/integration/` — `google-calendar.ts` (+ `-helpers.ts`), `google-auth.ts`, `google-tasks.ts`, `toggl-track.ts` (+ `-catalog.ts`, `-client.ts`), `openai-images.ts`, `integration-crypto.ts` (AES for stored tokens).
 - **MCP:** `src/mcp/create-mcp-server.ts` defines two tool profiles (read-only, full-access) selected by bearer token.
 - **DB pool:** `src/db/pool.ts` exposes `pg.Pool` + `withTransaction` helper.
 - **Utilities:** `src/utils/date.ts`.
@@ -79,7 +80,7 @@ Zod schemas and inferred types, barrel-exported from `src/index.ts`. Consumed as
 - `task.ts` — `Task`, `TaskInput`, `TaskUpdate`, `TaskStatus`, `TaskPriority` (`low | medium | high | urgent`).
 - `schedule.ts` — `ScheduleBlock`, `ScheduleBlockCreate/Update`, `CalendarEvent`, `CalendarEventView`.
 - `drafts.ts` — `SyncDraft`, `DraftKind`, `DraftStatus`, `ActorRole`, `formatDraftSummary()`.
-- `integration.ts` — Google/Toggl status schemas, `AuthUser`, `AuthSession`.
+- `integration.ts` — Google/Toggl/OpenAI image schemas, `AuthUser`, `AuthSession`.
 - `day-plan.ts` — `DayPlan` (aggregated snapshot returned by `GET /api/day-plan`).
 - `api.ts` — `PlannerMutationResult`, `CalendarSyncResult`.
 - `date.ts` — date parsing helpers.
@@ -106,6 +107,7 @@ Recent migrations (see filenames for dates): task priority, per-user Toggl conne
 
 - **Google Calendar** — OAuth 2.0 (`googleapis`). Lists calendars, fetches events per date range, creates/updates/deletes events for schedule blocks (uses `extendedProperties` for linkage), resolves colors. Primary + "Free Time Tasks" planner calendar via `GOOGLE_CALENDAR_ID` / `GOOGLE_PLANNER_CALENDAR_ID`.
 - **Toggl Track** — Personal API token, encrypted at rest in `integration_tokens`. Discover workspaces/projects, start/stop time entries, per-task and per-event project overrides.
+- **OpenAI Images** — Encrypted API key stored in `integration_tokens`. Settings exposes a server-backed GPT Image 2 preview flow via `POST /api/integrations/openai/images`, using the Images API (`/v1/images/generations`) with PNG output.
 - **MCP** — `POST /mcp` with `Authorization: Bearer <token>`. `MCP_BEARER_TOKEN` grants full-access tools; `MCP_READ_ONLY_TOKEN` grants read-only. Tools include `list_tasks`, `list_calendar_view`, `get_day_plan`, `propose_task_create`, `propose_schedule_block_*`, `confirm_draft`, `start_task_timer`, `stop_active_timer`.
 
 ## 7. Commands
@@ -165,6 +167,7 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 | [apps/web/src/theme/theme-provider.tsx](apps/web/src/theme/theme-provider.tsx) | Client theme preference, resolved mode tracking, and `<html>` class sync |
 | [apps/web/src/pages/planner-page.tsx](apps/web/src/pages/planner-page.tsx) | Main scheduling UI |
 | [apps/web/src/pages/settings-page.tsx](apps/web/src/pages/settings-page.tsx) | Integration configuration UI |
+| [apps/web/src/pages/settings-openai-image-card.tsx](apps/web/src/pages/settings-openai-image-card.tsx) | OpenAI image integration card and GPT Image 2 preview UI |
 | [apps/web/src/hooks/use-planner-mutations.ts](apps/web/src/hooks/use-planner-mutations.ts) | Task/schedule/timer mutations |
 | [apps/web/src/lib/api-planner.ts](apps/web/src/lib/api-planner.ts) | Planner HTTP client |
 | [apps/web/src/components/timeline-board.tsx](apps/web/src/components/timeline-board.tsx) | Timeline rendering |
@@ -172,6 +175,7 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 | [apps/server/src/services/planner-service.ts](apps/server/src/services/planner-service.ts) | Business-logic orchestrator |
 | [apps/server/src/repositories/planner-repository.ts](apps/server/src/repositories/planner-repository.ts) | Data access entry point |
 | [apps/server/src/integration/google-calendar.ts](apps/server/src/integration/google-calendar.ts) | Google Calendar client |
+| [apps/server/src/integration/openai-images.ts](apps/server/src/integration/openai-images.ts) | OpenAI GPT Image 2 request adapter |
 | [apps/server/src/integration/toggl-track.ts](apps/server/src/integration/toggl-track.ts) | Toggl client |
 | [apps/server/src/mcp/create-mcp-server.ts](apps/server/src/mcp/create-mcp-server.ts) | MCP tools exposed to agents |
 | [packages/shared/src/index.ts](packages/shared/src/index.ts) | Shared schema barrel |
