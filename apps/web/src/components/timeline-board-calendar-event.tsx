@@ -8,10 +8,6 @@ import { cn, formatTime } from "@/lib/utils";
 
 const FALLBACK_TIMELINE_EVENT_BORDER = "#6374ad";
 
-function getCalendarEventForegroundColor() {
-  return "var(--planner-surface-title)";
-}
-
 export function TimelineBoardCalendarEvent({
   date,
   event,
@@ -30,7 +26,7 @@ export function TimelineBoardCalendarEvent({
     return null;
   }
 
-  const foregroundColor = getCalendarEventForegroundColor();
+  const titleColor = "var(--calendar-event-title)";
   const borderColorSource = event.backgroundColor ?? FALLBACK_TIMELINE_EVENT_BORDER;
   const cardStyle: CSSProperties = {
     top: placement.top,
@@ -38,10 +34,10 @@ export function TimelineBoardCalendarEvent({
     backgroundColor: "transparent",
     borderColor: isSelected ? "var(--timeline-selection-ring)" : borderColorSource,
     borderWidth: "3px",
-    color: foregroundColor,
+    color: titleColor,
   };
   const badgeStyle = {
-    color: foregroundColor,
+    color: titleColor,
     borderColor: borderColorSource,
     backgroundColor: "transparent",
   };
@@ -58,14 +54,14 @@ export function TimelineBoardCalendarEvent({
           {isShortBlock(event.startAt, event.endAt) ? (
             <p className="truncate font-medium">
               {event.title}
-              <span className="ml-2 text-xs font-normal text-[var(--planner-surface-meta)]">
+              <span className="ml-2 text-xs font-normal text-[var(--calendar-event-meta)]">
                 {formatTime(event.startAt)} to {formatTime(event.endAt)}
               </span>
             </p>
           ) : (
             <>
               <p className="truncate font-medium">{event.title}</p>
-              <p className="mt-1 text-xs text-[var(--planner-surface-meta)]">
+              <p className="mt-1 text-xs text-[var(--calendar-event-meta)]">
                 {formatTime(event.startAt)} to {formatTime(event.endAt)}
               </p>
             </>
@@ -80,7 +76,7 @@ export function TimelineBoardCalendarEvent({
             variant="ghost"
             size="sm"
             className="h-8 px-2"
-            style={{ color: foregroundColor }}
+            style={{ color: titleColor }}
             onClick={(clickEvent) => {
               clickEvent.stopPropagation();
               onDismissCalendarEvent(event.id, event.title);

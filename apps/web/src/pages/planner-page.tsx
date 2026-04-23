@@ -10,6 +10,7 @@ import { usePlannerPageController } from "@/pages/use-planner-page-controller";
 export function PlannerPage({
   date,
   dayPlan,
+  linkedGoogleEmail,
   togglSettings,
   onDateChange,
   onCreateTask,
@@ -102,6 +103,7 @@ export function PlannerPage({
         <PlannerToolbar
           date={date}
           isSyncing={isSyncing}
+          linkedGoogleEmail={linkedGoogleEmail}
           search={search}
           onDateChange={onDateChange}
           onSyncCalendar={() => void onSyncCalendar()}

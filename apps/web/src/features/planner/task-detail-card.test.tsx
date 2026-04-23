@@ -27,6 +27,15 @@ function Harness({ task = buildTask() }: { task?: ReturnType<typeof buildTask> }
 }
 
 describe("TaskDetailCard save button", () => {
+  it("uses an opaque priority badge in the detail header", () => {
+    render(<Harness task={buildTask({ priority: "urgent" })} />);
+
+    const badge = screen.getAllByText("Urgent").find((element) => element.tagName === "SPAN");
+    expect(badge).toBeDefined();
+    expect(badge as HTMLElement).toHaveClass("bg-[var(--priority-urgent-card)]");
+    expect(badge as HTMLElement).not.toHaveClass("bg-[var(--priority-urgent-soft)]");
+  });
+
   it("uses the tinted ghost style when the form is pristine", () => {
     render(<Harness />);
     const saveButton = screen.getByRole("button", { name: /save/i });
@@ -59,5 +68,24 @@ describe("TaskDetailCard save button", () => {
 
     const saveButton = screen.getByRole("button", { name: /save/i });
     expect(saveButton.className).not.toContain("bg-[var(--accent-soft)]");
+  });
+
+  it("collapses and expands the detail body", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    const toggle = screen.getByRole("button", { name: /task detail/i });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByLabelText("Detail title")).toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByLabelText("Detail title")).not.toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByLabelText("Detail title")).toBeInTheDocument();
   });
 });

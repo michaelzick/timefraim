@@ -1,5 +1,6 @@
 import { stepLocalDate } from "@timefraim/shared";
 import { ChevronLeft, ChevronRight, LoaderCircle, RefreshCcw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getTodayDate } from "@/lib/utils";
@@ -7,6 +8,7 @@ import { getTodayDate } from "@/lib/utils";
 type PlannerToolbarProps = {
   date: string;
   isSyncing: boolean;
+  linkedGoogleEmail: string | null;
   search: string;
   onDateChange: (nextDate: string) => void;
   onSyncCalendar: () => void;
@@ -16,6 +18,7 @@ type PlannerToolbarProps = {
 export function PlannerToolbar({
   date,
   isSyncing,
+  linkedGoogleEmail,
   search,
   onDateChange,
   onSyncCalendar,
@@ -70,6 +73,7 @@ export function PlannerToolbar({
           {isSyncing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
           Sync calendar
         </Button>
+        {linkedGoogleEmail ? <Badge>Synced with {linkedGoogleEmail}</Badge> : null}
       </div>
       <Input
         aria-label="Filter tasks"

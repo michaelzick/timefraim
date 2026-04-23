@@ -25,10 +25,15 @@ describe("globals.css planner tokens", () => {
 
   it("defines the new planner surface and light-mode accent tokens", () => {
     const lightThemeBlock = getThemeBlock("light");
+    const darkThemeBlock = getThemeBlock("dark");
 
     expect(globalsCss).toContain("--planner-surface-title: #f8f8f7;");
     expect(globalsCss).toContain("--planner-surface-meta: #c8d1eb;");
     expect(globalsCss).toContain("--timeline-selection-ring: #ffffff;");
+    expect(darkThemeBlock).toContain("--calendar-event-title: var(--planner-surface-title);");
+    expect(darkThemeBlock).toContain("--calendar-event-meta: var(--planner-surface-meta);");
+    expect(lightThemeBlock).toContain("--calendar-event-title: var(--heading);");
+    expect(lightThemeBlock).toContain("--calendar-event-meta: var(--muted-strong);");
     expect(lightThemeBlock).toContain("--accent-foreground: #ffffff;");
   });
 });

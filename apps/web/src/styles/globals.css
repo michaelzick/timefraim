@@ -37,6 +37,8 @@ html.dark {
   --scroll-thumb: rgba(255, 255, 255, 0.18);
   --planner-surface-title: #f8f8f7;
   --planner-surface-meta: #c8d1eb;
+  --calendar-event-title: var(--planner-surface-title);
+  --calendar-event-meta: var(--planner-surface-meta);
   --timeline-selection-ring: #ffffff;
   --priority-low-block: #2f347c;
   --priority-low-border: rgba(98, 100, 170, 0.45);
@@ -91,6 +93,8 @@ html.light {
   --scroll-thumb: rgba(24, 39, 75, 0.22);
   --planner-surface-title: #f8f8f7;
   --planner-surface-meta: #c8d1eb;
+  --calendar-event-title: var(--heading);
+  --calendar-event-meta: var(--muted-strong);
   --timeline-selection-ring: #ffffff;
   --priority-low-block: #2f347c;
   --priority-low-border: rgba(98, 100, 170, 0.45);

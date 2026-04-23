@@ -55,6 +55,7 @@ function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerP
     dayPlan: buildDayPlan(),
     isMutating: false,
     isSyncing: false,
+    linkedGoogleEmail: "allowed@example.com",
     onDateChange: vi.fn(),
     onCreateTask: noopAsync,
     onUpdateTask: noopAsync,
@@ -139,6 +140,27 @@ describe("PlannerPage", () => {
     expect(screen.queryByText("2 total")).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText("Next commitment")).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText("Why this matters right now")).not.toBeInTheDocument();
+  });
+
+  it("collapses and expands the task inbox without hiding the queue below it", async () => {
+    const user = userEvent.setup();
+
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    const toggle = screen.getByRole("button", { name: /task inbox/i });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByLabelText("Task title")).toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByLabelText("Task title")).not.toBeInTheDocument();
+    expect(screen.getByText("Plan launch week")).toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByLabelText("Task title")).toBeInTheDocument();
   });
 
   it("shows an error and keeps the form values when task creation fails", async () => {
@@ -289,13 +311,14 @@ describe("PlannerPage", () => {
     expect(screen.queryByText("No pending AI drafts. MCP proposals will land here for approval.")).not.toBeInTheDocument();
   });
 
-  it("renders the planner toolbar with date, sync, and filter controls", () => {
+  it("renders the planner toolbar with date, sync, filter, and sync badge", () => {
     render(<PlannerPage {...buildPlannerPageProps()} />);
 
     expect(screen.getByRole("region", { name: /planner toolbar/i })).toBeInTheDocument();
     expect(screen.getByLabelText("Planner date")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /jump to today/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sync calendar/i })).toBeInTheDocument();
+    expect(screen.getByText(/synced with allowed@example.com/i)).toBeInTheDocument();
     expect(screen.getByLabelText("Filter tasks")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Focus on what matters today." })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Tasks ready to place" })).not.toBeInTheDocument();
@@ -461,7 +484,7 @@ describe("PlannerPage", () => {
     expect(confirmSpy).toHaveBeenCalledWith(
       'Hide "Team sync" from the planner timeline until it changes in Google Calendar?',
     );
-    expect(screen.getByRole("heading", { name: "Task detail" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /task detail/i })).toBeInTheDocument();
     expect(screen.getByTestId("selected-calendar-event")).toHaveTextContent("none");
   });
 });
