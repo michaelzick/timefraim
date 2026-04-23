@@ -17,7 +17,7 @@ import {
   duplicateScheduleBlockForUser,
   duplicateTaskForUser,
 } from "./planner-service-duplicates.js";
-import { deleteTogglConnection, discoverTogglConnection, getAllowedPlannerUserId, getGoogleCalendarSettings, getGoogleConnection, getTogglConnection, getTogglSettings, saveGoogleCalendarSettings, saveGoogleSession, saveTogglConnection } from "./planner-service-integrations.js";
+import { deleteOpenAiConnection, deleteTogglConnection, discoverTogglConnection, generateSavedOpenAiImage, getAllowedPlannerUserId, getGoogleCalendarSettings, getGoogleConnection, getOpenAiImageSettings, getTogglConnection, getTogglSettings, saveGoogleCalendarSettings, saveGoogleSession, saveOpenAiConnection, saveTogglConnection } from "./planner-service-integrations.js";
 import { runPlannerSideEffects } from "./planner-side-effects.js";
 import type { SideEffect } from "./planner-service-types.js";
 export class PlannerService {
@@ -65,6 +65,10 @@ export class PlannerService {
     await saveGoogleCalendarSettings(this.repository, syncCalendarIds);
     return getGoogleCalendarSettings(this.repository);
   }
+  async getOpenAiImageSettings() { return getOpenAiImageSettings(this.repository); }
+  async saveOpenAiConnection(apiKey: string) { return saveOpenAiConnection(this.repository, apiKey); }
+  async deleteOpenAiConnection() { return deleteOpenAiConnection(this.repository); }
+  async generateOpenAiImage(prompt: string) { return generateSavedOpenAiImage(this.repository, prompt); }
   async getDayPlan(userId: string | null = null, date = todayIsoDate(), tzOffsetMinutes = 0) {
     const effectiveUserId = userId ?? await getAllowedPlannerUserId(this.repository);
     const range = {

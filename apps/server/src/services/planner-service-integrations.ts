@@ -6,6 +6,12 @@ export {
   saveGoogleSession,
 } from "./planner-service-google-integrations.js";
 export {
+  deleteOpenAiConnection,
+  generateSavedOpenAiImage,
+  getOpenAiImageSettings,
+  saveOpenAiConnection,
+} from "./planner-service-openai-images.js";
+export {
   deleteTogglConnection,
   discoverTogglConnection,
   getAllowedPlannerUserId,

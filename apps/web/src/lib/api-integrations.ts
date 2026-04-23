@@ -3,6 +3,10 @@ import {
   googleCalendarSettingsSchema,
   googleConnectSchema,
   integrationStatusSchema,
+  openAiConnectSchema,
+  openAiGeneratedImageSchema,
+  openAiImageGenerateSchema,
+  openAiImageSettingsSchema,
   togglConnectSchema,
   togglDiscoverInputSchema,
   togglDiscoverResultSchema,
@@ -12,6 +16,10 @@ import {
   type GoogleCalendarSettingsUpdate,
   type GoogleConnect,
   type IntegrationStatus,
+  type OpenAiConnect,
+  type OpenAiGeneratedImage,
+  type OpenAiImageGenerate,
+  type OpenAiImageSettings,
   type TogglConnect,
   type TogglDiscoverInput,
   type TogglDiscoverResult,
@@ -63,4 +71,25 @@ export const integrationApi = {
       token,
       { method: "PUT", body, schema: googleCalendarSettingsSchema },
     ),
+  getOpenAiImageSettings: (token: string) =>
+    request<OpenAiImageSettings>("/api/integrations/openai", token, {
+      schema: openAiImageSettingsSchema,
+    }),
+  saveOpenAiConnection: (token: string, body: OpenAiConnect) =>
+    request<OpenAiImageSettings, OpenAiConnect>("/api/integrations/openai/connect", token, {
+      method: "POST",
+      body: openAiConnectSchema.parse(body),
+      schema: openAiImageSettingsSchema,
+    }),
+  deleteOpenAiConnection: (token: string) =>
+    request<OpenAiImageSettings>("/api/integrations/openai/connect", token, {
+      method: "DELETE",
+      schema: openAiImageSettingsSchema,
+    }),
+  generateOpenAiImage: (token: string, body: OpenAiImageGenerate) =>
+    request<OpenAiGeneratedImage, OpenAiImageGenerate>("/api/integrations/openai/images", token, {
+      method: "POST",
+      body: openAiImageGenerateSchema.parse(body),
+      schema: openAiGeneratedImageSchema,
+    }),
 };

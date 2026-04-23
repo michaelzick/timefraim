@@ -45,6 +45,10 @@ export class PlannerRepositoryIntegrationStore extends PlannerRepositoryCalendar
     return result.rows as IntegrationTokenRow[];
   }
 
+  async deleteIntegrationToken(provider: string, db: Queryable) {
+    await db.query(`delete from public.integration_tokens where provider = $1`, [provider]);
+  }
+
   async getUserTogglConnection(userId: string, db: Queryable): Promise<UserTogglConnectionRecord | null> {
     const result = await db.query(`select * from public.user_toggl_connections where user_id = $1 limit 1`, [userId]);
     return result.rows[0] ? mapUserTogglConnection(result.rows[0]) : null;

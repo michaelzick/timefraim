@@ -22,13 +22,17 @@ function AppContent() {
   const session = useSupabaseSession();
   const {
     authQuery,
+    deleteOpenAiConnectionMutation,
     date,
     dayPlanQuery,
+    generateOpenAiImageMutation,
     googleCalendarSettingsQuery,
     loading,
+    openAiImageSettingsQuery,
     plannerMutations,
     queryError,
     queryErrorMessage,
+    saveOpenAiConnectionMutation,
     saveGoogleCalendarsMutation,
     setDate,
     togglSettingsQuery,
@@ -105,18 +109,27 @@ function AppContent() {
       dayPlan={dayPlanQuery.data}
       togglSettings={togglSettingsQuery.data}
       googleCalendarSettings={googleCalendarSettingsQuery.data ?? null}
+      openAiImageSettings={openAiImageSettingsQuery.data ?? null}
       isDiscoveringToggl={plannerMutations.isDiscoveringToggl}
       isSavingToggl={plannerMutations.isSavingToggl}
       isLoadingGoogleCalendars={googleCalendarSettingsQuery.isLoading}
+      isLoadingOpenAiImageSettings={openAiImageSettingsQuery.isLoading}
       isSavingGoogleCalendars={saveGoogleCalendarsMutation.isPending}
+      isSavingOpenAiImage={
+        saveOpenAiConnectionMutation.isPending || deleteOpenAiConnectionMutation.isPending
+      }
+      isGeneratingOpenAiImage={generateOpenAiImageMutation.isPending}
       taskEndNotificationsEnabled={taskEndNotifications.enabled}
       taskEndNotificationsSupported={taskEndNotifications.supported}
       taskEndNotificationsMessage={taskEndNotifications.message}
       onDateChange={setDate}
       onDiscoverToggl={plannerMutations.actions.discoverToggl}
       onDeleteToggl={plannerMutations.actions.deleteToggl}
+      onDeleteOpenAiConnection={() => deleteOpenAiConnectionMutation.mutateAsync()}
+      onGenerateOpenAiImage={(prompt) => generateOpenAiImageMutation.mutateAsync(prompt)}
       onSaveToggl={plannerMutations.actions.saveToggl}
       onSaveGoogleCalendars={(ids) => saveGoogleCalendarsMutation.mutateAsync(ids)}
+      onSaveOpenAiConnection={(apiKey) => saveOpenAiConnectionMutation.mutateAsync(apiKey)}
       onTaskEndNotificationsChange={taskEndNotifications.setEnabledFromUserAction}
       onSignOut={handleSignOut}
       plannerPageProps={{
