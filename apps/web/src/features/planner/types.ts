@@ -54,6 +54,7 @@ export type PlannerScheduleBlockUpdateInput = {
 export type PlannerPageProps = {
   date: string;
   dayPlan: DayPlan;
+  linkedGoogleEmail: string | null;
   onDateChange: (nextDate: string) => void;
   onCreateTask: (values: PlannerTaskInput) => Promise<unknown>;
   onUpdateTask: (taskId: string, values: PlannerTaskUpdateInput) => Promise<unknown>;

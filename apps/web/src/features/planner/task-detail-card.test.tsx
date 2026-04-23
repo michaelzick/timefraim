@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRef } from "react";
 import { useForm } from "react-hook-form";
@@ -27,6 +27,15 @@ function Harness({ task = buildTask() }: { task?: ReturnType<typeof buildTask> }
 }
 
 describe("TaskDetailCard save button", () => {
+  it("uses an opaque priority badge in the detail header", () => {
+    render(<Harness task={buildTask({ priority: "urgent" })} />);
+
+    const badge = screen.getAllByText("Urgent").find((element) => element.tagName === "SPAN");
+    expect(badge).toBeDefined();
+    expect(badge as HTMLElement).toHaveClass("bg-[var(--priority-urgent-card)]");
+    expect(badge as HTMLElement).not.toHaveClass("bg-[var(--priority-urgent-soft)]");
+  });
+
   it("uses the tinted ghost style when the form is pristine", () => {
     render(<Harness />);
     const saveButton = screen.getByRole("button", { name: /save/i });
@@ -45,5 +54,39 @@ describe("TaskDetailCard save button", () => {
     const saveButton = screen.getByRole("button", { name: /save/i });
     expect(saveButton.className).not.toContain("bg-[var(--accent-soft)]");
     expect(saveButton.querySelector("svg")).not.toBeNull();
+  });
+
+  it("quick-selects common durations and marks the form dirty", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    const presets = screen.getByRole("group", { name: /detail common durations/i });
+    expect(within(presets).getByRole("button", { name: "45 min" })).toBeInTheDocument();
+    await user.click(within(presets).getByRole("button", { name: "1 hr" }));
+
+    expect(screen.getByLabelText("Detail estimated hours")).toHaveValue(1);
+    expect(screen.getByLabelText("Detail estimated minutes")).toHaveValue(0);
+
+    const saveButton = screen.getByRole("button", { name: /save/i });
+    expect(saveButton.className).not.toContain("bg-[var(--accent-soft)]");
+  });
+
+  it("collapses and expands the detail body", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    const toggle = screen.getByRole("button", { name: /task detail/i });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByLabelText("Detail title")).toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByLabelText("Detail title")).not.toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByLabelText("Detail title")).toBeInTheDocument();
   });
 });

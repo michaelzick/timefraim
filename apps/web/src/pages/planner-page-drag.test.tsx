@@ -104,6 +104,7 @@ function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerP
     dayPlan: buildDayPlan(),
     isMutating: false,
     isSyncing: false,
+    linkedGoogleEmail: "allowed@example.com",
     onDateChange: vi.fn(),
     onCreateTask: noopAsync,
     onUpdateTask: noopAsync,

@@ -41,7 +41,7 @@ type AppShellProps = {
   onSaveGoogleCalendars: (syncCalendarIds: string[]) => Promise<unknown>;
   onTaskEndNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
   onSignOut: () => void;
-  plannerPageProps: Omit<PlannerPageProps, "date" | "dayPlan" | "onDateChange">;
+  plannerPageProps: Omit<PlannerPageProps, "date" | "dayPlan" | "linkedGoogleEmail" | "onDateChange">;
 };
 
 function RouteLoader() {
@@ -74,10 +74,12 @@ export function AppShell({
   onSignOut,
   plannerPageProps,
 }: AppShellProps) {
+  const linkedGoogleEmail = authSession.integrationStatus.googleEmail ?? authSession.user.email ?? null;
+
   return (
     <div className="min-h-screen px-5 py-6 md:px-8">
       <div className="mx-auto max-w-[1600px] space-y-6">
-        <AppHeader authSession={authSession} onSignOut={onSignOut} />
+        <AppHeader onSignOut={onSignOut} />
         <Suspense fallback={<RouteLoader />}>
           <Routes>
             <Route
@@ -87,6 +89,7 @@ export function AppShell({
                   {...plannerPageProps}
                   date={date}
                   dayPlan={dayPlan}
+                  linkedGoogleEmail={linkedGoogleEmail}
                   onDateChange={onDateChange}
                 />
               }

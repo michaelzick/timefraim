@@ -18,6 +18,7 @@ function renderBlock(args: {
   block: ScheduleBlock;
   runState: "idle" | "running" | "done";
   runningStartedAt: string | null;
+  isSelected?: boolean;
 }) {
   const task = buildTask({ id: args.block.taskId, title: "Focused work" });
   return render(
@@ -25,7 +26,7 @@ function renderBlock(args: {
       block={args.block}
       date="2026-04-06"
       task={task}
-      isSelected={false}
+      isSelected={args.isSelected ?? false}
       runState={args.runState}
       runningStartedAt={args.runningStartedAt}
       onDeleteScheduleBlock={vi.fn()}
@@ -69,5 +70,20 @@ describe("TimelineScheduleBlock", () => {
 
     expect(screen.queryByTestId("inline-running-timer")).toBeNull();
     expect(screen.getByText(/^Running /)).toBeInTheDocument();
+  });
+
+  it.each(["light", "dark"] as const)("uses the white selected border and planner foregrounds in %s mode", (theme) => {
+    document.documentElement.className = theme;
+
+    const { container } = renderBlock({
+      block: baseBlock,
+      runState: "idle",
+      runningStartedAt: null,
+      isSelected: true,
+    });
+
+    expect(container.firstElementChild).toHaveClass("border-[var(--timeline-selection-ring)]");
+    expect(screen.getByText("Focused work")).toHaveClass("text-[var(--planner-surface-title)]");
+    expect(container.querySelector('[class*="text-[var(--planner-surface-meta)]"]')).not.toBeNull();
   });
 });

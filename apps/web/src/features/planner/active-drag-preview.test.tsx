@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ActiveDragPreview } from "@/features/planner/active-drag-preview";
 import { buildTask } from "@/test/fixtures";
@@ -10,6 +10,8 @@ describe("ActiveDragPreview", () => {
     );
 
     expect(container.firstElementChild).not.toHaveClass("opacity-75");
+    expect(screen.getByRole("heading", { name: /plan launch week/i })).toHaveClass("text-[var(--planner-surface-title)]");
+    expect(screen.getByText(/45 min/i).parentElement).toHaveClass("text-[var(--planner-surface-meta)]");
   });
 
   it("makes scheduled task previews translucent while dragging", () => {
@@ -35,5 +37,6 @@ describe("ActiveDragPreview", () => {
     );
 
     expect(container.firstElementChild).toHaveClass("opacity-75");
+    expect(screen.getByText("Plan launch week")).toHaveClass("text-[var(--planner-surface-title)]");
   });
 });

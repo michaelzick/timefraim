@@ -75,7 +75,7 @@ describe("AppShell", () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getByText(/synced with allowed@example.com/i)).toBeInTheDocument();
+    expect(screen.queryByText(/synced with allowed@example.com/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /toggle theme/i })).toBeInTheDocument();
     expect(screen.queryByText(/allowlisted for allowed@example.com/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/calendar-aware daily planning with guarded ai writes/i)).not.toBeInTheDocument();

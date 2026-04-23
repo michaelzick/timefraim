@@ -23,13 +23,7 @@ export function ActiveTimerPanel({
   const elapsed = useElapsedSeconds(activeTimer?.startedAt ?? null);
 
   if (!activeTimer) {
-    return (
-      <Card className="py-4">
-        <p className="text-sm text-[var(--muted)]">
-          No timer running — pick a task to start one.
-        </p>
-      </Card>
-    );
+    return null;
   }
 
   const heading = formatActiveTimerHeading(activeTimer, dayPlan.tasks, togglSettings);

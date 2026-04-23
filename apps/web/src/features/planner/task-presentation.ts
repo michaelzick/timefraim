@@ -25,6 +25,15 @@ const PRIORITY_BADGE_CLASSES: Record<Task["priority"], string> = {
     "border-[var(--priority-urgent-border)] bg-[var(--priority-urgent-soft)] text-[var(--priority-urgent-text)] normal-case tracking-[0.08em]",
 };
 
+const PRIORITY_HEADER_BADGE_CLASSES: Record<Task["priority"], string> = {
+  low: "border-[var(--priority-low-border)] bg-[var(--priority-low-card)] text-[var(--priority-low-text)] normal-case tracking-[0.08em]",
+  medium:
+    "border-[var(--priority-medium-border)] bg-[var(--priority-medium-card)] text-[var(--priority-medium-text)] normal-case tracking-[0.08em]",
+  high: "border-[var(--priority-high-border)] bg-[var(--priority-high-card)] text-[var(--priority-high-text)] normal-case tracking-[0.08em]",
+  urgent:
+    "border-[var(--priority-urgent-border)] bg-[var(--priority-urgent-card)] text-[var(--priority-urgent-text)] normal-case tracking-[0.08em]",
+};
+
 const PRIORITY_CARD_CLASSES: Record<Task["priority"], string> = {
   low: "border-[var(--priority-low-border)] bg-[var(--priority-low-card)]",
   medium: "border-[var(--priority-medium-border)] bg-[var(--priority-medium-card)]",
@@ -35,7 +44,7 @@ const PRIORITY_CARD_CLASSES: Record<Task["priority"], string> = {
 const PRIORITY_TIMELINE_BLOCK_CLASSES: Record<Task["priority"], string> = {
   low: "border-[var(--priority-low-border)] bg-[var(--priority-low-block)] shadow-[0_20px_50px_rgba(94,112,214,0.24)]",
   medium: "border-[var(--priority-medium-border)] bg-[var(--priority-medium-block)] shadow-[0_20px_50px_rgba(234,197,60,0.24)]",
-  high: "border-[var(--priority-high-border)] bg-[var(--priority-high-block)] shadow-[0_22px_54px_rgba(230,60,60,0.26)]",
+  high: "border-[var(--priority-high-border)] bg-[var(--priority-high-block)] shadow-[0_22px_54px_rgba(145,84,181,0.28)]",
   urgent: "border-[var(--priority-urgent-border)] bg-[var(--priority-urgent-block)] shadow-[0_22px_54px_rgba(255,30,30,0.3)]",
 };
 
@@ -49,6 +58,10 @@ export function formatTaskLifecycle(value: TaskLifecycleValue) {
 
 export function getTaskPriorityBadgeClass(priority: Task["priority"]) {
   return PRIORITY_BADGE_CLASSES[priority];
+}
+
+export function getTaskPriorityHeaderBadgeClass(priority: Task["priority"]) {
+  return PRIORITY_HEADER_BADGE_CLASSES[priority];
 }
 
 export function getTaskPriorityCardClass(priority: Task["priority"]) {

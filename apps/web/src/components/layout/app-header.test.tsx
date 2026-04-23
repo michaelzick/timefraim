@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { AppHeader } from "@/components/layout/app-header";
-import { buildAuthSession } from "@/test/fixtures";
 import { ThemeProvider } from "@/theme/theme-provider";
 
 describe("AppHeader", () => {
@@ -14,7 +13,7 @@ describe("AppHeader", () => {
     render(
       <ThemeProvider>
         <MemoryRouter>
-          <AppHeader authSession={buildAuthSession()} onSignOut={onSignOut} />
+          <AppHeader onSignOut={onSignOut} />
         </MemoryRouter>
       </ThemeProvider>,
     );
@@ -26,5 +25,30 @@ describe("AppHeader", () => {
     await user.click(signOutButton);
 
     expect(onSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the active planner nav pill on the accent foreground token and removes the sync badge", () => {
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/"]}>
+          <AppHeader onSignOut={vi.fn()} />
+        </MemoryRouter>
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByRole("link", { name: /planner/i })).toHaveClass("text-[var(--accent-foreground)]");
+    expect(screen.queryByText(/synced with/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps the active settings nav pill on the accent foreground token", () => {
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/settings"]}>
+          <AppHeader onSignOut={vi.fn()} />
+        </MemoryRouter>
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByRole("link", { name: /settings/i })).toHaveClass("text-[var(--accent-foreground)]");
   });
 });

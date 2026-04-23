@@ -86,13 +86,13 @@ export function TaskPill({
               onDelete={onDelete}
             />
           ) : null}
-          <GripVertical className="h-4 w-4 text-[var(--muted)]" />
+          <GripVertical className="h-4 w-4 text-[var(--planner-surface-meta)]" />
         </div>
       </div>
       <div className="space-y-2">
         <h3
           className={cn(
-            "font-medium text-[var(--heading)]",
+            "font-medium text-[var(--planner-surface-title)]",
             runState === "running" && "flex items-center gap-2",
             runState === "done" && "line-through",
           )}
@@ -102,7 +102,7 @@ export function TaskPill({
           ) : null}
           <span>{task.title}</span>
         </h3>
-        <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
+        <div className="flex items-center gap-2 text-xs text-[var(--planner-surface-meta)]">
           <Clock3 className="h-3.5 w-3.5" />
           <span>{task.estimatedMinutes} min</span>
         </div>
