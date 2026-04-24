@@ -2,8 +2,8 @@ import { PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { filterQueueTasks, getSelectedCalendarEventId, resolveSelectedCalendarEvent, resolveTaskSelection, selectDoneTasks, type PlannerSelection, type SelectedTaskSource } from "@/features/planner/planner-page-selection";
-import { EMPTY_CREATE_TASK_VALUES, getTaskFormValues, type LocalPlannerTaskInput, type LocalPlannerTaskUpdateInput } from "@/features/planner/planner-page-utils";
-import { type CalendarEventFormValues, type CreateTaskValues, type PlannerPageProps, type PlannerScheduleBlockUpdateInput, type TaskFormValues } from "@/features/planner/types";
+import { EMPTY_CREATE_TASK_VALUES, getTaskFormValues, type LocalPlannerTaskInput } from "@/features/planner/planner-page-utils";
+import { type CalendarEventFormValues, type CreateTaskValues, type PlannerPageProps, type PlannerScheduleBlockUpdateInput, type PlannerTaskUpdateInput, type TaskFormValues } from "@/features/planner/types";
 import { useAltKey } from "@/hooks/use-alt-key";
 import { createPlannerMutationHandlers } from "@/pages/planner-page-actions";
 import { createPlannerPageHandlers } from "@/pages/planner-page-controller-handlers";
@@ -39,7 +39,7 @@ export function usePlannerPageController({
   | "onStartTimer"
 >) {
   const createTask = onCreateTask as (values: LocalPlannerTaskInput) => Promise<unknown>;
-  const updateTask = onUpdateTask as (taskId: string, values: LocalPlannerTaskUpdateInput) => Promise<unknown>;
+  const updateTask = onUpdateTask as (taskId: string, values: PlannerTaskUpdateInput) => Promise<unknown>;
   const updateScheduleBlock = onUpdateScheduleBlock as (scheduleBlockId: string, values: PlannerScheduleBlockUpdateInput) => Promise<unknown>;
   const [selectedTaskState, setSelectedTaskState] = useState<{
     taskId: string | null;

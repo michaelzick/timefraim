@@ -67,6 +67,7 @@ type PlannerTimelineColumnProps = {
   onDuplicateTask: (task: Task) => void;
   onStartTaskTimer: (taskId: string) => void;
   onMarkTaskDone: (task: Task) => void;
+  onResizeTaskDuration: (task: Task, durationMinutes: number) => void;
 };
 
 export function PlannerTimelineColumn({
@@ -81,6 +82,7 @@ export function PlannerTimelineColumn({
   onDuplicateTask,
   onStartTaskTimer,
   onMarkTaskDone,
+  onResizeTaskDuration,
 }: PlannerTimelineColumnProps) {
   return (
     <TimelineBoard
@@ -98,6 +100,7 @@ export function PlannerTimelineColumn({
       onDuplicateTask={onDuplicateTask}
       onStartTaskTimer={onStartTaskTimer}
       onMarkTaskDone={onMarkTaskDone}
+      onResizeTaskDuration={onResizeTaskDuration}
     />
   );
 }

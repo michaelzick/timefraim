@@ -135,6 +135,8 @@ export function PlannerPage({
             onDuplicateTask={(task) => mutationHandlers.handleDuplicateTask(task)}
             onStartTaskTimer={(taskId) => mutationHandlers.handleStartTaskTimer(taskId)}
             onMarkTaskDone={(task) => mutationHandlers.handleMarkTaskDone(task)}
+            onResizeTaskDuration={(task, durationMinutes) =>
+              mutationHandlers.handleResizeTaskDuration(task, durationMinutes)}
           />
           <PlannerDetailColumn
             detailPanelRef={detailPanelRef}

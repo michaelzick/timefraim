@@ -2,7 +2,7 @@ import type { PlannerDuplicateResult } from "@timefraim/shared";
 import { toast } from "sonner";
 import type { LocalPlannerTaskInput, LocalPlannerTaskUpdateInput, PlannerCreateTaskValues, PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
 import { resolvePlannerTaskStatus, showActionError } from "@/features/planner/planner-page-utils";
-import type { CalendarEventFormValues, PlannerCalendarEventUpdateInput } from "@/features/planner/types";
+import type { CalendarEventFormValues, PlannerCalendarEventUpdateInput, PlannerTaskUpdateInput } from "@/features/planner/types";
 
 type PlannerPageActionTaskStatus =
   | "inbox"
@@ -94,7 +94,7 @@ export function createPlannerMutationHandlers(args: {
   date: string;
   onDeleteTask: (taskId: string) => Promise<unknown>;
   onDeleteScheduleBlock: (scheduleBlockId: string) => Promise<unknown>;
-  onUpdateTask: (taskId: string, values: LocalPlannerTaskUpdateInput) => Promise<unknown>;
+  onUpdateTask: (taskId: string, values: PlannerTaskUpdateInput) => Promise<unknown>;
   onDuplicateTask: (
     taskId: string,
     body?: { startAt?: string; endAt?: string; plannerDate?: string },
@@ -154,6 +154,15 @@ export function createPlannerMutationHandlers(args: {
     },
     handleStartTaskTimer(taskId: string) {
       void args.onStartTimer(taskId).catch((error) => showActionError("Failed to start the timer. Please try again.", error));
+    },
+    handleResizeTaskDuration(task: PlannerPageActionTask, estimatedMinutes: number) {
+      if (estimatedMinutes === task.estimatedMinutes) {
+        return;
+      }
+
+      void args
+        .onUpdateTask(task.id, { estimatedMinutes })
+        .catch((error) => showActionError("Failed to resize the scheduled task. Please try again.", error));
     },
     handleMarkTaskDone(task: PlannerPageActionTask) {
       const previousStatus = task.status;

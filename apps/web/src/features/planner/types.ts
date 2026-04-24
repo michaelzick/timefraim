@@ -37,7 +37,13 @@ export type PlannerTaskInput = {
   plannerDate?: string;
 };
 
-export type PlannerTaskUpdateInput = Partial<Omit<TaskFormValues, "lifecycle"> & { status: TaskStatus }>;
+export type PlannerTaskUpdateInput = Partial<
+  Omit<TaskFormValues, "lifecycle" | "togglProjectId"> & {
+    status: TaskStatus;
+    togglProjectId: string | null;
+    completedOnDate: string | null;
+  }
+>;
 
 export type PlannerScheduleBlockInput = {
   taskId: string;

@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
+import type { Task } from "@timefraim/shared";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -93,7 +94,22 @@ vi.mock("@dnd-kit/core", () => ({
 }));
 
 vi.mock("@/components/timeline-board", () => ({
-  TimelineBoard: () => <div>timeline board</div>,
+  TimelineBoard: ({
+    tasks,
+    onResizeTaskDuration,
+  }: {
+    tasks: Task[];
+    onResizeTaskDuration: (task: Task, durationMinutes: number) => void;
+  }) => (
+    <div>
+      <div>timeline board</div>
+      {tasks[0] ? (
+        <button type="button" onClick={() => onResizeTaskDuration(tasks[0], 60)}>
+          Trigger timeline resize
+        </button>
+      ) : null}
+    </div>
+  ),
 }));
 
 const noopAsync = () => Promise.resolve(undefined);
@@ -218,5 +234,33 @@ describe("PlannerPage drag behavior", () => {
       );
     });
     expect(onDuplicateScheduleBlock).not.toHaveBeenCalled();
+  });
+
+  it("resizes a scheduled block through the task duration update path", async () => {
+    const user = userEvent.setup();
+    const onUpdateTask = vi.fn().mockResolvedValue(undefined);
+    const onUpdateScheduleBlock = vi.fn().mockResolvedValue(undefined);
+    const task = buildTask({
+      estimatedMinutes: 30,
+      status: "scheduled",
+      scheduledBlockId: "block-1",
+    });
+
+    render(
+      <PlannerPage
+        {...buildPlannerPageProps({
+          dayPlan: buildDayPlan({ tasks: [task] }),
+          onUpdateTask,
+          onUpdateScheduleBlock,
+        })}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /trigger timeline resize/i }));
+
+    await waitFor(() => {
+      expect(onUpdateTask).toHaveBeenCalledWith(task.id, { estimatedMinutes: 60 });
+    });
+    expect(onUpdateScheduleBlock).not.toHaveBeenCalled();
   });
 });

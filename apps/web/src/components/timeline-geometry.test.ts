@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getTimelinePlacement, SLOT_HEIGHT } from "./timeline-geometry";
+import { getTimelinePlacement, getTimelineResizePreview, SLOT_HEIGHT } from "./timeline-geometry";
 
 describe("timeline geometry", () => {
   it("clamps events that begin before the visible window", () => {
@@ -32,5 +32,49 @@ describe("timeline geometry", () => {
       top: 17 * SLOT_HEIGHT,
       height: SLOT_HEIGHT,
     });
+  });
+
+  it("shortens resize previews in quarter-hour increments", () => {
+    expect(
+      getTimelineResizePreview({
+        date: "2026-04-06",
+        startAt: "2026-04-06T09:00:00",
+        endAt: "2026-04-06T09:45:00",
+        deltaY: -SLOT_HEIGHT,
+      }).durationMinutes,
+    ).toBe(30);
+  });
+
+  it("extends resize previews in quarter-hour increments", () => {
+    expect(
+      getTimelineResizePreview({
+        date: "2026-04-06",
+        startAt: "2026-04-06T09:00:00",
+        endAt: "2026-04-06T09:45:00",
+        deltaY: 2 * SLOT_HEIGHT,
+      }).durationMinutes,
+    ).toBe(75);
+  });
+
+  it("does not resize below one quarter-hour slot", () => {
+    expect(
+      getTimelineResizePreview({
+        date: "2026-04-06",
+        startAt: "2026-04-06T09:00:00",
+        endAt: "2026-04-06T09:30:00",
+        deltaY: -10 * SLOT_HEIGHT,
+      }).durationMinutes,
+    ).toBe(15);
+  });
+
+  it("clamps resize previews to the visible timeline end", () => {
+    expect(
+      getTimelineResizePreview({
+        date: "2026-04-06",
+        startAt: "2026-04-06T23:30:00",
+        endAt: "2026-04-06T23:45:00",
+        deltaY: 10 * SLOT_HEIGHT,
+      }).durationMinutes,
+    ).toBe(30);
   });
 });
