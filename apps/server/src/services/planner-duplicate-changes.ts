@@ -1,5 +1,6 @@
 import type { ScheduleBlockDuplicatePayload, TaskDuplicatePayload } from "@timefraim/shared";
 import { detectScheduleConflicts } from "./planner-domain.js";
+import { conflict, notFound } from "./planner-errors.js";
 import { endOfDay, startOfDay } from "../utils/date.js";
 import { isUniqueViolation, type DraftHandlerContext } from "./planner-service-types.js";
 
@@ -12,7 +13,7 @@ export async function duplicateTaskInContext(context: DraftHandlerContext): Prom
   const payload = context.draft.payload as TaskDuplicatePayload;
   const sourceTask = await context.repository.getTask(payload.sourceTaskId, context.client);
   if (!sourceTask) {
-    throw new Error(`Task ${payload.sourceTaskId} not found`);
+    throw notFound(`Task ${payload.sourceTaskId} not found`);
   }
 
   const newTask = await context.repository.createTask(
@@ -45,7 +46,7 @@ export async function duplicateTaskInContext(context: DraftHandlerContext): Prom
       calendarEvents: events,
     });
     if (conflicts.length > 0) {
-      throw new Error(`Schedule conflict with ${conflicts[0].title}`);
+      throw conflict(`Schedule conflict with ${conflicts[0].title}`);
     }
 
     try {
@@ -70,7 +71,7 @@ export async function duplicateTaskInContext(context: DraftHandlerContext): Prom
       createdScheduleBlockId = block.id;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new Error("Task is already scheduled");
+        throw conflict("Task is already scheduled");
       }
       throw error;
     }
@@ -107,7 +108,7 @@ export async function duplicateScheduleBlockInContext(
   const payload = context.draft.payload as ScheduleBlockDuplicatePayload;
   const sourceBlock = await context.repository.getScheduleBlock(payload.sourceBlockId, context.client);
   if (!sourceBlock) {
-    throw new Error(`Schedule block ${payload.sourceBlockId} not found`);
+    throw notFound(`Schedule block ${payload.sourceBlockId} not found`);
   }
   const task = await context.repository.getTask(sourceBlock.taskId, context.client);
 
@@ -126,7 +127,7 @@ export async function duplicateScheduleBlockInContext(
     calendarEvents: events,
   });
   if (conflicts.length > 0) {
-    throw new Error(`Schedule conflict with ${conflicts[0].title}`);
+    throw conflict(`Schedule conflict with ${conflicts[0].title}`);
   }
 
   const block = await context.repository.createScheduleBlock(

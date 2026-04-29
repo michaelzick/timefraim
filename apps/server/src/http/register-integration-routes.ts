@@ -7,6 +7,7 @@ import {
   togglDiscoverInputSchema,
 } from "@timefraim/shared";
 import type { FastifyInstance } from "fastify";
+import { AuthorizationError } from "./auth.js";
 import { parseWithReply, withAuthenticatedRoute } from "./route-helpers.js";
 import type { PlannerService } from "../services/planner-service.js";
 
@@ -72,7 +73,7 @@ export function registerIntegrationRoutes(app: FastifyInstance, plannerService: 
         return null;
       }
       if (payload.email.toLowerCase() !== user.email.toLowerCase()) {
-        return reply.status(403).send({ message: "Google session must belong to the signed-in account" });
+        throw new AuthorizationError("Google session must belong to the signed-in account");
       }
 
       return plannerService.saveGoogleSession({

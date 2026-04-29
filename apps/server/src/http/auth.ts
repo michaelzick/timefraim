@@ -20,6 +20,28 @@ export type AuthenticatedUser = {
   avatarUrl: string | null;
 };
 
+export class AuthenticationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthenticationError";
+  }
+}
+
+export class AuthorizationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthorizationError";
+  }
+}
+
+export function isAuthenticationError(error: unknown): error is AuthenticationError {
+  return error instanceof AuthenticationError;
+}
+
+export function isAuthorizationError(error: unknown): error is AuthorizationError {
+  return error instanceof AuthorizationError;
+}
+
 const JWKS = createRemoteJWKSet(new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
 const JWT_SECRET = new TextEncoder().encode(env.SUPABASE_JWT_SECRET);
 
@@ -39,17 +61,22 @@ function getBearerToken(header: string | undefined) {
 export async function requireAuthenticatedUser(authorizationHeader: string | undefined): Promise<AuthenticatedUser> {
   const token = getBearerToken(authorizationHeader);
   if (!token) {
-    throw new Error("Missing bearer token");
+    throw new AuthenticationError("Missing bearer token");
   }
 
-  const header = decodeProtectedHeader(token);
-  const { payload } = header.alg?.startsWith("HS")
-    ? await jwtVerify(token, JWT_SECRET)
-    : await jwtVerify(token, JWKS);
-  const parsed = payloadSchema.parse(payload);
+  let parsed: z.infer<typeof payloadSchema>;
+  try {
+    const header = decodeProtectedHeader(token);
+    const { payload } = header.alg?.startsWith("HS")
+      ? await jwtVerify(token, JWT_SECRET)
+      : await jwtVerify(token, JWKS);
+    parsed = payloadSchema.parse(payload);
+  } catch {
+    throw new AuthenticationError("Invalid bearer token");
+  }
 
   if (parsed.email.toLowerCase() !== env.ALLOWED_EMAIL.toLowerCase()) {
-    throw new Error("This account is not allowed to access TimeFraim");
+    throw new AuthorizationError("This account is not allowed to access TimeFraim");
   }
 
   return {
@@ -63,7 +90,7 @@ export async function requireAuthenticatedUser(authorizationHeader: string | und
 export function requireMcpProfile(authorizationHeader: string | undefined): "read-only" | "full-access" {
   const token = getBearerToken(authorizationHeader);
   if (!token) {
-    throw new Error("Missing MCP bearer token");
+    throw new AuthenticationError("Missing MCP bearer token");
   }
 
   if (token === env.MCP_BEARER_TOKEN) {
@@ -74,5 +101,5 @@ export function requireMcpProfile(authorizationHeader: string | undefined): "rea
     return "read-only";
   }
 
-  throw new Error("Invalid MCP bearer token");
+  throw new AuthenticationError("Invalid MCP bearer token");
 }

@@ -1,4 +1,5 @@
 import type { TaskInput, TaskUpdate } from "@timefraim/shared";
+import { notFound } from "./planner-errors.js";
 import type { DraftHandlerContext } from "./planner-service-types.js";
 import { updateScheduleBlockWithValidation } from "./planner-schedule-changes.js";
 import { todayIsoDate } from "../utils/date.js";
@@ -63,7 +64,7 @@ export async function applyTaskUpdateDraft(context: DraftHandlerContext) {
   const payload = context.draft.payload as TaskUpdate;
   const currentTask = await context.repository.getTask(payload.taskId, context.client);
   if (!currentTask) {
-    throw new Error(`Task ${payload.taskId} not found`);
+    throw notFound(`Task ${payload.taskId} not found`);
   }
 
   const completedOnDate = resolveCompletedOnDate({
@@ -127,7 +128,7 @@ export async function applyTaskDeleteDraft(context: DraftHandlerContext) {
   const payload = context.draft.payload as { taskId: string };
   const task = await context.repository.getTask(payload.taskId, context.client);
   if (!task) {
-    throw new Error(`Task ${payload.taskId} not found`);
+    throw notFound(`Task ${payload.taskId} not found`);
   }
 
   const scheduledBlock = task.scheduledBlockId

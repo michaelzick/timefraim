@@ -34,6 +34,7 @@ timefraim/
 ├── packages/
 │   └── shared/          # Zod schemas shared by apps
 ├── skills/
+│   ├── coding-standards/ # Repo-local production coding standards for Node/React/TypeScript
 │   └── sync-agent-briefs/ # Repo-local maintenance skill for AGENTS/CLAUDE/GEMINI sync
 ├── supabase/
 │   ├── config.toml
@@ -151,6 +152,7 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 - **File naming:** kebab-case for files (`planner-service.ts`, `task-pill.tsx`); PascalCase only inside React component exports. Hooks start with `use-`.
 - **Layers:** route → service → repository → db pool. Services never touch SQL; repositories never hold business logic.
 - **Contracts:** every API boundary validates with a Zod schema from `@timefraim/shared`. Never hand-write request/response types in an app.
+- **Coding standards:** use `skills/coding-standards/SKILL.md` before implementation, refactors, API work, UI state handling, error handling, persistence changes, security-sensitive code, performance-sensitive code, tests, and reviews.
 - **Mutations:** AI/agent changes go through the draft pipeline (`propose_* → confirm_draft`). Direct user actions still hit typed mutation routes.
 - **Max file size:** ESLint enforces `max-lines: 200` (excludes blanks, comments, tests, `vite-env.d.ts`). When a file approaches the limit, split by responsibility — this is why `planner-repository-*-store.ts` and `planner-service-*-integrations.ts` are split.
 - **Repository layer:** `no-unsafe-argument` / `no-unsafe-assignment` are relaxed here only; keep unsafe code confined to this layer.
@@ -179,6 +181,7 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 | [apps/server/src/integration/toggl-track.ts](apps/server/src/integration/toggl-track.ts) | Toggl client |
 | [apps/server/src/mcp/create-mcp-server.ts](apps/server/src/mcp/create-mcp-server.ts) | MCP tools exposed to agents |
 | [packages/shared/src/index.ts](packages/shared/src/index.ts) | Shared schema barrel |
+| [skills/coding-standards/SKILL.md](skills/coding-standards/SKILL.md) | Production coding standards for Node, React, and TypeScript work |
 | [skills/sync-agent-briefs/SKILL.md](skills/sync-agent-briefs/SKILL.md) | Repo-local workflow for syncing agent orientation files |
 | [supabase/migrations/](supabase/migrations/) | Schema evolution |
 | [eslint.config.mjs](eslint.config.mjs) | Lint rules incl. `max-lines: 200` |

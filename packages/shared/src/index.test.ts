@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calendarEventViewSchema, calendarSyncResultSchema, googleCalendarSettingsSchema, plannerMutationResultSchema, taskSchema } from "./index.js";
+import { apiErrorSchema, calendarEventViewSchema, calendarSyncResultSchema, googleCalendarSettingsSchema, plannerMutationResultSchema, taskSchema } from "./index.js";
 
 describe("shared barrel exports", () => {
   it("exposes core schemas through the package root", () => {
@@ -17,6 +17,14 @@ describe("shared barrel exports", () => {
         updatedAt: "2026-04-06T08:00:00.000Z",
       }).title,
     ).toBe("Plan launch week");
+
+    expect(
+      apiErrorSchema.parse({
+        code: "invalid_input",
+        message: "Invalid request",
+        requestId: "req-1",
+      }).code,
+    ).toBe("invalid_input");
 
     expect(
       plannerMutationResultSchema.parse({

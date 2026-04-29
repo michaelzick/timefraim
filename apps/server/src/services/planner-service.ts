@@ -10,6 +10,7 @@ import {
   duplicateScheduleBlockForUser,
   duplicateTaskForUser,
 } from "./planner-service-duplicates.js";
+import { forbidden, notFound } from "./planner-errors.js";
 import { deleteOpenAiConnection, deleteTogglConnection, discoverTogglConnection, generateSavedOpenAiImage, getAllowedPlannerUserId, getGoogleCalendarSettings, getGoogleCalendarSyncState, getOpenAiImageSettings, getTogglConnection, getTogglSettings, saveGoogleCalendarSettings, saveGoogleSession, saveOpenAiConnection, saveTogglConnection } from "./planner-service-integrations.js";
 import { runPlannerSideEffects } from "./planner-side-effects.js";
 import type { SideEffect } from "./planner-service-types.js";
@@ -145,10 +146,10 @@ export class PlannerService {
   async rejectDraft(draftId: string, actorRole: ActorRole, userId?: string | null) {
     const existingDraft = await this.repository.getDraft(draftId, pool);
     if (!existingDraft) {
-      throw new Error(`Draft ${draftId} not found`);
+      throw notFound(`Draft ${draftId} not found`);
     }
     if (userId && existingDraft.ownerUserId && existingDraft.ownerUserId !== userId) {
-      throw new Error("Draft does not belong to the signed-in user");
+      throw forbidden("Draft does not belong to the signed-in user");
     }
     const draft = await this.repository.updateDraftStatus(draftId, "rejected", pool);
     await this.repository.createAuditLog(
@@ -172,10 +173,10 @@ export class PlannerService {
     const draft = await withTransaction(async (client) => {
       const existingDraft = await this.repository.getDraft(draftId, client);
       if (!existingDraft) {
-        throw new Error(`Draft ${draftId} not found`);
+        throw notFound(`Draft ${draftId} not found`);
       }
       if (userId && existingDraft.ownerUserId && existingDraft.ownerUserId !== userId) {
-        throw new Error("Draft does not belong to the signed-in user");
+        throw forbidden("Draft does not belong to the signed-in user");
       }
       if (existingDraft.status !== "pending") {
         togglOwnerUserId = existingDraft.ownerUserId ?? togglOwnerUserId;

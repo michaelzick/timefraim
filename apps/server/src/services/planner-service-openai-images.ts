@@ -4,6 +4,7 @@ import { decryptSecret, encryptSecret, maskSecret } from "../integration/integra
 import { generateOpenAiImage as requestOpenAiImage } from "../integration/openai-images.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
 import type { IntegrationTokenRow } from "../repositories/planner-repository-types.js";
+import { dependencyUnavailable, invalidInput } from "./planner-errors.js";
 
 const OPENAI_PROVIDER = "openai";
 const OPENAI_IMAGE_MODEL = "gpt-image-2";
@@ -33,7 +34,7 @@ export async function saveOpenAiConnection(repository: PlannerRepository, apiKey
   const trimmedApiKey = apiKey.trim();
 
   if (!trimmedApiKey) {
-    throw new Error("An OpenAI API key is required before GPT Image 2 can be used");
+    throw invalidInput("An OpenAI API key is required before GPT Image 2 can be used");
   }
 
   await repository.upsertIntegrationToken(
@@ -66,8 +67,14 @@ export async function generateSavedOpenAiImage(
   const apiKey = readOpenAiApiKey(row);
 
   if (!apiKey) {
-    throw new Error("OpenAI Images is not connected");
+    throw dependencyUnavailable("OpenAI Images is not connected");
   }
 
-  return requestOpenAiImage({ apiKey, prompt });
+  try {
+    return await requestOpenAiImage({ apiKey, prompt });
+  } catch (error) {
+    throw dependencyUnavailable(
+      error instanceof Error ? error.message : "OpenAI Images request failed",
+    );
+  }
 }

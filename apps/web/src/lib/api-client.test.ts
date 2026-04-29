@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { request, withQuery } from "@/lib/api-client";
+import { ApiRequestError, request, withQuery } from "@/lib/api-client";
 import { plannerApi } from "@/lib/api-planner";
 
 describe("api-client", () => {
@@ -36,13 +36,77 @@ describe("api-client", () => {
     );
   });
 
-  it("surfaces structured server error messages", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ message: "Google sync failed" }), { status: 500 }),
+  it("forwards abort signals to fetch", async () => {
+    const controller = new AbortController();
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
     );
 
-    await expect(request("/api/calendar/sync", "session-token")).rejects.toThrow(
-      "Google sync failed",
+    await request("/api/auth/me", "session-token", { signal: controller.signal });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        signal: controller.signal,
+      }),
     );
+  });
+
+  it("surfaces structured server errors as ApiRequestError", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: "conflict",
+          message: "Task is already scheduled",
+          requestId: "req-server",
+        }),
+        { status: 409 },
+      ),
+    );
+
+    try {
+      await request("/api/calendar/sync", "session-token");
+      throw new Error("request should have failed");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiRequestError);
+      expect(error).toMatchObject({
+        status: 409,
+        code: "conflict",
+        requestId: "req-server",
+        message: "Task is already scheduled",
+      });
+    }
+  });
+
+  it("falls back to legacy server error messages", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ message: "Google sync failed" }), {
+        status: 500,
+        headers: { "x-request-id": "req-legacy" },
+      }),
+    );
+
+    await expect(request("/api/calendar/sync", "session-token")).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+      requestId: "req-legacy",
+      message: "Google sync failed",
+    });
+  });
+
+  it("falls back cleanly when an error response is not JSON", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("Service unavailable", {
+        status: 503,
+        headers: { "x-request-id": "req-text" },
+      }),
+    );
+
+    await expect(request("/api/calendar/sync", "session-token")).rejects.toMatchObject({
+      status: 503,
+      code: "dependency_unavailable",
+      requestId: "req-text",
+      message: "Request failed with status 503",
+    });
   });
 });
