@@ -12,7 +12,7 @@ Sibling files [CLAUDE.md](CLAUDE.md) (Claude Code) and [AGENTS.md](AGENTS.md) (C
 
 Primary flows:
 - Planner: three-column layout (task queue / timeline / detail panel) with drag-and-drop scheduling.
-- Settings: connect Google Calendar (multi-calendar, colors), Toggl (workspace + per-task project overrides), and OpenAI Images (encrypted API key + GPT Image 2 preview generation).
+- Settings: connect Google Calendar (multi-calendar, colors, optional planner-block sync), Toggl (workspace + per-task project overrides), and OpenAI Images (encrypted API key + GPT Image 2 preview generation).
 - Draft-first mutations: AI-proposed changes land as `sync_drafts` rows; the user confirms before they apply.
 
 ## 2. Tech stack
@@ -105,7 +105,7 @@ Recent migrations (see filenames for dates): task priority, per-user Toggl conne
 
 ## 6. External integrations
 
-- **Google Calendar** — OAuth 2.0 (`googleapis`). Lists calendars, fetches events per date range, creates/updates/deletes events for schedule blocks (uses `extendedProperties` for linkage), resolves colors. Primary + "Free Time Tasks" planner calendar via `GOOGLE_CALENDAR_ID` / `GOOGLE_PLANNER_CALENDAR_ID`.
+- **Google Calendar** — OAuth 2.0 (`googleapis`). Lists calendars, fetches events per date range, optionally creates/updates/deletes events for schedule blocks (uses `extendedProperties` for linkage), resolves colors. Primary + "Free Time Tasks" planner calendar via `GOOGLE_CALENDAR_ID` / `GOOGLE_PLANNER_CALENDAR_ID`.
 - **Toggl Track** — Personal API token, encrypted at rest in `integration_tokens`. Discover workspaces/projects, start/stop time entries, per-task and per-event project overrides.
 - **OpenAI Images** — Encrypted API key stored in `integration_tokens`. Settings exposes a server-backed GPT Image 2 preview flow via `POST /api/integrations/openai/images`, using the Images API (`/v1/images/generations`) with PNG output.
 - **MCP** — `POST /mcp` with `Authorization: Bearer <token>`. `MCP_BEARER_TOKEN` grants full-access tools; `MCP_READ_ONLY_TOKEN` grants read-only. Tools include `list_tasks`, `list_calendar_view`, `get_day_plan`, `propose_task_create`, `propose_schedule_block_*`, `confirm_draft`, `start_task_timer`, `stop_active_timer`.

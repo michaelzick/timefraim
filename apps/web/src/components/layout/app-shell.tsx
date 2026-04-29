@@ -2,6 +2,7 @@ import type {
   AuthSession,
   DayPlan,
   GoogleCalendarSettings,
+  GoogleCalendarSettingsUpdate,
   OpenAiGeneratedImage,
   OpenAiImageSettings,
   TogglConnect,
@@ -46,7 +47,7 @@ type AppShellProps = {
   onDeleteOpenAiConnection: () => Promise<OpenAiImageSettings>;
   onGenerateOpenAiImage: (prompt: string) => Promise<OpenAiGeneratedImage>;
   onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
-  onSaveGoogleCalendars: (syncCalendarIds: string[]) => Promise<unknown>;
+  onSaveGoogleCalendars: (values: GoogleCalendarSettingsUpdate) => Promise<unknown>;
   onSaveOpenAiConnection: (apiKey: string) => Promise<OpenAiImageSettings>;
   onTaskEndNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
   onSignOut: () => void;

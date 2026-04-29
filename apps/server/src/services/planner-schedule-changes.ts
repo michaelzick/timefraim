@@ -5,7 +5,7 @@ import { isUniqueViolation, type DraftHandlerContext } from "./planner-service-t
 
 type ScheduleBlockMutationContext = Pick<
   DraftHandlerContext,
-  "client" | "googleConnected" | "repository" | "sideEffects"
+  "client" | "repository" | "sideEffects" | "syncPlannerBlocksToCalendar"
 >;
 
 export async function updateScheduleBlockWithValidation(
@@ -42,11 +42,13 @@ export async function updateScheduleBlockWithValidation(
       startAt: params.patch.startAt,
       endAt: params.patch.endAt,
       source: params.patch.source,
-      state: context.googleConnected ? "sync_pending" : "confirmed",
+      state: context.syncPlannerBlocksToCalendar ? "sync_pending" : "confirmed",
     },
     context.client,
   );
-  context.sideEffects.push({ type: "google.upsert", taskId: block.taskId, scheduleBlockId: block.id });
+  if (context.syncPlannerBlocksToCalendar) {
+    context.sideEffects.push({ type: "google.upsert", taskId: block.taskId, scheduleBlockId: block.id });
+  }
   return block;
 }
 
@@ -96,7 +98,7 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
         startAt: payload.startAt,
         endAt: payload.endAt,
         source: payload.source,
-        state: context.googleConnected ? "sync_pending" : "confirmed",
+        state: context.syncPlannerBlocksToCalendar ? "sync_pending" : "confirmed",
       },
       context.client,
     );
@@ -119,7 +121,9 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
     },
     context.client,
   );
-  context.sideEffects.push({ type: "google.upsert", taskId: task.id, scheduleBlockId: block.id });
+  if (context.syncPlannerBlocksToCalendar) {
+    context.sideEffects.push({ type: "google.upsert", taskId: task.id, scheduleBlockId: block.id });
+  }
   return context.markApplied();
 }
 

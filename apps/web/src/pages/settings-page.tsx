@@ -1,6 +1,7 @@
 import type {
   AuthSession,
   GoogleCalendarSettings,
+  GoogleCalendarSettingsUpdate,
   OpenAiGeneratedImage,
   OpenAiImageSettings,
   TogglConnect,
@@ -58,7 +59,7 @@ export function SettingsPage({
   onDeleteToggl: () => Promise<TogglIntegrationSettings>;
   onSaveOpenAiConnection: (apiKey: string) => Promise<OpenAiImageSettings>;
   onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
-  onSaveGoogleCalendars: (syncCalendarIds: string[]) => Promise<unknown>;
+  onSaveGoogleCalendars: (values: GoogleCalendarSettingsUpdate) => Promise<unknown>;
   onTaskEndNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
   isDiscovering: boolean;
   isSaving: boolean;
@@ -91,7 +92,7 @@ export function SettingsPage({
             <div className="rounded-[24px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] p-4">
               <p className="text-sm font-medium text-[var(--heading)]">Scope guardrails</p>
               <p className="mt-2 text-sm text-[var(--muted-strong)]">
-                Selected calendars show up as blockers on the timeline. Planner-created blocks go to the planner calendar, and new planner tasks copy to your default Google Tasks list.
+                Selected calendars show up as blockers on the timeline. Scheduled tasks can sync to the planner calendar, and new planner tasks copy to your default Google Tasks list.
               </p>
             </div>
           </div>

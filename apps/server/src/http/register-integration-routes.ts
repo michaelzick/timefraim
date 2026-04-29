@@ -98,7 +98,7 @@ export function registerIntegrationRoutes(app: FastifyInstance, plannerService: 
       if (!payload) {
         return null;
       }
-      return plannerService.saveGoogleCalendarSettings(payload.syncCalendarIds);
+      return plannerService.saveGoogleCalendarSettings(payload);
     }),
   );
 

@@ -13,7 +13,7 @@ import {
 } from "./planner-duplicate-changes.js";
 import {
   getAllowedPlannerUserId,
-  getGoogleConnection,
+  getGoogleCalendarSyncState,
   getTogglConnection,
 } from "./planner-service-integrations.js";
 import { runPlannerSideEffects } from "./planner-side-effects.js";
@@ -30,7 +30,8 @@ export async function duplicateTaskForUser(
   payload: TaskDuplicatePayload,
 ): Promise<DuplicateOutcome & { kind: "task.duplicate"; diffSummary: string }> {
   const effectiveUserId = await resolveUserId(context);
-  const googleConnection = await getGoogleConnection(context.repository);
+  const googleSyncState = await getGoogleCalendarSyncState(context.repository);
+  const googleConnection = googleSyncState.connection;
   const togglConnection = await getTogglConnection(context.repository, effectiveUserId);
   const sideEffects: SideEffect[] = [];
   const diffSummary = formatDraftSummary("task.duplicate", payload);
@@ -50,6 +51,7 @@ export async function duplicateTaskForUser(
       client,
       sideEffects,
       googleConnected: Boolean(googleConnection),
+      syncPlannerBlocksToCalendar: googleSyncState.syncPlannerBlocksToCalendar,
       markApplied: () => Promise.resolve(null),
     }),
   );
@@ -63,7 +65,8 @@ export async function duplicateScheduleBlockForUser(
   payload: ScheduleBlockDuplicatePayload,
 ): Promise<DuplicateOutcome & { kind: "schedule_block.duplicate"; diffSummary: string }> {
   const effectiveUserId = await resolveUserId(context);
-  const googleConnection = await getGoogleConnection(context.repository);
+  const googleSyncState = await getGoogleCalendarSyncState(context.repository);
+  const googleConnection = googleSyncState.connection;
   const togglConnection = await getTogglConnection(context.repository, effectiveUserId);
   const sideEffects: SideEffect[] = [];
   const diffSummary = formatDraftSummary("schedule_block.duplicate", payload);
@@ -83,6 +86,7 @@ export async function duplicateScheduleBlockForUser(
       client,
       sideEffects,
       googleConnected: Boolean(googleConnection),
+      syncPlannerBlocksToCalendar: googleSyncState.syncPlannerBlocksToCalendar,
       markApplied: () => Promise.resolve(null),
     }),
   );

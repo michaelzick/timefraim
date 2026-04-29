@@ -31,6 +31,7 @@ export type DraftHandlerContext = {
   client: Queryable;
   draft: DraftToApply;
   googleConnected: boolean;
+  syncPlannerBlocksToCalendar: boolean;
   markApplied: () => Promise<SyncDraft | null>;
   repository: PlannerRepository;
   sideEffects: SideEffect[];

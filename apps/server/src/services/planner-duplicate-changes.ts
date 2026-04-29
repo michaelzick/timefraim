@@ -55,7 +55,7 @@ export async function duplicateTaskInContext(context: DraftHandlerContext): Prom
           startAt: payload.startAt,
           endAt: payload.endAt,
           source: "manual",
-          state: context.googleConnected ? "sync_pending" : "confirmed",
+          state: context.syncPlannerBlocksToCalendar ? "sync_pending" : "confirmed",
         },
         context.client,
       );
@@ -64,7 +64,9 @@ export async function duplicateTaskInContext(context: DraftHandlerContext): Prom
         { scheduledBlockId: block.id, status: "scheduled" },
         context.client,
       );
-      context.sideEffects.push({ type: "google.upsert", taskId: newTask.id, scheduleBlockId: block.id });
+      if (context.syncPlannerBlocksToCalendar) {
+        context.sideEffects.push({ type: "google.upsert", taskId: newTask.id, scheduleBlockId: block.id });
+      }
       createdScheduleBlockId = block.id;
     } catch (error) {
       if (isUniqueViolation(error)) {
@@ -133,11 +135,13 @@ export async function duplicateScheduleBlockInContext(
       startAt: payload.startAt,
       endAt: payload.endAt,
       source: "manual",
-      state: context.googleConnected ? "sync_pending" : "confirmed",
+      state: context.syncPlannerBlocksToCalendar ? "sync_pending" : "confirmed",
     },
     context.client,
   );
-  context.sideEffects.push({ type: "google.upsert", taskId: sourceBlock.taskId, scheduleBlockId: block.id });
+  if (context.syncPlannerBlocksToCalendar) {
+    context.sideEffects.push({ type: "google.upsert", taskId: sourceBlock.taskId, scheduleBlockId: block.id });
+  }
 
   await context.repository.createAuditLog(
     {

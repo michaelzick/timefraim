@@ -49,6 +49,7 @@ function buildContext(args: {
     client: {} as never,
     draft,
     googleConnected: false,
+    syncPlannerBlocksToCalendar: false,
     markApplied,
     repository: repository as never,
     sideEffects: [],

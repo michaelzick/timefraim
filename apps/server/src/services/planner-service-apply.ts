@@ -9,6 +9,7 @@ export async function applyPlannerDraft(args: {
   client: Parameters<typeof applyDraftChange>[0]["client"];
   sideEffects: SideEffect[];
   googleConnected: boolean;
+  syncPlannerBlocksToCalendar: boolean;
   persistDraftStatus: boolean;
   repository: PlannerRepository;
 }) {
@@ -22,6 +23,7 @@ export async function applyPlannerDraft(args: {
     client: args.client,
     draft: args.draft,
     googleConnected: args.googleConnected,
+    syncPlannerBlocksToCalendar: args.syncPlannerBlocksToCalendar,
     markApplied,
     repository: args.repository,
     sideEffects: args.sideEffects,

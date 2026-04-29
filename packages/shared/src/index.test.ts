@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calendarEventViewSchema, calendarSyncResultSchema, plannerMutationResultSchema, taskSchema } from "./index.js";
+import { calendarEventViewSchema, calendarSyncResultSchema, googleCalendarSettingsSchema, plannerMutationResultSchema, taskSchema } from "./index.js";
 
 describe("shared barrel exports", () => {
   it("exposes core schemas through the package root", () => {
@@ -45,5 +45,13 @@ describe("shared barrel exports", () => {
         foregroundColor: null,
       }).backgroundColor,
     ).toBe("#d50000");
+
+    expect(
+      googleCalendarSettingsSchema.parse({
+        availableCalendars: [],
+        syncCalendarIds: ["primary"],
+        plannerCalendarId: "planner",
+      }).syncPlannerBlocksToCalendar,
+    ).toBe(true);
   });
 });
