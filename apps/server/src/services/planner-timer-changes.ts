@@ -1,4 +1,5 @@
 import { finalizeTimerSession, resolveIdleTaskStatus } from "./planner-domain.js";
+import { notFound } from "./planner-errors.js";
 import type { DraftHandlerContext } from "./planner-service-types.js";
 
 async function stopActiveTimerIfRunning(context: DraftHandlerContext) {
@@ -27,7 +28,7 @@ export async function applyTimerStartDraft(context: DraftHandlerContext) {
   const payload = context.draft.payload as { taskId: string; source: "manual" | "ai" | "sync" };
   const task = await context.repository.getTask(payload.taskId, context.client);
   if (!task) {
-    throw new Error(`Task ${payload.taskId} not found`);
+    throw notFound(`Task ${payload.taskId} not found`);
   }
 
   await stopActiveTimerIfRunning(context);
@@ -56,7 +57,7 @@ export async function applyTimerStartEventDraft(context: DraftHandlerContext) {
   const payload = context.draft.payload as { calendarEventId: string; source: "manual" | "ai" | "sync" };
   const calendarEvent = await context.repository.getCalendarEvent(payload.calendarEventId, context.client);
   if (!calendarEvent) {
-    throw new Error(`Calendar event ${payload.calendarEventId} not found`);
+    throw notFound(`Calendar event ${payload.calendarEventId} not found`);
   }
 
   await stopActiveTimerIfRunning(context);

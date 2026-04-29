@@ -11,6 +11,7 @@ import {
   type TogglConnection,
 } from "../integration/toggl-track.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
+import { dependencyUnavailable, invalidInput } from "./planner-errors.js";
 
 export async function getTogglConnection(
   repository: PlannerRepository,
@@ -51,11 +52,17 @@ export async function discoverTogglConnection(input: {
   workspaceId?: string | null;
 }): Promise<TogglDiscoverResult> {
   const apiToken = input.apiToken.trim();
-  return discoverTogglData({
-    apiToken,
-    apiTokenHint: maskSecret(apiToken),
-    workspaceId: input.workspaceId ?? null,
-  });
+  try {
+    return await discoverTogglData({
+      apiToken,
+      apiTokenHint: maskSecret(apiToken),
+      workspaceId: input.workspaceId ?? null,
+    });
+  } catch (error) {
+    throw dependencyUnavailable(
+      error instanceof Error ? error.message : "Unable to discover Toggl data",
+    );
+  }
 }
 
 export async function saveTogglConnection(
@@ -76,12 +83,12 @@ export async function saveTogglConnection(
       : null;
 
   if (!apiToken) {
-    throw new Error(
+    throw dependencyUnavailable(
       "A Toggl API token is required before this connection can be saved",
     );
   }
 
-  const validated = await validateTogglConnection({
+  const validated = await validateSavedTogglConnection({
     apiToken,
     apiTokenHint: providedApiToken
       ? maskSecret(apiToken)
@@ -111,6 +118,24 @@ export async function saveTogglConnection(
   return repository.getTogglSettings(saved);
 }
 
+async function validateSavedTogglConnection(input: {
+  apiToken: string;
+  apiTokenHint: string;
+  workspaceId: string;
+  defaultProjectId: string | null;
+}) {
+  try {
+    return await validateTogglConnection(input);
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Selected Toggl")) {
+      throw invalidInput(error.message);
+    }
+    throw dependencyUnavailable(
+      error instanceof Error ? error.message : "Unable to validate Toggl connection",
+    );
+  }
+}
+
 export async function deleteTogglConnection(
   repository: PlannerRepository,
   userId: string,
@@ -123,7 +148,7 @@ export async function getAllowedPlannerUserId(
 ): Promise<string> {
   const userId = await repository.findAuthUserIdByEmail(env.ALLOWED_EMAIL, pool);
   if (!userId) {
-    throw new Error(
+    throw dependencyUnavailable(
       `Could not resolve the allowed planner user for ${env.ALLOWED_EMAIL}`,
     );
   }

@@ -1,5 +1,6 @@
 import type { ScheduleBlock, ScheduleBlockUpdate } from "@timefraim/shared";
 import { detectScheduleConflicts } from "./planner-domain.js";
+import { conflict, notFound } from "./planner-errors.js";
 import { endOfDay, startOfDay } from "../utils/date.js";
 import { isUniqueViolation, type DraftHandlerContext } from "./planner-service-types.js";
 
@@ -33,7 +34,7 @@ export async function updateScheduleBlockWithValidation(
     ignoreScheduleBlockId: params.existingBlock.id,
   });
   if (conflicts.length > 0) {
-    throw new Error(`Schedule conflict with ${conflicts[0].title}`);
+    throw conflict(`Schedule conflict with ${conflicts[0].title}`);
   }
 
   const block = await context.repository.updateScheduleBlock(
@@ -61,7 +62,7 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
   };
   const task = await context.repository.getTask(payload.taskId, context.client);
   if (!task) {
-    throw new Error(`Task ${payload.taskId} not found`);
+    throw notFound(`Task ${payload.taskId} not found`);
   }
 
   const scheduledBlock = task.scheduledBlockId
@@ -69,7 +70,7 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
     : null;
   const existingBlock = scheduledBlock ?? (await context.repository.getScheduleBlockByTaskId(task.id, context.client));
   if (existingBlock) {
-    throw new Error("Task is already scheduled");
+    throw conflict("Task is already scheduled");
   }
 
   const range = {
@@ -87,7 +88,7 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
     calendarEvents: events,
   });
   if (conflicts.length > 0) {
-    throw new Error(`Schedule conflict with ${conflicts[0].title}`);
+    throw conflict(`Schedule conflict with ${conflicts[0].title}`);
   }
 
   let block;
@@ -104,7 +105,7 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
     );
   } catch (error) {
     if (isUniqueViolation(error)) {
-      throw new Error("Task is already scheduled");
+      throw conflict("Task is already scheduled");
     }
     throw error;
   }
@@ -131,7 +132,7 @@ export async function applyScheduleBlockUpdateDraft(context: DraftHandlerContext
   const payload = context.draft.payload as ScheduleBlockUpdate;
   const existingBlock = await context.repository.getScheduleBlock(payload.scheduleBlockId, context.client);
   if (!existingBlock) {
-    throw new Error(`Schedule block ${payload.scheduleBlockId} not found`);
+    throw notFound(`Schedule block ${payload.scheduleBlockId} not found`);
   }
   const task = await context.repository.getTask(existingBlock.taskId, context.client);
 
@@ -161,7 +162,7 @@ export async function applyScheduleBlockDeleteDraft(context: DraftHandlerContext
   const payload = context.draft.payload as { scheduleBlockId: string };
   const existingBlock = await context.repository.getScheduleBlock(payload.scheduleBlockId, context.client);
   if (!existingBlock) {
-    throw new Error(`Schedule block ${payload.scheduleBlockId} not found`);
+    throw notFound(`Schedule block ${payload.scheduleBlockId} not found`);
   }
 
   const task = await context.repository.getTask(existingBlock.taskId, context.client);

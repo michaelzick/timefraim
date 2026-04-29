@@ -75,32 +75,33 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
   const authQuery = useQuery({
     queryKey: ["auth-session", token],
     enabled: Boolean(token),
-    queryFn: () => api.getAuthSession(token),
+    queryFn: ({ signal }) => api.getAuthSession(token, signal),
     retry: false,
   });
   const dayPlanQuery = useQuery({
     queryKey: ["day-plan", token, date],
     enabled: Boolean(token),
-    queryFn: () => api.getDayPlan(token, date, getTimezoneOffsetForDate(date)),
+    queryFn: ({ signal }) =>
+      api.getDayPlan(token, date, getTimezoneOffsetForDate(date), signal),
     retry: false,
   });
   const togglSettingsQuery = useQuery({
     queryKey: ["toggl-settings", token],
     enabled: Boolean(token),
-    queryFn: () => api.getTogglSettings(token),
+    queryFn: ({ signal }) => api.getTogglSettings(token, signal),
     retry: false,
   });
 
   const googleCalendarSettingsQuery = useQuery({
     queryKey: ["google-calendar-settings", token],
     enabled: Boolean(token),
-    queryFn: () => api.getGoogleCalendarSettings(token),
+    queryFn: ({ signal }) => api.getGoogleCalendarSettings(token, signal),
     retry: false,
   });
   const openAiImageSettingsQuery = useQuery({
     queryKey: ["openai-image-settings", token],
     enabled: Boolean(token),
-    queryFn: () => api.getOpenAiImageSettings(token),
+    queryFn: ({ signal }) => api.getOpenAiImageSettings(token, signal),
     retry: false,
   });
 

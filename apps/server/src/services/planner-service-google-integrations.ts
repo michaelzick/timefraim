@@ -1,9 +1,15 @@
 import type { GoogleCalendarSettings, GoogleCalendarSettingsUpdate } from "@timefraim/shared";
 import { env } from "../config/env.js";
 import { pool } from "../db/pool.js";
-import { listGoogleCalendars, type GoogleCalendarListEntry, type GoogleConnection } from "../integration/google-calendar.js";
+import { listGoogleCalendars, type GoogleConnection } from "../integration/google-calendar.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
 import type { IntegrationTokenRow } from "../repositories/planner-repository-types.js";
+import { dependencyUnavailable } from "./planner-errors.js";
+import {
+  buildGoogleCalendarSettings,
+  getSelectableGoogleCalendars,
+  validateSyncCalendarIds,
+} from "./planner-service-google-settings.js";
 
 type IntegrationRowWithMetadata = Pick<IntegrationTokenRow, "metadata"> | null | undefined;
 
@@ -47,69 +53,6 @@ function buildGoogleConnection(row: IntegrationTokenRow | null): GoogleConnectio
     calendarId: readStringMetadata(row, "calendarId", env.GOOGLE_CALENDAR_ID),
     plannerCalendarId: readStringMetadata(row, "plannerCalendarId", env.GOOGLE_PLANNER_CALENDAR_ID),
     email: readStringMetadata(row, "email", env.ALLOWED_EMAIL),
-  };
-}
-
-function sortGoogleCalendars(calendars: GoogleCalendarListEntry[]) {
-  calendars.sort((a, b) => {
-    if (a.primary && !b.primary) return -1;
-    if (!a.primary && b.primary) return 1;
-    return a.name.localeCompare(b.name);
-  });
-}
-
-function getSelectableGoogleCalendars(calendars: GoogleCalendarListEntry[], plannerCalendarId: string) {
-  return calendars.filter((calendar) => calendar.id !== plannerCalendarId);
-}
-
-function getDefaultSyncCalendarIds(calendars: GoogleCalendarListEntry[]) {
-  const primaryCalendar = calendars.find((calendar) => calendar.primary);
-  return primaryCalendar ? [primaryCalendar.id] : ["primary"];
-}
-
-function normalizeSyncCalendarIds(syncCalendarIds: string[]) {
-  return [...new Set(syncCalendarIds.map((id) => id.trim()).filter(Boolean))];
-}
-
-function validateSyncCalendarIds(syncCalendarIds: string[], calendars: GoogleCalendarListEntry[]) {
-  const normalizedIds = normalizeSyncCalendarIds(syncCalendarIds);
-  const allowedIds = new Set(calendars.map((calendar) => calendar.id));
-  const invalidIds = normalizedIds.filter((id) => !allowedIds.has(id));
-
-  if (invalidIds.length > 0) {
-    throw new Error("Selected Google calendars are invalid or no longer available");
-  }
-
-  if (normalizedIds.length === 0) {
-    throw new Error("At least one Google calendar must remain selected");
-  }
-
-  return normalizedIds;
-}
-
-function buildGoogleCalendarSettings(args: {
-  calendars: GoogleCalendarListEntry[];
-  plannerCalendarId: string;
-  savedSyncCalendarIds?: string[];
-  syncPlannerBlocksToCalendar: boolean;
-}): GoogleCalendarSettings {
-  const availableCalendars = getSelectableGoogleCalendars([...args.calendars], args.plannerCalendarId);
-  sortGoogleCalendars(availableCalendars);
-
-  const syncCalendarIds = args.savedSyncCalendarIds
-    ? validateSyncCalendarIds(args.savedSyncCalendarIds, availableCalendars)
-    : getDefaultSyncCalendarIds(availableCalendars);
-
-  return {
-    availableCalendars: availableCalendars.map((calendar) => ({
-      id: calendar.id,
-      name: calendar.name,
-      primary: calendar.primary,
-      backgroundColor: calendar.backgroundColor,
-    })),
-    syncCalendarIds,
-    syncPlannerBlocksToCalendar: args.syncPlannerBlocksToCalendar,
-    plannerCalendarId: args.plannerCalendarId,
   };
 }
 
@@ -168,7 +111,7 @@ export async function getGoogleCalendarSettings(repository: PlannerRepository): 
   const plannerCalendarId = connection?.plannerCalendarId ?? env.GOOGLE_PLANNER_CALENDAR_ID;
   const savedSyncCalendarIds = readGoogleSyncCalendarIds(row);
   const syncPlannerBlocksToCalendar = readGoogleSyncPlannerBlocksToCalendar(row);
-  const allCalendars = await listGoogleCalendars(connection);
+  const allCalendars = await listGoogleCalendarsOrUnavailable(connection);
   const validSavedSyncCalendarIds = savedSyncCalendarIds?.filter((id) =>
     allCalendars.some((calendar) => calendar.id === id),
   );
@@ -189,10 +132,10 @@ export async function saveGoogleCalendarSettings(
   const connection = buildGoogleConnection(row);
 
   if (!row || !connection) {
-    throw new Error("Google integration not connected");
+    throw dependencyUnavailable("Google integration not connected");
   }
 
-  const allCalendars = await listGoogleCalendars(connection);
+  const allCalendars = await listGoogleCalendarsOrUnavailable(connection);
   const plannerCalendarId = connection.plannerCalendarId ?? env.GOOGLE_PLANNER_CALENDAR_ID;
   const availableCalendars = getSelectableGoogleCalendars(allCalendars, plannerCalendarId);
   const validatedSyncCalendarIds = validateSyncCalendarIds(input.syncCalendarIds, availableCalendars);
@@ -211,4 +154,14 @@ export async function saveGoogleCalendarSettings(
     },
     pool,
   );
+}
+
+async function listGoogleCalendarsOrUnavailable(connection: GoogleConnection | null) {
+  try {
+    return await listGoogleCalendars(connection);
+  } catch (error) {
+    throw dependencyUnavailable(
+      error instanceof Error ? error.message : "Unable to list Google calendars",
+    );
+  }
 }

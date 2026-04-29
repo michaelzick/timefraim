@@ -1,13 +1,14 @@
+import { forbidden, notFound } from "./planner-errors.js";
 import type { DraftHandlerContext } from "./planner-service-types.js";
 
 export async function applyCalendarEventDismissDraft(context: DraftHandlerContext) {
   const payload = context.draft.payload as { calendarEventId: string };
   const calendarEvent = await context.repository.getCalendarEvent(payload.calendarEventId, context.client);
   if (!calendarEvent) {
-    throw new Error(`Calendar event ${payload.calendarEventId} not found`);
+    throw notFound(`Calendar event ${payload.calendarEventId} not found`);
   }
   if (calendarEvent.isAppManaged) {
-    throw new Error("App-managed calendar events cannot be hidden");
+    throw forbidden("App-managed calendar events cannot be hidden");
   }
 
   await context.repository.dismissCalendarEvent(calendarEvent.id, context.client);
@@ -32,7 +33,7 @@ export async function applyCalendarEventUpdateDraft(context: DraftHandlerContext
   };
   const calendarEvent = await context.repository.getCalendarEvent(payload.calendarEventId, context.client);
   if (!calendarEvent) {
-    throw new Error(`Calendar event ${payload.calendarEventId} not found`);
+    throw notFound(`Calendar event ${payload.calendarEventId} not found`);
   }
 
   await context.repository.updateCalendarEvent(

@@ -28,17 +28,18 @@ import {
 import { request } from "@/lib/api-client";
 
 export const integrationApi = {
-  getAuthSession: (token: string) =>
-    request<AuthSession>("/api/auth/me", token, { schema: authSessionSchema }),
+  getAuthSession: (token: string, signal?: AbortSignal) =>
+    request<AuthSession>("/api/auth/me", token, { schema: authSessionSchema, signal }),
   saveGoogleSession: (token: string, body: GoogleConnect) =>
     request<IntegrationStatus, GoogleConnect>("/api/integrations/google/session", token, {
       method: "POST",
       body: googleConnectSchema.parse(body),
       schema: integrationStatusSchema,
     }),
-  getTogglSettings: (token: string) =>
+  getTogglSettings: (token: string, signal?: AbortSignal) =>
     request<TogglIntegrationSettings>("/api/integrations/toggl", token, {
       schema: togglIntegrationSettingsSchema,
+      signal,
     }),
   discoverTogglConnection: (token: string, body: TogglDiscoverInput) =>
     request<TogglDiscoverResult, TogglDiscoverInput>("/api/integrations/toggl/discover", token, {
@@ -57,13 +58,15 @@ export const integrationApi = {
       method: "DELETE",
       schema: togglIntegrationSettingsSchema,
     }),
-  getIntegrationStatus: (token: string) =>
+  getIntegrationStatus: (token: string, signal?: AbortSignal) =>
     request<IntegrationStatus>("/api/integrations/status", token, {
       schema: integrationStatusSchema,
+      signal,
     }),
-  getGoogleCalendarSettings: (token: string) =>
+  getGoogleCalendarSettings: (token: string, signal?: AbortSignal) =>
     request<GoogleCalendarSettings>("/api/integrations/google/calendars", token, {
       schema: googleCalendarSettingsSchema,
+      signal,
     }),
   saveGoogleCalendarSettings: (token: string, body: GoogleCalendarSettingsUpdate) =>
     request<GoogleCalendarSettings, GoogleCalendarSettingsUpdate>(
@@ -71,9 +74,10 @@ export const integrationApi = {
       token,
       { method: "PUT", body, schema: googleCalendarSettingsSchema },
     ),
-  getOpenAiImageSettings: (token: string) =>
+  getOpenAiImageSettings: (token: string, signal?: AbortSignal) =>
     request<OpenAiImageSettings>("/api/integrations/openai", token, {
       schema: openAiImageSettingsSchema,
+      signal,
     }),
   saveOpenAiConnection: (token: string, body: OpenAiConnect) =>
     request<OpenAiImageSettings, OpenAiConnect>("/api/integrations/openai/connect", token, {

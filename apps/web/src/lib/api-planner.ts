@@ -34,9 +34,10 @@ type DuplicateTaskInput = Omit<TaskDuplicatePayload, "sourceTaskId">;
 type DuplicateScheduleBlockInput = Omit<ScheduleBlockDuplicatePayload, "sourceBlockId">;
 
 export const plannerApi = {
-  getDayPlan: (token: string, date: string, tz: number) =>
-    request(withQuery("/api/day-plan", { date, tz }), token, { schema: dayPlanSchema }),
-  getTasks: (token: string) => request<Task[]>("/api/tasks", token, { schema: taskSchema.array() }),
+  getDayPlan: (token: string, date: string, tz: number, signal?: AbortSignal) =>
+    request(withQuery("/api/day-plan", { date, tz }), token, { schema: dayPlanSchema, signal }),
+  getTasks: (token: string, signal?: AbortSignal) =>
+    request<Task[]>("/api/tasks", token, { schema: taskSchema.array(), signal }),
   createTask: (token: string, body: TaskInput) =>
     request<PlannerMutationResult, TaskInput>("/api/tasks", token, {
       method: "POST",
@@ -110,8 +111,8 @@ export const plannerApi = {
         schema: plannerMutationResultSchema,
       },
     ),
-  getDrafts: (token: string) =>
-    request<SyncDraft[]>("/api/drafts", token, { schema: syncDraftSchema.array() }),
+  getDrafts: (token: string, signal?: AbortSignal) =>
+    request<SyncDraft[]>("/api/drafts", token, { schema: syncDraftSchema.array(), signal }),
   confirmDraft: (token: string, draftId: string) =>
     request<SyncDraft>(`/api/drafts/${draftId}/confirm`, token, {
       method: "POST",
