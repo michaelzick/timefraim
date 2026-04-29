@@ -22,7 +22,8 @@ type ErrorResponseInput = {
 
 function getErrorResponse(error: unknown): ErrorResponseInput {
   if (isPlannerError(error)) {
-    return { code: error.code, message: error.message };
+    const code: ApiErrorCode = error.code;
+    return { code, message: error.message };
   }
 
   if (isAuthenticationError(error)) {
@@ -49,11 +50,8 @@ export function sendApiError(
   input: ErrorResponseInput,
 ): FastifyReply {
   const requestId = setRequestIdHeader(reply, reply.request);
-  return reply.status(statusByCode[input.code]).send({
-    code: input.code,
-    message: input.message,
-    requestId,
-  });
+  const { code, message } = input;
+  return reply.status(statusByCode[code]).send({ code, message, requestId });
 }
 
 export function sendMappedError(
