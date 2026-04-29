@@ -1,5 +1,6 @@
 export {
   getGoogleConnection,
+  getGoogleCalendarSyncState,
   getGoogleCalendarSettings,
   readGoogleSyncCalendarIds,
   saveGoogleCalendarSettings,

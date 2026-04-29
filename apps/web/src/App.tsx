@@ -128,7 +128,7 @@ function AppContent() {
       onDeleteOpenAiConnection={() => deleteOpenAiConnectionMutation.mutateAsync()}
       onGenerateOpenAiImage={(prompt) => generateOpenAiImageMutation.mutateAsync(prompt)}
       onSaveToggl={plannerMutations.actions.saveToggl}
-      onSaveGoogleCalendars={(ids) => saveGoogleCalendarsMutation.mutateAsync(ids)}
+      onSaveGoogleCalendars={(values) => saveGoogleCalendarsMutation.mutateAsync(values)}
       onSaveOpenAiConnection={(apiKey) => saveOpenAiConnectionMutation.mutateAsync(apiKey)}
       onTaskEndNotificationsChange={taskEndNotifications.setEnabledFromUserAction}
       onSignOut={handleSignOut}

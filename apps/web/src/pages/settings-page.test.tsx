@@ -50,6 +50,58 @@ describe("SettingsPage", () => {
     expect(screen.getByText("https://example.ngrok.app/mcp")).toBeInTheDocument();
   });
 
+  it("submits the Google Calendar timeline sync preference", async () => {
+    const user = userEvent.setup();
+    const onSaveGoogleCalendars = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <SettingsPage
+        authSession={buildAuthSession()}
+        togglSettings={buildTogglSettings()}
+        openAiImageSettings={buildOpenAiImageSettings()}
+        onDiscoverToggl={vi.fn()}
+        onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
+        onDeleteOpenAiConnection={vi.fn().mockResolvedValue(buildOpenAiImageSettings({ connected: false, apiKeyHint: null }))}
+        onGenerateOpenAiImage={vi.fn()}
+        onSaveOpenAiConnection={vi.fn()}
+        onSaveToggl={vi.fn().mockResolvedValue(buildTogglSettings())}
+        isDiscovering={false}
+        isSaving={false}
+        googleCalendarSettings={{
+          availableCalendars: [
+            { id: "primary", name: "Personal", primary: true, backgroundColor: "#123456" },
+          ],
+          syncCalendarIds: ["primary"],
+          syncPlannerBlocksToCalendar: true,
+          plannerCalendarId: "planner",
+        }}
+        isLoadingGoogleCalendars={false}
+        isLoadingOpenAiImageSettings={false}
+        isSavingGoogleCalendars={false}
+        isSavingOpenAiImage={false}
+        isGeneratingOpenAiImage={false}
+        onSaveGoogleCalendars={onSaveGoogleCalendars}
+        taskEndNotificationsEnabled={false}
+        taskEndNotificationsSupported
+        taskEndNotificationsMessage={null}
+        onTaskEndNotificationsChange={vi.fn()}
+      />,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: /add scheduled tasks to google calendar/i });
+    expect(checkbox).toBeChecked();
+
+    await user.click(checkbox);
+    await user.click(screen.getByRole("button", { name: /save google calendar settings/i }));
+
+    await waitFor(() => {
+      expect(onSaveGoogleCalendars).toHaveBeenCalledWith({
+        syncCalendarIds: ["primary"],
+        syncPlannerBlocksToCalendar: false,
+      });
+    });
+  });
+
   it("submits Toggl settings and clears the API token field", async () => {
     const user = userEvent.setup();
     const togglSettings = buildTogglSettings({ connected: false, hasSavedToken: false, apiTokenHint: null, workspaceId: null, workspaceName: null, defaultProjectId: null, defaultProjectName: null, availableWorkspaces: [], availableProjects: [], lastValidatedAt: null });

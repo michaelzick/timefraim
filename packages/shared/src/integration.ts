@@ -82,11 +82,13 @@ export const googleCalendarOptionSchema = z.object({
 export const googleCalendarSettingsSchema = z.object({
   availableCalendars: z.array(googleCalendarOptionSchema),
   syncCalendarIds: z.array(z.string()),
+  syncPlannerBlocksToCalendar: z.boolean().default(true),
   plannerCalendarId: z.string(),
 });
 
 export const googleCalendarSettingsUpdateSchema = z.object({
   syncCalendarIds: z.array(z.string()).min(1),
+  syncPlannerBlocksToCalendar: z.boolean().default(true),
 });
 
 export const openAiConnectSchema = z.object({

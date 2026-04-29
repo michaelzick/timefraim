@@ -1,4 +1,4 @@
-import type { GoogleCalendarSettings } from "@timefraim/shared";
+import type { GoogleCalendarSettings, GoogleCalendarSettingsUpdate } from "@timefraim/shared";
 import { env } from "../config/env.js";
 import { pool } from "../db/pool.js";
 import { listGoogleCalendars, type GoogleCalendarListEntry, type GoogleConnection } from "../integration/google-calendar.js";
@@ -16,6 +16,11 @@ function readStringMetadata(row: IntegrationRowWithMetadata, key: string, fallba
   return typeof value === "string" ? value : fallback;
 }
 
+function readBooleanMetadata(row: IntegrationRowWithMetadata, key: string, fallback: boolean) {
+  const value = readGoogleMetadata(row)[key];
+  return typeof value === "boolean" ? value : fallback;
+}
+
 export function readGoogleSyncCalendarIds(row: IntegrationRowWithMetadata): string[] | undefined {
   const ids = readGoogleMetadata(row).syncCalendarIds;
   if (!Array.isArray(ids)) {
@@ -24,6 +29,10 @@ export function readGoogleSyncCalendarIds(row: IntegrationRowWithMetadata): stri
 
   const normalizedIds = ids.filter((id): id is string => typeof id === "string");
   return normalizedIds.length > 0 ? [...new Set(normalizedIds)] : undefined;
+}
+
+export function readGoogleSyncPlannerBlocksToCalendar(row: IntegrationRowWithMetadata) {
+  return readBooleanMetadata(row, "syncPlannerBlocksToCalendar", true);
 }
 
 function buildGoogleConnection(row: IntegrationTokenRow | null): GoogleConnection | null {
@@ -78,7 +87,12 @@ function validateSyncCalendarIds(syncCalendarIds: string[], calendars: GoogleCal
   return normalizedIds;
 }
 
-function buildGoogleCalendarSettings(args: { calendars: GoogleCalendarListEntry[]; plannerCalendarId: string; savedSyncCalendarIds?: string[]; }): GoogleCalendarSettings {
+function buildGoogleCalendarSettings(args: {
+  calendars: GoogleCalendarListEntry[];
+  plannerCalendarId: string;
+  savedSyncCalendarIds?: string[];
+  syncPlannerBlocksToCalendar: boolean;
+}): GoogleCalendarSettings {
   const availableCalendars = getSelectableGoogleCalendars([...args.calendars], args.plannerCalendarId);
   sortGoogleCalendars(availableCalendars);
 
@@ -94,6 +108,7 @@ function buildGoogleCalendarSettings(args: { calendars: GoogleCalendarListEntry[
       backgroundColor: calendar.backgroundColor,
     })),
     syncCalendarIds,
+    syncPlannerBlocksToCalendar: args.syncPlannerBlocksToCalendar,
     plannerCalendarId: args.plannerCalendarId,
   };
 }
@@ -101,6 +116,16 @@ function buildGoogleCalendarSettings(args: { calendars: GoogleCalendarListEntry[
 export async function getGoogleConnection(repository: PlannerRepository): Promise<GoogleConnection | null> {
   const row = await repository.getIntegrationToken("google", pool);
   return buildGoogleConnection(row);
+}
+
+export async function getGoogleCalendarSyncState(repository: PlannerRepository) {
+  const row = await repository.getIntegrationToken("google", pool);
+  const connection = buildGoogleConnection(row);
+  return {
+    connection,
+    syncPlannerBlocksToCalendar:
+      Boolean(connection) && readGoogleSyncPlannerBlocksToCalendar(row),
+  };
 }
 
 export async function saveGoogleSession(
@@ -115,6 +140,7 @@ export async function saveGoogleSession(
 ) {
   const existing = await repository.getIntegrationToken("google", pool);
   const previousSyncCalendarIds = readGoogleSyncCalendarIds(existing);
+  const previousSyncPlannerBlocksToCalendar = readGoogleSyncPlannerBlocksToCalendar(existing);
 
   await repository.upsertIntegrationToken(
     "google",
@@ -126,6 +152,7 @@ export async function saveGoogleSession(
         email: input.email,
         calendarId: input.calendarId,
         plannerCalendarId: env.GOOGLE_PLANNER_CALENDAR_ID,
+        syncPlannerBlocksToCalendar: previousSyncPlannerBlocksToCalendar,
         ...(previousSyncCalendarIds
           ? { syncCalendarIds: previousSyncCalendarIds }
           : {}),
@@ -140,6 +167,7 @@ export async function getGoogleCalendarSettings(repository: PlannerRepository): 
   const connection = buildGoogleConnection(row);
   const plannerCalendarId = connection?.plannerCalendarId ?? env.GOOGLE_PLANNER_CALENDAR_ID;
   const savedSyncCalendarIds = readGoogleSyncCalendarIds(row);
+  const syncPlannerBlocksToCalendar = readGoogleSyncPlannerBlocksToCalendar(row);
   const allCalendars = await listGoogleCalendars(connection);
   const validSavedSyncCalendarIds = savedSyncCalendarIds?.filter((id) =>
     allCalendars.some((calendar) => calendar.id === id),
@@ -149,10 +177,14 @@ export async function getGoogleCalendarSettings(repository: PlannerRepository): 
     calendars: allCalendars,
     plannerCalendarId,
     savedSyncCalendarIds: validSavedSyncCalendarIds?.length ? validSavedSyncCalendarIds : undefined,
+    syncPlannerBlocksToCalendar,
   });
 }
 
-export async function saveGoogleCalendarSettings(repository: PlannerRepository, syncCalendarIds: string[]) {
+export async function saveGoogleCalendarSettings(
+  repository: PlannerRepository,
+  input: GoogleCalendarSettingsUpdate,
+) {
   const row = await repository.getIntegrationToken("google", pool);
   const connection = buildGoogleConnection(row);
 
@@ -163,7 +195,7 @@ export async function saveGoogleCalendarSettings(repository: PlannerRepository, 
   const allCalendars = await listGoogleCalendars(connection);
   const plannerCalendarId = connection.plannerCalendarId ?? env.GOOGLE_PLANNER_CALENDAR_ID;
   const availableCalendars = getSelectableGoogleCalendars(allCalendars, plannerCalendarId);
-  const validatedSyncCalendarIds = validateSyncCalendarIds(syncCalendarIds, availableCalendars);
+  const validatedSyncCalendarIds = validateSyncCalendarIds(input.syncCalendarIds, availableCalendars);
 
   await repository.upsertIntegrationToken(
     "google",
@@ -174,6 +206,7 @@ export async function saveGoogleCalendarSettings(repository: PlannerRepository, 
       metadata: {
         ...readGoogleMetadata(row),
         syncCalendarIds: validatedSyncCalendarIds,
+        syncPlannerBlocksToCalendar: input.syncPlannerBlocksToCalendar,
       },
     },
     pool,

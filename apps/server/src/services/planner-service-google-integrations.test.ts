@@ -11,6 +11,7 @@ vi.mock("../integration/google-calendar.js", () => ({
 import {
   getGoogleCalendarSettings,
   saveGoogleCalendarSettings,
+  saveGoogleSession,
 } from "./planner-service-google-integrations.js";
 
 function createRepository(row: {
@@ -57,6 +58,7 @@ describe("planner-service-google-integrations", () => {
         { id: "team", name: "Team", primary: false, backgroundColor: "#654321" },
       ],
       syncCalendarIds: ["team"],
+      syncPlannerBlocksToCalendar: true,
       plannerCalendarId: "planner",
     });
   });
@@ -80,8 +82,80 @@ describe("planner-service-google-integrations", () => {
     ]);
 
     await expect(
-      saveGoogleCalendarSettings(repository as never, ["team", "missing"]),
+      saveGoogleCalendarSettings(repository as never, {
+        syncCalendarIds: ["team", "missing"],
+        syncPlannerBlocksToCalendar: true,
+      }),
     ).rejects.toThrow("Selected Google calendars are invalid or no longer available");
     expect(repository.upsertIntegrationToken).not.toHaveBeenCalled();
+  });
+
+  it("saves whether planner blocks sync to Google Calendar", async () => {
+    const repository = createRepository({
+      access_token: "google-token",
+      refresh_token: "refresh-token",
+      expires_at: "2026-04-16T12:00:00.000Z",
+      metadata: {
+        calendarId: "primary",
+        plannerCalendarId: "planner",
+        email: "allowed@example.com",
+      },
+    });
+
+    listGoogleCalendars.mockResolvedValue([
+      { id: "planner", name: "Planner", primary: false, backgroundColor: null },
+      { id: "primary", name: "Personal", primary: true, backgroundColor: "#123456" },
+      { id: "team", name: "Team", primary: false, backgroundColor: "#654321" },
+    ]);
+
+    await saveGoogleCalendarSettings(repository as never, {
+      syncCalendarIds: ["team"],
+      syncPlannerBlocksToCalendar: false,
+    });
+
+    expect(repository.upsertIntegrationToken).toHaveBeenCalledWith(
+      "google",
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          syncCalendarIds: ["team"],
+          syncPlannerBlocksToCalendar: false,
+        }),
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("preserves planner block sync preference when refreshing the Google session", async () => {
+    const repository = createRepository({
+      access_token: "old-google-token",
+      refresh_token: "old-refresh-token",
+      expires_at: null,
+      metadata: {
+        calendarId: "primary",
+        plannerCalendarId: "planner",
+        email: "allowed@example.com",
+        syncCalendarIds: ["team"],
+        syncPlannerBlocksToCalendar: false,
+      },
+    });
+
+    await saveGoogleSession(repository as never, {
+      accessToken: "new-google-token",
+      refreshToken: "new-refresh-token",
+      expiresAt: "2026-04-16T12:00:00.000Z",
+      email: "allowed@example.com",
+      calendarId: "primary",
+    });
+
+    expect(repository.upsertIntegrationToken).toHaveBeenCalledWith(
+      "google",
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          syncCalendarIds: ["team"],
+          syncPlannerBlocksToCalendar: false,
+        }),
+      }),
+      expect.anything(),
+    );
   });
 });

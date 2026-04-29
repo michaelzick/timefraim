@@ -1,11 +1,4 @@
-import {
-  dayPlanSchema,
-  formatDraftSummary,
-  type ActorRole,
-  type DraftKind,
-  type ScheduleBlockDuplicatePayload,
-  type TaskDuplicatePayload,
-} from "@timefraim/shared";
+import { dayPlanSchema, formatDraftSummary, type ActorRole, type DraftKind, type GoogleCalendarSettingsUpdate, type ScheduleBlockDuplicatePayload, type TaskDuplicatePayload } from "@timefraim/shared";
 import { env } from "../config/env.js";
 import { pool, withTransaction } from "../db/pool.js";
 import { PlannerRepository } from "../repositories/planner-repository.js";
@@ -17,7 +10,7 @@ import {
   duplicateScheduleBlockForUser,
   duplicateTaskForUser,
 } from "./planner-service-duplicates.js";
-import { deleteOpenAiConnection, deleteTogglConnection, discoverTogglConnection, generateSavedOpenAiImage, getAllowedPlannerUserId, getGoogleCalendarSettings, getGoogleConnection, getOpenAiImageSettings, getTogglConnection, getTogglSettings, saveGoogleCalendarSettings, saveGoogleSession, saveOpenAiConnection, saveTogglConnection } from "./planner-service-integrations.js";
+import { deleteOpenAiConnection, deleteTogglConnection, discoverTogglConnection, generateSavedOpenAiImage, getAllowedPlannerUserId, getGoogleCalendarSettings, getGoogleCalendarSyncState, getOpenAiImageSettings, getTogglConnection, getTogglSettings, saveGoogleCalendarSettings, saveGoogleSession, saveOpenAiConnection, saveTogglConnection } from "./planner-service-integrations.js";
 import { runPlannerSideEffects } from "./planner-side-effects.js";
 import type { SideEffect } from "./planner-service-types.js";
 export class PlannerService {
@@ -61,8 +54,8 @@ export class PlannerService {
   async getGoogleCalendarSettings() {
     return getGoogleCalendarSettings(this.repository);
   }
-  async saveGoogleCalendarSettings(syncCalendarIds: string[]) {
-    await saveGoogleCalendarSettings(this.repository, syncCalendarIds);
+  async saveGoogleCalendarSettings(input: GoogleCalendarSettingsUpdate) {
+    await saveGoogleCalendarSettings(this.repository, input);
     return getGoogleCalendarSettings(this.repository);
   }
   async getOpenAiImageSettings() { return getOpenAiImageSettings(this.repository); }
@@ -126,7 +119,8 @@ export class PlannerService {
     return duplicateScheduleBlockForUser({ repository: this.repository, actorRole, userId }, payload);
   }
   async applyChange(kind: DraftKind, payload: Record<string, unknown>, actorRole: ActorRole, userId?: string | null) {
-    const googleConnection = await getGoogleConnection(this.repository);
+    const googleSyncState = await getGoogleCalendarSyncState(this.repository);
+    const googleConnection = googleSyncState.connection;
     const effectiveUserId = userId ?? (actorRole === "assistant" ? await getAllowedPlannerUserId(this.repository) : null);
     const togglConnection = await getTogglConnection(this.repository, effectiveUserId);
     const sideEffects: SideEffect[] = [];
@@ -140,6 +134,7 @@ export class PlannerService {
         client,
         sideEffects,
         googleConnected: Boolean(googleConnection),
+        syncPlannerBlocksToCalendar: googleSyncState.syncPlannerBlocksToCalendar,
         persistDraftStatus: false,
       }),
     );
@@ -170,7 +165,8 @@ export class PlannerService {
     return draft;
   }
   async confirmDraft(draftId: string, actorRole: ActorRole, userId?: string | null) {
-    const googleConnection = await getGoogleConnection(this.repository);
+    const googleSyncState = await getGoogleCalendarSyncState(this.repository);
+    const googleConnection = googleSyncState.connection;
     const sideEffects: SideEffect[] = [];
     let togglOwnerUserId = userId ?? null;
     const draft = await withTransaction(async (client) => {
@@ -195,6 +191,7 @@ export class PlannerService {
         client,
         sideEffects,
         googleConnected: Boolean(googleConnection),
+        syncPlannerBlocksToCalendar: googleSyncState.syncPlannerBlocksToCalendar,
         persistDraftStatus: true,
       });
     });

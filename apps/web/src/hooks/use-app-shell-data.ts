@@ -10,6 +10,7 @@ import type {
   AuthSession,
   DayPlan,
   GoogleCalendarSettings,
+  GoogleCalendarSettingsUpdate,
   OpenAiGeneratedImage,
   OpenAiImageSettings,
   TogglIntegrationSettings,
@@ -37,7 +38,7 @@ type UseAppShellDataResult = {
   plannerMutations: ReturnType<typeof usePlannerMutations>;
   queryError: Error | null;
   queryErrorMessage: string;
-  saveGoogleCalendarsMutation: AppMutationResult<GoogleCalendarSettings, string[]>;
+  saveGoogleCalendarsMutation: AppMutationResult<GoogleCalendarSettings, GoogleCalendarSettingsUpdate>;
   saveOpenAiConnectionMutation: AppMutationResult<OpenAiImageSettings, string>;
   setDate: Dispatch<SetStateAction<string>>;
   togglSettingsQuery: AppQueryResult<TogglIntegrationSettings>;
@@ -104,8 +105,8 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
   });
 
   const saveGoogleCalendarsMutation = useMutation({
-    mutationFn: (syncCalendarIds: string[]) =>
-      api.saveGoogleCalendarSettings(token, { syncCalendarIds }),
+    mutationFn: (values: GoogleCalendarSettingsUpdate) =>
+      api.saveGoogleCalendarSettings(token, values),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["google-calendar-settings", token] });
     },
