@@ -24,6 +24,7 @@ type TimelineScheduleBlockProps = {
   date: string;
   task: Task | undefined;
   isSelected: boolean;
+  isCopyDragSource?: boolean;
   runState: TimelineBlockRunState;
   runningStartedAt: string | null;
   onDeleteScheduleBlock: (scheduleBlockId: string, title: string) => void;
@@ -39,6 +40,7 @@ export function TimelineScheduleBlock({
   date,
   task,
   isSelected,
+  isCopyDragSource = false,
   runState,
   runningStartedAt,
   onDeleteScheduleBlock,
@@ -67,6 +69,7 @@ export function TimelineScheduleBlock({
   const placement = getTimelinePlacement(date, block.startAt, displayEndAt);
   const priority = task?.priority ?? "medium";
   const title = task?.title ?? "Scheduled task";
+  const dragTransform = isCopyDragSource ? undefined : CSS.Translate.toString(transform);
 
   if (!placement) return null;
 
@@ -76,12 +79,12 @@ export function TimelineScheduleBlock({
       style={{
         top: placement.top,
         height: placement.height,
-        transform: CSS.Translate.toString(transform),
+        transform: dragTransform,
       }}
       className={cn(
-        "absolute left-8 right-8 z-10 cursor-pointer overflow-hidden rounded-[24px] border px-4 pb-7 pt-4 transition",
+        "absolute left-2 right-2 z-10 cursor-pointer overflow-hidden rounded-[24px] border px-4 pb-7 pt-4 transition sm:left-8 sm:right-8",
         getTaskPriorityTimelineBlockClass(priority),
-        isDragging && "opacity-75",
+        isDragging && !isCopyDragSource && "opacity-75",
         resize.isResizing && "ring-2 ring-[var(--timeline-selection-ring)]",
         isSelected && "border-[var(--timeline-selection-ring)]",
         runState === "running" && "adhd-pulse",

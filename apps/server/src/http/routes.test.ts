@@ -250,6 +250,34 @@ describe("HTTP routes", () => {
     await app.close();
   });
 
+  it("forwards sparse task updates without create defaults", async () => {
+    const taskId = "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1";
+    const userId = "84a87ef5-f143-4b9b-9f6b-b7c608d72af0";
+    const { app, plannerService } = await createApp(registerPlannerRoutes);
+    requireAuthenticatedUser.mockResolvedValue({
+      id: userId,
+      email: "allowed@example.com",
+      displayName: "Allowed User",
+      avatarUrl: null,
+    });
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/tasks/${taskId}`,
+      payload: { estimatedMinutes: 60 },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(plannerService.applyChange).toHaveBeenCalledWith(
+      "task.update",
+      { taskId, estimatedMinutes: 60 },
+      "user",
+      userId,
+    );
+
+    await app.close();
+  });
+
   it("maps known planner errors to structured HTTP responses", async () => {
     const taskId = "84a87ef5-f143-4b9b-9f6b-b7c608d72af0";
     const applyChange = vi

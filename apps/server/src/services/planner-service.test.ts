@@ -693,6 +693,11 @@ describe("planner-service", () => {
 
     await service.confirmDraft("draft-1", "user");
 
+    expect(repository.updateTask).toHaveBeenCalledWith(
+      unscheduledTask.id,
+      { scheduledBlockId: createdBlock.id, status: "scheduled" },
+      fakeDb,
+    );
     expect(upsertGoogleScheduleBlock).toHaveBeenCalledWith(
       expect.objectContaining({
         connection: expect.objectContaining({ accessToken: "google-token", calendarId: "primary" }),
@@ -781,6 +786,48 @@ describe("planner-service", () => {
     );
     expect(upsertGoogleScheduleBlock).not.toHaveBeenCalled();
     expect(repository.upsertCalendarEvent).not.toHaveBeenCalled();
+  });
+
+  it("moves scheduled blocks without patching task priority", async () => {
+    const repository = createRepositoryMock();
+    const movedBlock = {
+      ...baseBlock,
+      startAt: "2026-04-06T18:00:00.000Z",
+      endAt: "2026-04-06T18:45:00.000Z",
+      state: "confirmed" as const,
+    };
+
+    repository.getIntegrationToken.mockResolvedValue(null);
+    repository.getScheduleBlock.mockResolvedValue(baseBlock);
+    repository.getTask.mockResolvedValue(baseTask);
+    repository.listScheduleBlocksForRange.mockResolvedValue([]);
+    repository.listCalendarEventsForRange.mockResolvedValue([]);
+    repository.updateScheduleBlock.mockResolvedValue(movedBlock);
+    repository.createAuditLog.mockResolvedValue({});
+
+    const service = new PlannerService(repository as never);
+
+    await service.applyChange(
+      "schedule_block.update",
+      {
+        scheduleBlockId: baseBlock.id,
+        startAt: movedBlock.startAt,
+        endAt: movedBlock.endAt,
+      },
+      "user",
+    );
+
+    expect(repository.updateTask).not.toHaveBeenCalled();
+    expect(repository.updateScheduleBlock).toHaveBeenCalledWith(
+      baseBlock.id,
+      {
+        startAt: movedBlock.startAt,
+        endAt: movedBlock.endAt,
+        source: undefined,
+        state: "confirmed",
+      },
+      fakeDb,
+    );
   });
 
   it("clears dismissals for synced Google events on every manual sync", async () => {

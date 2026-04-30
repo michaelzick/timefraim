@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { apiErrorSchema, calendarEventViewSchema, calendarSyncResultSchema, googleCalendarSettingsSchema, plannerMutationResultSchema, taskSchema } from "./index.js";
+import {
+  apiErrorSchema,
+  calendarEventViewSchema,
+  calendarSyncResultSchema,
+  googleCalendarSettingsSchema,
+  plannerMutationResultSchema,
+  taskInputSchema,
+  taskSchema,
+  taskUpdateSchema,
+} from "./index.js";
 
 describe("shared barrel exports", () => {
   it("exposes core schemas through the package root", () => {
@@ -61,5 +70,27 @@ describe("shared barrel exports", () => {
         plannerCalendarId: "planner",
       }).syncPlannerBlocksToCalendar,
     ).toBe(true);
+  });
+
+  it("keeps create defaults out of sparse task updates", () => {
+    expect(taskInputSchema.parse({ title: "Deep work" })).toMatchObject({
+      estimatedMinutes: 30,
+      priority: "low",
+      status: "planned",
+    });
+
+    expect(
+      taskUpdateSchema.parse({
+        taskId: "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1",
+      }),
+    ).toEqual({
+      taskId: "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1",
+    });
+
+    expect(
+      taskUpdateSchema.omit({ taskId: true }).parse({
+        estimatedMinutes: 60,
+      }),
+    ).toEqual({ estimatedMinutes: 60 });
   });
 });

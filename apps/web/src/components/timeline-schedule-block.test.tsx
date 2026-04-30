@@ -1,16 +1,21 @@
 import type { ScheduleBlock, Task } from "@timefraim/shared";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TimelineScheduleBlock } from "@/components/timeline-schedule-block";
 import { buildTask } from "@/test/fixtures";
+
+const draggableState = vi.hoisted(() => ({
+  transform: null as { x: number; y: number; scaleX: number; scaleY: number } | null,
+  isDragging: false,
+}));
 
 vi.mock("@dnd-kit/core", () => ({
   useDraggable: () => ({
     attributes: {},
     listeners: {},
     setNodeRef: () => undefined,
-    transform: null,
-    isDragging: false,
+    transform: draggableState.transform,
+    isDragging: draggableState.isDragging,
   }),
 }));
 
@@ -19,6 +24,7 @@ function renderBlock(args: {
   runState: "idle" | "running" | "done";
   runningStartedAt: string | null;
   isSelected?: boolean;
+  isCopyDragSource?: boolean;
   onResizeTaskDuration?: (task: Task, durationMinutes: number) => void;
   onSelectTask?: (taskId: string) => void;
 }) {
@@ -29,6 +35,7 @@ function renderBlock(args: {
       date="2026-04-06"
       task={task}
       isSelected={args.isSelected ?? false}
+      isCopyDragSource={args.isCopyDragSource}
       runState={args.runState}
       runningStartedAt={args.runningStartedAt}
       onDeleteScheduleBlock={vi.fn()}
@@ -53,6 +60,11 @@ const baseBlock: ScheduleBlock = {
 };
 
 describe("TimelineScheduleBlock", () => {
+  beforeEach(() => {
+    draggableState.transform = null;
+    draggableState.isDragging = false;
+  });
+
   it("renders the running timer inline for short blocks", () => {
     renderBlock({
       block: baseBlock,
@@ -140,5 +152,21 @@ describe("TimelineScheduleBlock", () => {
     fireEvent.click(screen.getByTestId("timeline-resize-handle"));
 
     expect(onSelectTask).not.toHaveBeenCalled();
+  });
+
+  it("keeps the scheduled source block anchored and opaque during copy drags", () => {
+    draggableState.transform = { x: 30, y: 60, scaleX: 1, scaleY: 1 };
+    draggableState.isDragging = true;
+
+    const { container } = renderBlock({
+      block: baseBlock,
+      runState: "idle",
+      runningStartedAt: null,
+      isCopyDragSource: true,
+    });
+
+    const blockElement = container.firstElementChild as HTMLElement;
+    expect(blockElement.style.transform).toBe("");
+    expect(blockElement).not.toHaveClass("opacity-75");
   });
 });

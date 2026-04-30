@@ -162,6 +162,7 @@ describe("PlannerPage drag behavior", () => {
 
   it("moves a scheduled block in quarter-hour increments while preserving duration", async () => {
     const user = userEvent.setup();
+    const onUpdateTask = vi.fn().mockResolvedValue(undefined);
     const onUpdateScheduleBlock = vi.fn().mockResolvedValue(undefined);
     const dayPlan = buildDayPlan({
       tasks: [
@@ -186,7 +187,7 @@ describe("PlannerPage drag behavior", () => {
       ],
     });
 
-    render(<PlannerPage {...buildPlannerPageProps({ dayPlan, onUpdateScheduleBlock })} />);
+    render(<PlannerPage {...buildPlannerPageProps({ dayPlan, onUpdateScheduleBlock, onUpdateTask })} />);
 
     await user.click(screen.getByRole("button", { name: /trigger scheduled drag/i }));
 
@@ -196,6 +197,7 @@ describe("PlannerPage drag behavior", () => {
         endAt: "2026-04-06T18:00:00.000Z",
       });
     });
+    expect(onUpdateTask).not.toHaveBeenCalled();
   });
 
   it("duplicates the underlying task when option-dragging a scheduled block", async () => {

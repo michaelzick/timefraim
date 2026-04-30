@@ -25,7 +25,7 @@ describe("ActivityLogCard", () => {
 
     render(<ActivityLogCard dayPlan={dayPlan} />);
 
-    await user.click(screen.getByRole("button", { name: /today's changes/i }));
+    await user.click(screen.getByRole("button", { name: /recent changes/i }));
 
     expect(screen.getByText('Start timer for task "Journal"')).toBeInTheDocument();
     expect(screen.queryByText("Start timer for task task-1")).not.toBeInTheDocument();

@@ -134,4 +134,19 @@ describe("applyTaskUpdateDraft", () => {
     const patch = repository.updateTask.mock.calls[0]?.[1] as Record<string, unknown>;
     expect(patch).not.toHaveProperty("completedOnDate");
   });
+
+  it("does not touch priority when priority is not part of the payload", async () => {
+    const { context, repository } = buildContext({
+      currentTask: baseTask,
+      payload: { taskId: baseTask.id, estimatedMinutes: 45 },
+    });
+
+    await applyTaskUpdateDraft(context);
+
+    expect(repository.updateTask).toHaveBeenCalledWith(
+      baseTask.id,
+      { estimatedMinutes: 45 },
+      expect.anything(),
+    );
+  });
 });
