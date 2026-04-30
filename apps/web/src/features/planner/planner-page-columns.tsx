@@ -13,6 +13,7 @@ type PlannerQueueColumnProps = {
   togglSettings: TogglIntegrationSettings;
   selectedTaskId: string | null;
   activeTimerTaskId: string | null;
+  copyDragTaskId: string | null;
   tasks: Task[];
   onCreateTask: (values: CreateTaskValues) => Promise<void>;
   onSelectTask: (taskId: string) => void;
@@ -27,6 +28,7 @@ export function PlannerQueueColumn({
   togglSettings,
   selectedTaskId,
   activeTimerTaskId,
+  copyDragTaskId,
   tasks,
   onCreateTask,
   onSelectTask,
@@ -45,6 +47,7 @@ export function PlannerQueueColumn({
       <TaskQueueCard
         selectedTaskId={selectedTaskId}
         activeTimerTaskId={activeTimerTaskId}
+        copyDragTaskId={copyDragTaskId}
         tasks={tasks}
         onSelectTask={onSelectTask}
         onDeleteTask={onDeleteTask}
@@ -60,6 +63,7 @@ type PlannerTimelineColumnProps = {
   dayPlan: DayPlan;
   selectedTimelineTaskId: string | null;
   selectedTimelineCalendarEventId: string | null;
+  copyDragScheduleBlockId: string | null;
   onSelectTask: (taskId: string) => void;
   onSelectCalendarEvent: (calendarEventId: string) => void;
   onDismissCalendarEvent: (calendarEventId: string, title: string) => void;
@@ -75,6 +79,7 @@ export function PlannerTimelineColumn({
   dayPlan,
   selectedTimelineTaskId,
   selectedTimelineCalendarEventId,
+  copyDragScheduleBlockId,
   onSelectTask,
   onSelectCalendarEvent,
   onDismissCalendarEvent,
@@ -93,6 +98,7 @@ export function PlannerTimelineColumn({
       activeTimer={dayPlan.activeTimer}
       selectedTaskId={selectedTimelineTaskId}
       selectedCalendarEventId={selectedTimelineCalendarEventId}
+      copyDragScheduleBlockId={copyDragScheduleBlockId}
       onSelectTask={onSelectTask}
       onSelectCalendarEvent={onSelectCalendarEvent}
       onDismissCalendarEvent={onDismissCalendarEvent}

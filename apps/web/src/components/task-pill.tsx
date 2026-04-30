@@ -16,6 +16,7 @@ export type TaskPillRunState = "idle" | "running" | "done";
 export function TaskPill({
   task,
   active,
+  isCopyDragSource = false,
   runState = "idle",
   onSelect,
   onDelete,
@@ -25,6 +26,7 @@ export function TaskPill({
 }: {
   task: Task;
   active: boolean;
+  isCopyDragSource?: boolean;
   runState?: TaskPillRunState;
   onSelect: () => void;
   onDelete?: () => void;
@@ -37,16 +39,17 @@ export function TaskPill({
     id: task.id,
     data: { dragType: "queue-task", task },
   });
+  const dragTransform = isCopyDragSource ? undefined : CSS.Translate.toString(transform);
 
   return (
     <div
       ref={setNodeRef}
-      style={{ transform: CSS.Translate.toString(transform) }}
+      style={{ transform: dragTransform }}
       className={cn(
         "group w-full cursor-pointer rounded-[24px] border p-4 text-left transition hover:border-[var(--panel-border-strong)]",
         getTaskPriorityCardClass(task.priority),
         active && "ring-2 ring-[rgba(255,111,59,0.28)]",
-        isDragging && "opacity-65",
+        isDragging && !isCopyDragSource && "opacity-65",
         runState === "running" && "adhd-pulse",
         runState === "done" && "opacity-60",
       )}

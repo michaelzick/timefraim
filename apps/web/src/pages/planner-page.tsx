@@ -82,6 +82,9 @@ export function PlannerPage({
   const clearActiveDrag = () => setActiveDrag(null);
 
   const activeDragPayload = activeDrag ? applyCopyIntent(activeDrag, isAltPressed) : null;
+  const copyDragTaskId = activeDrag?.dragType === "queue-task" && isAltPressed ? activeDrag.task.id : null;
+  const copyDragScheduleBlockId =
+    activeDrag?.dragType === "schedule-block" && isAltPressed ? activeDrag.scheduleBlock.id : null;
 
   usePlannerKeyboardShortcuts({
     selectedTask,
@@ -116,6 +119,7 @@ export function PlannerPage({
             togglSettings={togglSettings}
             selectedTaskId={plannerSelection.type === "queue-task" ? selectedTask?.id ?? null : null}
             activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
+            copyDragTaskId={copyDragTaskId}
             tasks={filteredQueueTasks}
             onCreateTask={handleCreateTask}
             onSelectTask={handleSelectQueueTask}
@@ -128,6 +132,7 @@ export function PlannerPage({
             dayPlan={dayPlan}
             selectedTimelineTaskId={selectedTimelineTaskId}
             selectedTimelineCalendarEventId={selectedTimelineCalendarEventId}
+            copyDragScheduleBlockId={copyDragScheduleBlockId}
             onSelectTask={handleSelectTimelineTask}
             onSelectCalendarEvent={handleSelectCalendarEvent}
             onDismissCalendarEvent={(calendarEventId, title) => void handleDismissCalendarEvent(calendarEventId, title)}

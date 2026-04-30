@@ -55,6 +55,7 @@ export function TimelineBoard({
   activeTimer,
   selectedTaskId,
   selectedCalendarEventId,
+  copyDragScheduleBlockId = null,
   onDismissCalendarEvent,
   onSelectTask,
   onSelectCalendarEvent,
@@ -71,6 +72,7 @@ export function TimelineBoard({
   activeTimer: TimerSession | null;
   selectedTaskId: string | null;
   selectedCalendarEventId: string | null;
+  copyDragScheduleBlockId?: string | null;
   onDismissCalendarEvent: (calendarEventId: string, title: string) => void;
   onSelectTask: (taskId: string) => void;
   onSelectCalendarEvent: (calendarEventId: string) => void;
@@ -110,6 +112,7 @@ export function TimelineBoard({
               date={date}
               task={task}
               isSelected={selectedTaskId === block.taskId}
+              isCopyDragSource={copyDragScheduleBlockId === block.id}
               runState={deriveRunState(block, task, activeTimer)}
               runningStartedAt={activeTimer?.startedAt ?? null}
               onDeleteScheduleBlock={onDeleteScheduleBlock}

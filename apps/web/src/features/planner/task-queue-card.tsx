@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 type TaskQueueCardProps = {
   selectedTaskId: string | null;
   activeTimerTaskId: string | null;
+  copyDragTaskId?: string | null;
   tasks: Task[];
   onSelectTask: (taskId: string) => void;
   onDeleteTask: (taskId: string, title: string) => void;
@@ -16,6 +17,7 @@ type TaskQueueCardProps = {
 export function TaskQueueCard({
   selectedTaskId,
   activeTimerTaskId,
+  copyDragTaskId = null,
   tasks,
   onSelectTask,
   onDeleteTask,
@@ -31,6 +33,7 @@ export function TaskQueueCard({
               key={task.id}
               task={task}
               active={selectedTaskId === task.id}
+              isCopyDragSource={copyDragTaskId === task.id}
               runState={activeTimerTaskId === task.id ? "running" : "idle"}
               onSelect={() => onSelectTask(task.id)}
               onDelete={() => onDeleteTask(task.id, task.title)}
