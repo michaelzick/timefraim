@@ -321,8 +321,9 @@ describe("PlannerPage", () => {
     expect(screen.getByRole("button", { name: /jump to today/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sync calendar/i })).toBeInTheDocument();
     expect(screen.getByText(/synced with allowed@example.com/i)).toBeInTheDocument();
-    expect(within(toolbar).queryByLabelText("Filter tasks")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Filter tasks")).toHaveAttribute("placeholder", "Search queue");
+    expect(within(toolbar).queryByText("Task queue")).not.toBeInTheDocument();
+    expect(screen.getByText("Task queue")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Search tasks" })).toHaveAttribute("placeholder", "Search tasks");
     expect(screen.queryByRole("heading", { name: "Focus on what matters today." })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Tasks ready to place" })).not.toBeInTheDocument();
   });

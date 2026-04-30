@@ -1,5 +1,6 @@
 import type { Task } from "@timefraim/shared";
 import { Search } from "lucide-react";
+import type { KeyboardEvent } from "react";
 import { TaskPill } from "@/components/task-pill";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,15 +31,24 @@ export function TaskQueueCard({
   onDuplicateTask,
   onStartTaskTimer,
 }: TaskQueueCardProps) {
+  const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Escape" || search.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    onSearchChange("");
+  };
+
   return (
     <Card className="xl:min-h-[520px]">
       <div className="mb-4 border-b border-[var(--panel-border)] pb-4">
-        <label
-          htmlFor="task-queue-filter"
+        <div
+          id="task-queue-heading"
           className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]"
         >
-          Filter tasks
-        </label>
+          Task queue
+        </div>
         <div className="relative">
           <Search
             aria-hidden="true"
@@ -46,9 +56,11 @@ export function TaskQueueCard({
           />
           <Input
             id="task-queue-filter"
+            aria-label="Search tasks"
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Search queue"
+            onKeyDown={handleSearchKeyDown}
+            placeholder="Search tasks"
             className="pl-10"
           />
         </div>
