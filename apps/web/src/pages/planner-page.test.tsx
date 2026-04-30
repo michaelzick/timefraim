@@ -311,15 +311,18 @@ describe("PlannerPage", () => {
     expect(screen.queryByText("No pending AI drafts. MCP proposals will land here for approval.")).not.toBeInTheDocument();
   });
 
-  it("renders the planner toolbar with date, sync, filter, and sync badge", () => {
+  it("renders the planner toolbar controls and queue filter", () => {
     render(<PlannerPage {...buildPlannerPageProps()} />);
 
-    expect(screen.getByRole("region", { name: /planner toolbar/i })).toBeInTheDocument();
+    const toolbar = screen.getByRole("region", { name: /planner toolbar/i });
+
+    expect(toolbar).toBeInTheDocument();
     expect(screen.getByLabelText("Planner date")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /jump to today/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sync calendar/i })).toBeInTheDocument();
     expect(screen.getByText(/synced with allowed@example.com/i)).toBeInTheDocument();
-    expect(screen.getByLabelText("Filter tasks")).toBeInTheDocument();
+    expect(within(toolbar).queryByLabelText("Filter tasks")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Filter tasks")).toHaveAttribute("placeholder", "Search queue");
     expect(screen.queryByRole("heading", { name: "Focus on what matters today." })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Tasks ready to place" })).not.toBeInTheDocument();
   });

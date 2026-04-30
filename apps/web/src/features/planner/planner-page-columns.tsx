@@ -14,7 +14,9 @@ type PlannerQueueColumnProps = {
   selectedTaskId: string | null;
   activeTimerTaskId: string | null;
   copyDragTaskId: string | null;
+  search: string;
   tasks: Task[];
+  onSearchChange: (value: string) => void;
   onCreateTask: (values: CreateTaskValues) => Promise<void>;
   onSelectTask: (taskId: string) => void;
   onDeleteTask: (taskId: string, title: string) => void;
@@ -29,7 +31,9 @@ export function PlannerQueueColumn({
   selectedTaskId,
   activeTimerTaskId,
   copyDragTaskId,
+  search,
   tasks,
+  onSearchChange,
   onCreateTask,
   onSelectTask,
   onDeleteTask,
@@ -48,7 +52,9 @@ export function PlannerQueueColumn({
         selectedTaskId={selectedTaskId}
         activeTimerTaskId={activeTimerTaskId}
         copyDragTaskId={copyDragTaskId}
+        search={search}
         tasks={tasks}
+        onSearchChange={onSearchChange}
         onSelectTask={onSelectTask}
         onDeleteTask={onDeleteTask}
         onDuplicateTask={onDuplicateTask}

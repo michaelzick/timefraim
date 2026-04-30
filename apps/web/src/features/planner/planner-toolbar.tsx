@@ -9,20 +9,16 @@ type PlannerToolbarProps = {
   date: string;
   isSyncing: boolean;
   linkedGoogleEmail: string | null;
-  search: string;
   onDateChange: (nextDate: string) => void;
   onSyncCalendar: () => void;
-  onSearchChange: (value: string) => void;
 };
 
 export function PlannerToolbar({
   date,
   isSyncing,
   linkedGoogleEmail,
-  search,
   onDateChange,
   onSyncCalendar,
-  onSearchChange,
 }: PlannerToolbarProps) {
   const today = getTodayDate();
   const isToday = date === today;
@@ -94,13 +90,6 @@ export function PlannerToolbar({
           ) : null}
         </div>
       </div>
-      <Input
-        aria-label="Filter tasks"
-        value={search}
-        onChange={(event) => onSearchChange(event.target.value)}
-        placeholder="Filter tasks"
-        className="w-full lg:max-w-[240px]"
-      />
     </section>
   );
 }

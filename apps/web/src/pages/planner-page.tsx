@@ -107,10 +107,8 @@ export function PlannerPage({
           date={date}
           isSyncing={isSyncing}
           linkedGoogleEmail={linkedGoogleEmail}
-          search={search}
           onDateChange={onDateChange}
           onSyncCalendar={() => void onSyncCalendar()}
-          onSearchChange={setSearch}
         />
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
           <PlannerQueueColumn
@@ -120,7 +118,9 @@ export function PlannerPage({
             selectedTaskId={plannerSelection.type === "queue-task" ? selectedTask?.id ?? null : null}
             activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
             copyDragTaskId={copyDragTaskId}
+            search={search}
             tasks={filteredQueueTasks}
+            onSearchChange={setSearch}
             onCreateTask={handleCreateTask}
             onSelectTask={handleSelectQueueTask}
             onDeleteTask={(taskId, title) => mutationHandlers.handleQueueTaskDelete(taskId, title)}
