@@ -363,7 +363,7 @@ describe("PlannerPage", () => {
   it("renders the activity log without tabs in the right rail", () => {
     render(<PlannerPage {...buildPlannerPageProps()} />);
 
-    expect(screen.getByRole("heading", { name: /Today's changes/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Recent changes/ })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Timer" })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Activity" })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Drafts" })).not.toBeInTheDocument();

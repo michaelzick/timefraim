@@ -35,7 +35,7 @@ function TimelineSlot({
       style={{ top: slot.top, height: SLOT_HEIGHT }}
     >
       {label ? (
-        <span className="absolute -left-[74px] top-1 text-xs font-medium text-[var(--muted)]">{label}</span>
+        <span className="absolute -left-[44px] top-1 text-xs font-medium text-[var(--muted)] sm:-left-[74px]">{label}</span>
       ) : null}
     </div>
   );
@@ -84,7 +84,7 @@ export function TimelineBoard({
   const slots = buildTimelineSlots(date);
 
   return (
-    <div className="relative rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] pl-20 pr-4">
+    <div className="relative rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] pl-12 pr-3 sm:pl-20 sm:pr-4">
       <div className="relative" style={{ height: containerHeight }}>
         {slots.map((slot) => (
           <TimelineSlot key={slot.id} slot={slot} label={slot.label} />

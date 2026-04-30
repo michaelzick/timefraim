@@ -79,7 +79,7 @@ export function TimelineScheduleBlock({
         transform: CSS.Translate.toString(transform),
       }}
       className={cn(
-        "absolute left-8 right-8 z-10 cursor-pointer overflow-hidden rounded-[24px] border px-4 pb-7 pt-4 transition",
+        "absolute left-2 right-2 z-10 cursor-pointer overflow-hidden rounded-[24px] border px-4 pb-7 pt-4 transition sm:left-8 sm:right-8",
         getTaskPriorityTimelineBlockClass(priority),
         isDragging && "opacity-75",
         resize.isResizing && "ring-2 ring-[var(--timeline-selection-ring)]",

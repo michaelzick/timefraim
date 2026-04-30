@@ -41,16 +41,19 @@ export function TimelineBoardCalendarEvent({
     borderColor: borderColorSource,
     backgroundColor: "transparent",
   };
+  const sourceCalendarName = event.sourceCalendarName ?? "Google Calendar";
 
   return (
     <div
       key={event.id}
-      className={cn("absolute left-3 right-3 cursor-pointer rounded-[24px] border p-4 text-sm")}
+      className={cn(
+        "absolute left-2 right-2 cursor-pointer overflow-hidden rounded-[24px] border p-3 text-sm sm:left-3 sm:right-3 sm:p-4",
+      )}
       style={cardStyle}
       onClick={() => onSelectCalendarEvent(event.id)}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+        <div className="min-w-0 sm:flex-1">
           {isShortBlock(event.startAt, event.endAt) ? (
             <p className="truncate font-medium">
               {event.title}
@@ -67,15 +70,17 @@ export function TimelineBoardCalendarEvent({
             </>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Badge className="normal-case tracking-[0.08em]" style={badgeStyle}>
-            {event.sourceCalendarName ?? "Google Calendar"}
+        <div className="flex min-w-0 items-center gap-2 sm:shrink-0">
+          <Badge className="min-w-0 flex-1 normal-case tracking-[0.08em] sm:flex-none" style={badgeStyle}>
+            <span className="min-w-0 truncate" style={{ color: titleColor }} title={sourceCalendarName}>
+              {sourceCalendarName}
+            </span>
           </Badge>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-8 px-2"
+            className="h-8 shrink-0 px-2"
             style={{ color: titleColor }}
             onClick={(clickEvent) => {
               clickEvent.stopPropagation();

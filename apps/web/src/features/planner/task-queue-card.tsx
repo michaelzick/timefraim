@@ -23,8 +23,8 @@ export function TaskQueueCard({
   onStartTaskTimer,
 }: TaskQueueCardProps) {
   return (
-    <Card className="min-h-[520px]">
-      <ScrollArea className="h-[420px] pr-2">
+    <Card className="xl:min-h-[520px]">
+      <ScrollArea className="max-h-[60vh] pr-2 xl:h-[420px]">
         <div className="space-y-3">
           {tasks.map((task) => (
             <TaskPill

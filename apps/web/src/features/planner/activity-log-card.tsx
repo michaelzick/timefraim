@@ -22,7 +22,7 @@ export function ActivityLogCard({ dayPlan }: ActivityLogCardProps) {
       >
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Activity</p>
-          <h2 className="mt-1 text-lg font-semibold text-[var(--heading)]">Today's changes · {count}</h2>
+          <h2 className="mt-1 text-lg font-semibold text-[var(--heading)]">Recent changes · {count}</h2>
         </div>
         {isOpen ? (
           <ChevronDown className="h-4 w-4 text-[var(--muted)]" />
