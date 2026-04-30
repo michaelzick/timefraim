@@ -2,6 +2,7 @@ import type { TaskInput, TaskUpdate } from "@timefraim/shared";
 import { notFound } from "./planner-errors.js";
 import type { DraftHandlerContext } from "./planner-service-types.js";
 import { updateScheduleBlockWithValidation } from "./planner-schedule-changes.js";
+import type { TaskPatch } from "../repositories/planner-repository-types.js";
 import { todayIsoDate } from "../utils/date.js";
 
 function resolveCompletedOnDate(args: {
@@ -73,19 +74,16 @@ export async function applyTaskUpdateDraft(context: DraftHandlerContext) {
     currentCompletedOnDate: currentTask.completedOnDate ?? null,
   });
 
-  const task = await context.repository.updateTask(
-    payload.taskId,
-    {
-      title: payload.title,
-      notes: payload.notes,
-      estimatedMinutes: payload.estimatedMinutes,
-      status: payload.status,
-      priority: payload.priority,
-      togglProjectId: payload.togglProjectId,
-      ...(typeof completedOnDate !== "undefined" ? { completedOnDate } : {}),
-    },
-    context.client,
-  );
+  const patch: TaskPatch = {};
+  if (typeof payload.title !== "undefined") patch.title = payload.title;
+  if (typeof payload.notes !== "undefined") patch.notes = payload.notes;
+  if (typeof payload.estimatedMinutes !== "undefined") patch.estimatedMinutes = payload.estimatedMinutes;
+  if (typeof payload.status !== "undefined") patch.status = payload.status;
+  if (typeof payload.priority !== "undefined") patch.priority = payload.priority;
+  if (typeof payload.togglProjectId !== "undefined") patch.togglProjectId = payload.togglProjectId;
+  if (typeof completedOnDate !== "undefined") patch.completedOnDate = completedOnDate;
+
+  const task = await context.repository.updateTask(payload.taskId, patch, context.client);
 
   const estimatedMinutesChanged = typeof payload.estimatedMinutes !== "undefined"
     && payload.estimatedMinutes !== currentTask.estimatedMinutes;

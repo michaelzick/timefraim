@@ -10,6 +10,12 @@ export const taskStatusSchema = z.enum([
 export const taskPrioritySchema = z.enum(["low", "medium", "high", "urgent"]);
 
 const plannerDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+const taskTitleInputSchema = z.string().min(1).max(200);
+const taskNotesInputSchema = z.string().max(5000).optional().nullable();
+const taskEstimatedMinutesInputSchema = z.number().int().positive().max(12 * 60);
+const togglProjectIdInputSchema = z.string().optional().nullable();
+const completedOnDateInputSchema = z.string().regex(plannerDateRegex).nullable().optional();
+const plannerDateInputSchema = z.string().regex(plannerDateRegex).optional();
 
 export const taskSchema = z.object({
   id: z.string().uuid(),
@@ -26,18 +32,26 @@ export const taskSchema = z.object({
 });
 
 export const taskInputSchema = z.object({
-  title: z.string().min(1).max(200),
-  notes: z.string().max(5000).optional().nullable(),
-  estimatedMinutes: z.number().int().positive().max(12 * 60).default(30),
+  title: taskTitleInputSchema,
+  notes: taskNotesInputSchema,
+  estimatedMinutes: taskEstimatedMinutesInputSchema.default(30),
   status: taskStatusSchema.default("planned"),
   priority: taskPrioritySchema.default("low"),
-  togglProjectId: z.string().optional().nullable(),
-  completedOnDate: z.string().regex(plannerDateRegex).nullable().optional(),
-  plannerDate: z.string().regex(plannerDateRegex).optional(),
+  togglProjectId: togglProjectIdInputSchema,
+  completedOnDate: completedOnDateInputSchema,
+  plannerDate: plannerDateInputSchema,
 });
 
-export const taskUpdateSchema = taskInputSchema.partial().extend({
+export const taskUpdateSchema = z.object({
   taskId: z.string().uuid(),
+  title: taskTitleInputSchema.optional(),
+  notes: taskNotesInputSchema,
+  estimatedMinutes: taskEstimatedMinutesInputSchema.optional(),
+  status: taskStatusSchema.optional(),
+  priority: taskPrioritySchema.optional(),
+  togglProjectId: togglProjectIdInputSchema,
+  completedOnDate: completedOnDateInputSchema,
+  plannerDate: plannerDateInputSchema,
 });
 
 export const taskDuplicatePayloadSchema = z.object({
