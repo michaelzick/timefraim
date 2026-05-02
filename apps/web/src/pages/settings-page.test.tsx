@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import { SettingsPage } from "@/pages/settings-page";
-import { buildAuthSession, buildOpenAiImageSettings, buildTogglSettings } from "@/test/fixtures";
+import { buildAuthSession, buildTogglSettings } from "@/test/fixtures";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -24,21 +24,14 @@ describe("SettingsPage", () => {
       <SettingsPage
         authSession={buildAuthSession()}
         togglSettings={buildTogglSettings()}
-        openAiImageSettings={buildOpenAiImageSettings()}
         onDiscoverToggl={vi.fn()}
         onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
-        onDeleteOpenAiConnection={vi.fn().mockResolvedValue(buildOpenAiImageSettings({ connected: false, apiKeyHint: null }))}
-        onGenerateOpenAiImage={vi.fn()}
-        onSaveOpenAiConnection={vi.fn()}
         onSaveToggl={vi.fn().mockResolvedValue(buildTogglSettings())}
         isDiscovering={false}
         isSaving={false}
         googleCalendarSettings={null}
         isLoadingGoogleCalendars={false}
-        isLoadingOpenAiImageSettings={false}
         isSavingGoogleCalendars={false}
-        isSavingOpenAiImage={false}
-        isGeneratingOpenAiImage={false}
         onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
         taskEndNotificationsEnabled={false}
         taskEndNotificationsSupported
@@ -58,12 +51,8 @@ describe("SettingsPage", () => {
       <SettingsPage
         authSession={buildAuthSession()}
         togglSettings={buildTogglSettings()}
-        openAiImageSettings={buildOpenAiImageSettings()}
         onDiscoverToggl={vi.fn()}
         onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
-        onDeleteOpenAiConnection={vi.fn().mockResolvedValue(buildOpenAiImageSettings({ connected: false, apiKeyHint: null }))}
-        onGenerateOpenAiImage={vi.fn()}
-        onSaveOpenAiConnection={vi.fn()}
         onSaveToggl={vi.fn().mockResolvedValue(buildTogglSettings())}
         isDiscovering={false}
         isSaving={false}
@@ -76,10 +65,7 @@ describe("SettingsPage", () => {
           plannerCalendarId: "planner",
         }}
         isLoadingGoogleCalendars={false}
-        isLoadingOpenAiImageSettings={false}
         isSavingGoogleCalendars={false}
-        isSavingOpenAiImage={false}
-        isGeneratingOpenAiImage={false}
         onSaveGoogleCalendars={onSaveGoogleCalendars}
         taskEndNotificationsEnabled={false}
         taskEndNotificationsSupported
@@ -120,21 +106,14 @@ describe("SettingsPage", () => {
       <SettingsPage
         authSession={buildAuthSession()}
         togglSettings={togglSettings}
-        openAiImageSettings={buildOpenAiImageSettings()}
         onDiscoverToggl={onDiscoverToggl}
         onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
-        onDeleteOpenAiConnection={vi.fn().mockResolvedValue(buildOpenAiImageSettings({ connected: false, apiKeyHint: null }))}
-        onGenerateOpenAiImage={vi.fn()}
-        onSaveOpenAiConnection={vi.fn()}
         onSaveToggl={onSaveToggl}
         isDiscovering={false}
         isSaving={false}
         googleCalendarSettings={null}
         isLoadingGoogleCalendars={false}
-        isLoadingOpenAiImageSettings={false}
         isSavingGoogleCalendars={false}
-        isSavingOpenAiImage={false}
-        isGeneratingOpenAiImage={false}
         onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
         taskEndNotificationsEnabled={false}
         taskEndNotificationsSupported
@@ -190,21 +169,14 @@ describe("SettingsPage", () => {
       <SettingsPage
         authSession={buildAuthSession()}
         togglSettings={togglSettings}
-        openAiImageSettings={buildOpenAiImageSettings()}
         onDiscoverToggl={vi.fn()}
         onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
-        onDeleteOpenAiConnection={vi.fn().mockResolvedValue(buildOpenAiImageSettings({ connected: false, apiKeyHint: null }))}
-        onGenerateOpenAiImage={vi.fn()}
-        onSaveOpenAiConnection={vi.fn()}
         onSaveToggl={onSaveToggl}
         isDiscovering={false}
         isSaving={false}
         googleCalendarSettings={null}
         isLoadingGoogleCalendars={false}
-        isLoadingOpenAiImageSettings={false}
         isSavingGoogleCalendars={false}
-        isSavingOpenAiImage={false}
-        isGeneratingOpenAiImage={false}
         onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
         taskEndNotificationsEnabled={false}
         taskEndNotificationsSupported
@@ -242,21 +214,14 @@ describe("SettingsPage", () => {
       <SettingsPage
         authSession={buildAuthSession()}
         togglSettings={buildTogglSettings()}
-        openAiImageSettings={buildOpenAiImageSettings()}
         onDiscoverToggl={vi.fn()}
         onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
-        onDeleteOpenAiConnection={vi.fn().mockResolvedValue(buildOpenAiImageSettings({ connected: false, apiKeyHint: null }))}
-        onGenerateOpenAiImage={vi.fn()}
-        onSaveOpenAiConnection={vi.fn()}
         onSaveToggl={vi.fn().mockResolvedValue(buildTogglSettings())}
         isDiscovering={false}
         isSaving={false}
         googleCalendarSettings={null}
         isLoadingGoogleCalendars={false}
-        isLoadingOpenAiImageSettings={false}
         isSavingGoogleCalendars={false}
-        isSavingOpenAiImage={false}
-        isGeneratingOpenAiImage={false}
         onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
         taskEndNotificationsEnabled
         taskEndNotificationsSupported
@@ -273,50 +238,4 @@ describe("SettingsPage", () => {
     expect(onTaskEndNotificationsChange).toHaveBeenCalledWith(false);
   });
 
-  it("submits an OpenAI image prompt and renders the returned preview", async () => {
-    const user = userEvent.setup();
-    const onGenerateOpenAiImage = vi.fn().mockResolvedValue({
-      imageBase64: "base64-image-data",
-      mimeType: "image/png",
-      revisedPrompt: "Refined prompt",
-      model: "gpt-image-2",
-    });
-
-    render(
-      <SettingsPage
-        authSession={buildAuthSession()}
-        togglSettings={buildTogglSettings()}
-        openAiImageSettings={buildOpenAiImageSettings()}
-        onDiscoverToggl={vi.fn()}
-        onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
-        onDeleteOpenAiConnection={vi.fn().mockResolvedValue(buildOpenAiImageSettings({ connected: false, apiKeyHint: null }))}
-        onGenerateOpenAiImage={onGenerateOpenAiImage}
-        onSaveOpenAiConnection={vi.fn()}
-        onSaveToggl={vi.fn().mockResolvedValue(buildTogglSettings())}
-        isDiscovering={false}
-        isSaving={false}
-        googleCalendarSettings={null}
-        isLoadingGoogleCalendars={false}
-        isLoadingOpenAiImageSettings={false}
-        isSavingGoogleCalendars={false}
-        isSavingOpenAiImage={false}
-        isGeneratingOpenAiImage={false}
-        onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
-        taskEndNotificationsEnabled={false}
-        taskEndNotificationsSupported
-        taskEndNotificationsMessage={null}
-        onTaskEndNotificationsChange={vi.fn()}
-      />,
-    );
-
-    await user.clear(screen.getByPlaceholderText(/describe the image/i));
-    await user.type(screen.getByPlaceholderText(/describe the image/i), "Paint a sunrise over the ocean.");
-    await user.click(screen.getByRole("button", { name: /generate preview/i }));
-
-    await waitFor(() => {
-      expect(onGenerateOpenAiImage).toHaveBeenCalledWith("Paint a sunrise over the ocean.");
-    });
-    expect(screen.getByAltText("Generated GPT Image 2 preview")).toBeInTheDocument();
-    expect(screen.getByText(/revised prompt:/i)).toBeInTheDocument();
-  });
 });

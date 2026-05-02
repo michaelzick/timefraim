@@ -1,7 +1,6 @@
 import type {
   AuthSession,
   DayPlan,
-  OpenAiImageSettings,
   PlannerDuplicateResult,
   Task,
   TogglIntegrationSettings,
@@ -89,17 +88,6 @@ export function buildTogglSettings(
       { id: "project-2", name: "Client X / Bugfix", workspaceId: "workspace-1", active: true },
     ],
     lastValidatedAt: "2026-04-06T09:00:00.000Z",
-    ...overrides,
-  };
-}
-
-export function buildOpenAiImageSettings(
-  overrides: Partial<OpenAiImageSettings> = {},
-): OpenAiImageSettings {
-  return {
-    connected: true,
-    apiKeyHint: "••••1234",
-    model: "gpt-image-2",
     ...overrides,
   };
 }

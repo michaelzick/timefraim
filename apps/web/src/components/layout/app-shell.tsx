@@ -3,8 +3,6 @@ import type {
   DayPlan,
   GoogleCalendarSettings,
   GoogleCalendarSettingsUpdate,
-  OpenAiGeneratedImage,
-  OpenAiImageSettings,
   TogglConnect,
   TogglDiscoverInput,
   TogglDiscoverResult,
@@ -30,25 +28,18 @@ type AppShellProps = {
   dayPlan: DayPlan;
   togglSettings: TogglIntegrationSettings;
   googleCalendarSettings: GoogleCalendarSettings | null;
-  openAiImageSettings: OpenAiImageSettings | null;
   isDiscoveringToggl: boolean;
   isSavingToggl: boolean;
   isLoadingGoogleCalendars: boolean;
-  isLoadingOpenAiImageSettings: boolean;
   isSavingGoogleCalendars: boolean;
-  isSavingOpenAiImage: boolean;
-  isGeneratingOpenAiImage: boolean;
   taskEndNotificationsEnabled: boolean;
   taskEndNotificationsSupported: boolean;
   taskEndNotificationsMessage: string | null;
   onDateChange: (nextDate: string) => void;
   onDiscoverToggl: (values: TogglDiscoverInput) => Promise<TogglDiscoverResult>;
   onDeleteToggl: () => Promise<TogglIntegrationSettings>;
-  onDeleteOpenAiConnection: () => Promise<OpenAiImageSettings>;
-  onGenerateOpenAiImage: (prompt: string) => Promise<OpenAiGeneratedImage>;
   onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
   onSaveGoogleCalendars: (values: GoogleCalendarSettingsUpdate) => Promise<unknown>;
-  onSaveOpenAiConnection: (apiKey: string) => Promise<OpenAiImageSettings>;
   onTaskEndNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
   onSignOut: () => void;
   plannerPageProps: Omit<PlannerPageProps, "date" | "dayPlan" | "linkedGoogleEmail" | "onDateChange">;
@@ -68,25 +59,18 @@ export function AppShell({
   dayPlan,
   togglSettings,
   googleCalendarSettings,
-  openAiImageSettings,
   isDiscoveringToggl,
   isSavingToggl,
   isLoadingGoogleCalendars,
-  isLoadingOpenAiImageSettings,
   isSavingGoogleCalendars,
-  isSavingOpenAiImage,
-  isGeneratingOpenAiImage,
   taskEndNotificationsEnabled,
   taskEndNotificationsSupported,
   taskEndNotificationsMessage,
   onDateChange,
   onDiscoverToggl,
   onDeleteToggl,
-  onDeleteOpenAiConnection,
-  onGenerateOpenAiImage,
   onSaveToggl,
   onSaveGoogleCalendars,
-  onSaveOpenAiConnection,
   onTaskEndNotificationsChange,
   onSignOut,
   plannerPageProps,
@@ -118,20 +102,13 @@ export function AppShell({
                   authSession={authSession}
                   togglSettings={togglSettings}
                   googleCalendarSettings={googleCalendarSettings}
-                  openAiImageSettings={openAiImageSettings}
                   isLoadingGoogleCalendars={isLoadingGoogleCalendars}
-                  isLoadingOpenAiImageSettings={isLoadingOpenAiImageSettings}
                   isSavingGoogleCalendars={isSavingGoogleCalendars}
-                  isSavingOpenAiImage={isSavingOpenAiImage}
-                  isGeneratingOpenAiImage={isGeneratingOpenAiImage}
                   isDiscovering={isDiscoveringToggl}
                   onSaveToggl={onSaveToggl}
                   onDiscoverToggl={onDiscoverToggl}
                   onDeleteToggl={onDeleteToggl}
-                  onDeleteOpenAiConnection={onDeleteOpenAiConnection}
-                  onGenerateOpenAiImage={onGenerateOpenAiImage}
                   onSaveGoogleCalendars={onSaveGoogleCalendars}
-                  onSaveOpenAiConnection={onSaveOpenAiConnection}
                   taskEndNotificationsEnabled={taskEndNotificationsEnabled}
                   taskEndNotificationsSupported={taskEndNotificationsSupported}
                   taskEndNotificationsMessage={taskEndNotificationsMessage}

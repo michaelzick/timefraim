@@ -11,7 +11,18 @@ import {
   duplicateTaskForUser,
 } from "./planner-service-duplicates.js";
 import { forbidden, notFound } from "./planner-errors.js";
-import { deleteOpenAiConnection, deleteTogglConnection, discoverTogglConnection, generateSavedOpenAiImage, getAllowedPlannerUserId, getGoogleCalendarSettings, getGoogleCalendarSyncState, getOpenAiImageSettings, getTogglConnection, getTogglSettings, saveGoogleCalendarSettings, saveGoogleSession, saveOpenAiConnection, saveTogglConnection } from "./planner-service-integrations.js";
+import {
+  deleteTogglConnection,
+  discoverTogglConnection,
+  getAllowedPlannerUserId,
+  getGoogleCalendarSettings,
+  getGoogleCalendarSyncState,
+  getTogglConnection,
+  getTogglSettings,
+  saveGoogleCalendarSettings,
+  saveGoogleSession,
+  saveTogglConnection,
+} from "./planner-service-integrations.js";
 import { runPlannerSideEffects } from "./planner-side-effects.js";
 import type { SideEffect } from "./planner-service-types.js";
 export class PlannerService {
@@ -52,17 +63,11 @@ export class PlannerService {
     await deleteTogglConnection(this.repository, userId);
     return this.getTogglSettings(userId);
   }
-  async getGoogleCalendarSettings() {
-    return getGoogleCalendarSettings(this.repository);
-  }
+  async getGoogleCalendarSettings() { return getGoogleCalendarSettings(this.repository); }
   async saveGoogleCalendarSettings(input: GoogleCalendarSettingsUpdate) {
     await saveGoogleCalendarSettings(this.repository, input);
     return getGoogleCalendarSettings(this.repository);
   }
-  async getOpenAiImageSettings() { return getOpenAiImageSettings(this.repository); }
-  async saveOpenAiConnection(apiKey: string) { return saveOpenAiConnection(this.repository, apiKey); }
-  async deleteOpenAiConnection() { return deleteOpenAiConnection(this.repository); }
-  async generateOpenAiImage(prompt: string) { return generateSavedOpenAiImage(this.repository, prompt); }
   async getDayPlan(userId: string | null = null, date = todayIsoDate(), tzOffsetMinutes = 0) {
     const effectiveUserId = userId ?? await getAllowedPlannerUserId(this.repository);
     const range = {
@@ -92,9 +97,7 @@ export class PlannerService {
       integrationStatus,
     });
   }
-  async syncGoogleCalendar(date = todayIsoDate(), tzOffsetMinutes = 0) {
-    return syncPlannerGoogleCalendar(this.repository, date, tzOffsetMinutes);
-  }
+  async syncGoogleCalendar(date = todayIsoDate(), tzOffsetMinutes = 0) { return syncPlannerGoogleCalendar(this.repository, date, tzOffsetMinutes); }
   async createDraft(kind: DraftKind, payload: Record<string, unknown>, actorRole: ActorRole, ownerUserId?: string | null) {
     const resolvedOwnerUserId = ownerUserId ?? (actorRole === "assistant" ? await getAllowedPlannerUserId(this.repository) : null);
     return this.repository.createDraft(
