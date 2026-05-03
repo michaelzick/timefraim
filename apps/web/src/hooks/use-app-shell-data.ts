@@ -11,8 +11,6 @@ import type {
   DayPlan,
   GoogleCalendarSettings,
   GoogleCalendarSettingsUpdate,
-  OpenAiGeneratedImage,
-  OpenAiImageSettings,
   TogglIntegrationSettings,
 } from "@timefraim/shared";
 import { useEffect, useEffectEvent, useMemo, useState, type Dispatch, type SetStateAction } from "react";
@@ -30,16 +28,12 @@ type UseAppShellDataResult = {
   authQuery: AppQueryResult<AuthSession>;
   date: string;
   dayPlanQuery: AppQueryResult<DayPlan>;
-  deleteOpenAiConnectionMutation: AppMutationResult<OpenAiImageSettings>;
-  generateOpenAiImageMutation: AppMutationResult<OpenAiGeneratedImage, string>;
   googleCalendarSettingsQuery: AppQueryResult<GoogleCalendarSettings>;
   loading: boolean;
-  openAiImageSettingsQuery: AppQueryResult<OpenAiImageSettings>;
   plannerMutations: ReturnType<typeof usePlannerMutations>;
   queryError: Error | null;
   queryErrorMessage: string;
   saveGoogleCalendarsMutation: AppMutationResult<GoogleCalendarSettings, GoogleCalendarSettingsUpdate>;
-  saveOpenAiConnectionMutation: AppMutationResult<OpenAiImageSettings, string>;
   setDate: Dispatch<SetStateAction<string>>;
   togglSettingsQuery: AppQueryResult<TogglIntegrationSettings>;
 };
@@ -98,12 +92,6 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
     queryFn: ({ signal }) => api.getGoogleCalendarSettings(token, signal),
     retry: false,
   });
-  const openAiImageSettingsQuery = useQuery({
-    queryKey: ["openai-image-settings", token],
-    enabled: Boolean(token),
-    queryFn: ({ signal }) => api.getOpenAiImageSettings(token, signal),
-    retry: false,
-  });
 
   const saveGoogleCalendarsMutation = useMutation({
     mutationFn: (values: GoogleCalendarSettingsUpdate) =>
@@ -111,21 +99,6 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["google-calendar-settings", token] });
     },
-  });
-  const saveOpenAiConnectionMutation = useMutation({
-    mutationFn: (apiKey: string) => api.saveOpenAiConnection(token, { apiKey }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["openai-image-settings", token] });
-    },
-  });
-  const deleteOpenAiConnectionMutation = useMutation({
-    mutationFn: () => api.deleteOpenAiConnection(token),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["openai-image-settings", token] });
-    },
-  });
-  const generateOpenAiImageMutation = useMutation({
-    mutationFn: (prompt: string) => api.generateOpenAiImage(token, { prompt }),
   });
 
   const plannerMutations = usePlannerMutations({
@@ -147,14 +120,10 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
     dayPlanQuery,
     googleCalendarSettingsQuery,
     loading,
-    openAiImageSettingsQuery,
     plannerMutations,
     queryError,
     queryErrorMessage,
-    saveOpenAiConnectionMutation,
     saveGoogleCalendarsMutation,
-    deleteOpenAiConnectionMutation,
-    generateOpenAiImageMutation,
     setDate,
     togglSettingsQuery,
   };

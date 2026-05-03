@@ -91,27 +91,6 @@ export const googleCalendarSettingsUpdateSchema = z.object({
   syncPlannerBlocksToCalendar: z.boolean().default(true),
 });
 
-export const openAiConnectSchema = z.object({
-  apiKey: z.string().trim().min(1),
-});
-
-export const openAiImageSettingsSchema = z.object({
-  connected: z.boolean(),
-  apiKeyHint: z.string().nullable(),
-  model: z.literal("gpt-image-2"),
-});
-
-export const openAiImageGenerateSchema = z.object({
-  prompt: z.string().trim().min(1).max(32000),
-});
-
-export const openAiGeneratedImageSchema = z.object({
-  imageBase64: z.string().min(1),
-  mimeType: z.enum(["image/png", "image/jpeg", "image/webp"]),
-  revisedPrompt: z.string().nullable().default(null),
-  model: z.literal("gpt-image-2"),
-});
-
 export const authUserSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
@@ -135,10 +114,6 @@ export type GoogleConnect = z.infer<typeof googleConnectSchema>;
 export type GoogleCalendarOption = z.infer<typeof googleCalendarOptionSchema>;
 export type GoogleCalendarSettings = z.infer<typeof googleCalendarSettingsSchema>;
 export type GoogleCalendarSettingsUpdate = z.infer<typeof googleCalendarSettingsUpdateSchema>;
-export type OpenAiConnect = z.infer<typeof openAiConnectSchema>;
-export type OpenAiImageSettings = z.infer<typeof openAiImageSettingsSchema>;
-export type OpenAiImageGenerate = z.infer<typeof openAiImageGenerateSchema>;
-export type OpenAiGeneratedImage = z.infer<typeof openAiGeneratedImageSchema>;
 export type AuthUser = z.infer<typeof authUserSchema>;
 export type AuthSession = z.infer<typeof authSessionSchema>;
 export type McpProfile = z.infer<typeof mcpProfileSchema>;

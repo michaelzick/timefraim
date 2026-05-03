@@ -2,8 +2,6 @@ import type {
   AuthSession,
   GoogleCalendarSettings,
   GoogleCalendarSettingsUpdate,
-  OpenAiGeneratedImage,
-  OpenAiImageSettings,
   TogglConnect,
   TogglDiscoverInput,
   TogglDiscoverResult,
@@ -13,7 +11,6 @@ import { Bot, LockKeyhole, Orbit } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { env } from "@/lib/env";
 import { SettingsGoogleCalendarsCard } from "@/pages/settings-google-calendars-card";
-import { SettingsOpenAiImageCard } from "@/pages/settings-openai-image-card";
 import { SettingsTaskEndNotificationsCard } from "@/pages/settings-task-end-notifications-card";
 import { SettingsTogglCard } from "@/pages/settings-toggl-card";
 
@@ -21,20 +18,13 @@ export function SettingsPage({
   authSession,
   togglSettings,
   googleCalendarSettings,
-  openAiImageSettings,
   isLoadingGoogleCalendars,
-  isLoadingOpenAiImageSettings,
   isSavingGoogleCalendars,
-  isSavingOpenAiImage,
-  isGeneratingOpenAiImage,
   taskEndNotificationsEnabled,
   taskEndNotificationsSupported,
   taskEndNotificationsMessage,
-  onDeleteOpenAiConnection,
   onDiscoverToggl,
-  onGenerateOpenAiImage,
   onDeleteToggl,
-  onSaveOpenAiConnection,
   onSaveToggl,
   onSaveGoogleCalendars,
   onTaskEndNotificationsChange,
@@ -44,20 +34,13 @@ export function SettingsPage({
   authSession: AuthSession;
   togglSettings: TogglIntegrationSettings;
   googleCalendarSettings: GoogleCalendarSettings | null;
-  openAiImageSettings: OpenAiImageSettings | null;
   isLoadingGoogleCalendars: boolean;
-  isLoadingOpenAiImageSettings: boolean;
   isSavingGoogleCalendars: boolean;
-  isSavingOpenAiImage: boolean;
-  isGeneratingOpenAiImage: boolean;
   taskEndNotificationsEnabled: boolean;
   taskEndNotificationsSupported: boolean;
   taskEndNotificationsMessage: string | null;
-  onDeleteOpenAiConnection: () => Promise<OpenAiImageSettings>;
   onDiscoverToggl: (values: TogglDiscoverInput) => Promise<TogglDiscoverResult>;
-  onGenerateOpenAiImage: (prompt: string) => Promise<OpenAiGeneratedImage>;
   onDeleteToggl: () => Promise<TogglIntegrationSettings>;
-  onSaveOpenAiConnection: (apiKey: string) => Promise<OpenAiImageSettings>;
   onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
   onSaveGoogleCalendars: (values: GoogleCalendarSettingsUpdate) => Promise<unknown>;
   onTaskEndNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
@@ -115,16 +98,6 @@ export function SettingsPage({
           onSaveToggl={onSaveToggl}
           isDiscovering={isDiscovering}
           isSaving={isSaving}
-        />
-
-        <SettingsOpenAiImageCard
-          settings={openAiImageSettings}
-          isLoading={isLoadingOpenAiImageSettings}
-          isSaving={isSavingOpenAiImage}
-          isGenerating={isGeneratingOpenAiImage}
-          onDelete={onDeleteOpenAiConnection}
-          onGenerate={onGenerateOpenAiImage}
-          onSave={onSaveOpenAiConnection}
         />
       </div>
 
