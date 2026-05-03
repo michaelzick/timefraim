@@ -38,6 +38,12 @@
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.30.1",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "hono": "^4.12.14",
+      "@hono/node-server": "^1.19.13"
+    }
   }
 }

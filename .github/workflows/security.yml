@@ -5,9 +5,10 @@ on:
   pull_request:
 
 permissions:
+  actions: read
   contents: read
   security-events: write
-  pull-requests: read
+  pull-requests: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -22,6 +23,8 @@ jobs:
           fetch-depth: 0
 
       - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   dependencies:
     name: Dependency Audit
@@ -35,11 +38,19 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --audit-level=moderate
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
 
   codeql:
     name: CodeQL Scan
