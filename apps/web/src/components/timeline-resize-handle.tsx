@@ -18,6 +18,7 @@ type TimelineResizePreview = ReturnType<typeof getTimelineResizePreview>;
 type TimelineResizeHandleProps = {
   currentDurationMinutes: number;
   isResizing: boolean;
+  isShort?: boolean;
   previewDurationMinutes: number | null;
   onClick: (event: MouseEvent<HTMLButtonElement>) => void;
   onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void;
@@ -26,6 +27,7 @@ type TimelineResizeHandleProps = {
 export function TimelineResizeHandle({
   currentDurationMinutes,
   isResizing,
+  isShort = false,
   previewDurationMinutes,
   onClick,
   onPointerDown,
@@ -40,15 +42,23 @@ export function TimelineResizeHandle({
       data-resizing={isResizing ? "true" : "false"}
       data-duration-minutes={durationMinutes}
       className={cn(
-        "absolute inset-x-5 bottom-1 flex h-5 cursor-ns-resize touch-none items-center justify-center rounded-full",
+        "absolute flex cursor-ns-resize touch-none items-center justify-center rounded-full",
         "text-[var(--planner-surface-meta)] transition hover:bg-black/10 hover:text-[var(--planner-surface-title)]",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]",
+        isShort
+          ? "bottom-0 left-1/2 h-1.5 w-12 -translate-x-1/2"
+          : "inset-x-5 bottom-1 h-5",
         isResizing && "bg-black/10 text-[var(--planner-surface-title)]",
       )}
       onClick={onClick}
       onPointerDown={onPointerDown}
     >
-      <span className="h-1 w-10 rounded-full bg-current opacity-70" />
+      <span
+        className={cn(
+          "rounded-full bg-current opacity-70",
+          isShort ? "h-0.5 w-6" : "h-1 w-10",
+        )}
+      />
     </button>
   );
 }
