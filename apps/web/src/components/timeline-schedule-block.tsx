@@ -67,6 +67,7 @@ export function TimelineScheduleBlock({
   });
   const displayEndAt = resize.previewEndAt ?? block.endAt;
   const placement = getTimelinePlacement(date, block.startAt, displayEndAt);
+  const isShort = isShortBlock(block.startAt, displayEndAt);
   const priority = task?.priority ?? "medium";
   const title = task?.title ?? "Scheduled task";
   const dragTransform = isCopyDragSource ? undefined : CSS.Translate.toString(transform);
@@ -82,7 +83,8 @@ export function TimelineScheduleBlock({
         transform: dragTransform,
       }}
       className={cn(
-        "absolute left-2 right-2 z-10 cursor-pointer overflow-hidden rounded-[24px] border px-4 pb-7 pt-4 transition sm:left-8 sm:right-8",
+        "absolute left-2 right-2 z-10 cursor-pointer overflow-hidden rounded-[24px] border px-4 transition sm:left-8 sm:right-8",
+        isShort ? "py-0" : "pb-7 pt-4",
         getTaskPriorityTimelineBlockClass(priority),
         isDragging && !isCopyDragSource && "opacity-75",
         resize.isResizing && "ring-2 ring-[var(--timeline-selection-ring)]",
@@ -97,9 +99,14 @@ export function TimelineScheduleBlock({
       {runState === "done" ? (
         <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-[var(--success-text)]" />
       ) : null}
-      <div className="flex items-start justify-between gap-3">
+      <div
+        className={cn(
+          "flex justify-between gap-3",
+          isShort ? "h-full items-center" : "items-start",
+        )}
+      >
         <div className="min-w-0">
-          {isShortBlock(block.startAt, displayEndAt) ? (
+          {isShort ? (
             <p
               className={cn(
                 "truncate font-semibold text-[var(--planner-surface-title)]",
@@ -167,6 +174,7 @@ export function TimelineScheduleBlock({
         <TimelineResizeHandle
           currentDurationMinutes={resize.currentDurationMinutes}
           isResizing={resize.isResizing}
+          isShort={isShort}
           previewDurationMinutes={resize.previewDurationMinutes}
           {...resize.resizeHandleProps}
         />
