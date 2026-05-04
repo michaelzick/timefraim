@@ -12,7 +12,7 @@ export function AppHeader({ onSignOut }: AppHeaderProps) {
     <header className="flex flex-col gap-4 rounded-[32px] border border-[var(--panel-border)] bg-[var(--panel-elevated)] px-6 py-4 shadow-[var(--shadow-elevated)] backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
       <div>
         <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
-          <img src="/img/timefraim-logo.webp" alt="TimeFraim" className="h-8 w-auto rounded-lg" />
+          <img src="/img/timefraim-logo-tf.webp" alt="TimeFraim" className="h-8 w-auto rounded-lg" />
           <h1 className="text-2xl font-semibold text-[var(--heading)]">TimeFraim</h1>
         </Link>
       </div>
