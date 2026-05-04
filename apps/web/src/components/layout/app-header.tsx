@@ -1,5 +1,5 @@
 import { CalendarDays, LogOut, Settings2 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/layout/theme-switcher";
 
@@ -11,9 +11,10 @@ export function AppHeader({ onSignOut }: AppHeaderProps) {
   return (
     <header className="flex flex-col gap-4 rounded-[32px] border border-[var(--panel-border)] bg-[var(--panel-elevated)] px-6 py-4 shadow-[var(--shadow-elevated)] backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <div className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
+          <img src="/img/timefraim-logo.webp" alt="TimeFraim" className="h-8 w-auto rounded-lg" />
           <h1 className="text-2xl font-semibold text-[var(--heading)]">TimeFraim</h1>
-        </div>
+        </Link>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <nav className="flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-[var(--panel-subtle)] p-1">

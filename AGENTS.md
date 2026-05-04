@@ -159,6 +159,7 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 - **Dates:** always `timestamptz` in DB, always UTC on the wire. Frontend passes timezone offset via `tz` query param.
 - **Secrets:** integration tokens encrypted via `integration-crypto.ts` before hitting the DB.
 - **Completion gate:** never mark work done while `pnpm lint` or `pnpm typecheck` fail. When structural or meaningful project facts change, update `AGENTS.md`, run `pnpm agent-briefs:sync`, and keep `CLAUDE.md` / `GEMINI.md` in lockstep.
+- **UI verification:** Never spin up the dev server (`pnpm dev` / `pnpm dev:web`) to test or verify frontend changes. Verify UI work via `pnpm lint` and `pnpm typecheck` only, then report the change as done.
 
 ## 10. Key files map
 
