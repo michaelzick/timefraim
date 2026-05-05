@@ -26,6 +26,11 @@ export function TimelineBoardCalendarEvent({
     return null;
   }
 
+  const isShort = isShortBlock(event.startAt, event.endAt);
+  const isVeryShort =
+    new Date(event.endAt).getTime() - new Date(event.startAt).getTime() <
+    30 * 60 * 1000;
+
   const titleColor = "var(--calendar-event-title)";
   const borderColorSource = event.backgroundColor ?? FALLBACK_TIMELINE_EVENT_BORDER;
   const cardStyle: CSSProperties = {
@@ -47,14 +52,22 @@ export function TimelineBoardCalendarEvent({
     <div
       key={event.id}
       className={cn(
-        "absolute left-2 right-2 cursor-pointer overflow-hidden rounded-[24px] border p-3 text-sm sm:left-3 sm:right-3 sm:p-4",
+        "absolute left-2 right-2 cursor-pointer overflow-hidden rounded-[24px] border px-3 text-sm sm:left-3 sm:right-3 sm:px-4",
+        isShort ? "py-0" : "py-3 sm:py-4",
       )}
       style={cardStyle}
       onClick={() => onSelectCalendarEvent(event.id)}
     >
-      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+      <div
+        className={cn(
+          "flex min-w-0",
+          isShort
+            ? "h-full flex-row items-center justify-between gap-2"
+            : "flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3",
+        )}
+      >
         <div className="min-w-0 sm:flex-1">
-          {isShortBlock(event.startAt, event.endAt) ? (
+          {isShort ? (
             <p className="truncate font-medium">
               {event.title}
               <span className="ml-2 text-xs font-normal text-[var(--calendar-event-meta)]">
@@ -71,11 +84,13 @@ export function TimelineBoardCalendarEvent({
           )}
         </div>
         <div className="flex min-w-0 items-center gap-2 sm:shrink-0">
-          <Badge className="min-w-0 flex-1 normal-case tracking-[0.08em] sm:flex-none" style={badgeStyle}>
-            <span className="min-w-0 truncate" style={{ color: titleColor }} title={sourceCalendarName}>
-              {sourceCalendarName}
-            </span>
-          </Badge>
+          {!isVeryShort && (
+            <Badge className="min-w-0 flex-1 normal-case tracking-[0.08em] sm:flex-none" style={badgeStyle}>
+              <span className="min-w-0 truncate" style={{ color: titleColor }} title={sourceCalendarName}>
+                {sourceCalendarName}
+              </span>
+            </Badge>
+          )}
           <Button
             type="button"
             variant="ghost"
@@ -88,7 +103,7 @@ export function TimelineBoardCalendarEvent({
             }}
           >
             <X className="h-4 w-4" />
-            Hide
+            {!isVeryShort && "Hide"}
           </Button>
         </div>
       </div>
