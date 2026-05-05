@@ -28,7 +28,7 @@ export function TimelineBoardCalendarEvent({
 
   const isShort = isShortBlock(event.startAt, event.endAt);
   const isVeryShort =
-    new Date(event.endAt).getTime() - new Date(event.startAt).getTime() <=
+    new Date(event.endAt).getTime() - new Date(event.startAt).getTime() <
     30 * 60 * 1000;
 
   const titleColor = "var(--calendar-event-title)";
