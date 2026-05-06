@@ -116,7 +116,7 @@ app.get("/mcp", async (request, reply) => {
 
 const address = await app.listen({
   port: env.PORT,
-  host: "127.0.0.1",
+  host: env.HOST,
 });
 
 app.log.info(`TimeFraim server listening on ${address}`);

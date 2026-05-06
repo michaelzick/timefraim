@@ -117,6 +117,9 @@ Root scripts (all use `corepack pnpm` under the hood):
 ```bash
 pnpm agent-briefs:sync   # regenerate CLAUDE.md and GEMINI.md from AGENTS.md
 pnpm agent-briefs:check  # fail if CLAUDE.md or GEMINI.md drift from AGENTS.md
+pnpm sandbox:start       # start the Docker sandbox (Supabase + app container)
+pnpm sandbox:stop        # stop the Docker sandbox
+pnpm sandbox:status      # show sandbox container status
 pnpm dev           # web + server in parallel
 pnpm dev:web       # web only (5173)
 pnpm dev:server    # server only (4000)
@@ -135,6 +138,16 @@ supabase migration up    # apply pending migrations
 supabase db reset        # drop, recreate, run migrations + seed
 ```
 
+Sandbox CLI:
+
+```bash
+pnpm sandbox:start
+# or, after linking/installing the package bin:
+timefraim sandbox start
+```
+
+`pnpm sandbox:start` runs `supabase start` and then launches the web/API app inside a `node:24-bookworm` Docker container named `timefraim-app-sandbox`. Source is bind-mounted at `/workspace`; dependency folders and the pnpm store use named Docker volumes. The app is exposed on `127.0.0.1:5173` and `127.0.0.1:4000`, while the app container reaches Supabase via `host.docker.internal`.
+
 No change is done until `pnpm lint` and `pnpm typecheck` pass locally. Before opening a PR, run `pnpm check` — it is the same gate CI uses.
 
 ## 8. Environment
@@ -142,7 +155,7 @@ No change is done until `pnpm lint` and `pnpm typecheck` pass locally. Before op
 Canonical list lives in [.env.example](.env.example). Highlights:
 
 - **Frontend (`VITE_*`):** `VITE_APP_ORIGIN`, `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ALLOWED_EMAIL`.
-- **Backend:** `NODE_ENV`, `PORT`, `APP_ORIGIN` (comma-separated CORS origins), `API_BASE_URL`, `DATABASE_URL`, `SUPABASE_URL`/`ANON_KEY`/`SERVICE_ROLE_KEY`/`JWT_SECRET`, `INTEGRATION_ENCRYPTION_KEY`, `ALLOWED_EMAIL`, `MCP_BEARER_TOKEN`, `MCP_READ_ONLY_TOKEN`, `GOOGLE_CLIENT_ID`/`SECRET`, `GOOGLE_CALENDAR_ID`, `GOOGLE_PLANNER_CALENDAR_ID`, `TUNNEL_PUBLIC_BASE_URL`.
+- **Backend:** `NODE_ENV`, `PORT`, `HOST`, `APP_ORIGIN` (comma-separated CORS origins), `API_BASE_URL`, `DATABASE_URL`, `SUPABASE_URL`/`ANON_KEY`/`SERVICE_ROLE_KEY`/`JWT_SECRET`, `INTEGRATION_ENCRYPTION_KEY`, `ALLOWED_EMAIL`, `MCP_BEARER_TOKEN`, `MCP_READ_ONLY_TOKEN`, `GOOGLE_CLIENT_ID`/`SECRET`, `GOOGLE_CALENDAR_ID`, `GOOGLE_PLANNER_CALENDAR_ID`, `TUNNEL_PUBLIC_BASE_URL`.
 
 `ALLOWED_EMAIL` gates login (single-user app). `INTEGRATION_ENCRYPTION_KEY` must be a long random secret — regenerating it invalidates stored Toggl tokens.
 

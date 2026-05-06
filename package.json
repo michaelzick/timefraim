@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.11.0",
+  "bin": {
+    "timefraim": "scripts/timefraim.mjs"
+  },
   "engines": {
     "node": ">=24"
   },
@@ -14,6 +17,9 @@
   "scripts": {
     "agent-briefs:sync": "node skills/sync-agent-briefs/scripts/sync-agent-briefs.mjs",
     "agent-briefs:check": "node skills/sync-agent-briefs/scripts/sync-agent-briefs.mjs --check",
+    "sandbox:start": "node scripts/timefraim.mjs sandbox start",
+    "sandbox:stop": "node scripts/timefraim.mjs sandbox stop",
+    "sandbox:status": "node scripts/timefraim.mjs sandbox status",
     "dev": "corepack pnpm -r --parallel --filter @timefraim/server --filter @timefraim/web dev",
     "dev:web": "corepack pnpm --filter @timefraim/web dev",
     "dev:server": "corepack pnpm --filter @timefraim/server dev",
