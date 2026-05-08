@@ -52,6 +52,23 @@ describe("TaskPill", () => {
     expect(screen.getByText(/45 min/i).parentElement).toHaveClass("text-[var(--planner-surface-meta)]");
   });
 
+  it("uses the white selection border for the active task and exposes a white keyboard focus ring", () => {
+    const { container } = render(
+      <TaskPill
+        task={buildTask()}
+        active
+        onSelect={vi.fn()}
+      />,
+    );
+
+    const card = container.firstElementChild as HTMLElement;
+
+    expect(card).toHaveClass("border-[var(--timeline-selection-ring)]");
+    expect(card).toHaveClass("focus-visible:ring-[var(--timeline-selection-ring)]");
+    expect(card).not.toHaveClass("hover:border-[var(--panel-border-strong)]");
+    expect(card).not.toHaveClass("ring-[rgba(255,111,59,0.28)]");
+  });
+
   it("keeps the source card anchored and opaque during copy drags", () => {
     draggableState.transform = { x: 24, y: 12, scaleX: 1, scaleY: 1 };
     draggableState.isDragging = true;
