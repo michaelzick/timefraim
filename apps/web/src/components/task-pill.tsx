@@ -46,9 +46,9 @@ export function TaskPill({
       ref={setNodeRef}
       style={{ transform: dragTransform }}
       className={cn(
-        "group w-full cursor-pointer rounded-[24px] border p-4 text-left transition hover:border-[var(--panel-border-strong)]",
+        "group w-full cursor-pointer rounded-[24px] border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]",
         getTaskPriorityCardClass(task.priority),
-        active && "ring-2 ring-[rgba(255,111,59,0.28)]",
+        active && "border-[var(--timeline-selection-ring)]",
         isDragging && !isCopyDragSource && "opacity-65",
         runState === "running" && "adhd-pulse",
         runState === "done" && "opacity-60",
