@@ -55,7 +55,15 @@ describe("usePlannerMutations", () => {
     api.saveTogglConnection.mockResolvedValue({});
     api.startTimer.mockResolvedValue({ status: "applied", kind: "timer.start", diffSummary: "" });
     api.stopTimer.mockResolvedValue({ status: "applied", kind: "timer.stop", diffSummary: "" });
-    api.syncCalendar.mockResolvedValue({ date: "2026-04-06", events: [] });
+    api.syncCalendar.mockResolvedValue({
+      date: "2026-04-06",
+      events: [],
+      calendarSync: {
+        status: "fully_synced",
+        syncedAt: "2026-04-06T09:00:00.000Z",
+        hiddenEventCount: 0,
+      },
+    });
   });
 
   it("removes a hidden calendar blocker immediately and restores it if the request fails", async () => {
@@ -66,6 +74,11 @@ describe("usePlannerMutations", () => {
     queryClient.setQueryData<DayPlan>(
       key,
       buildDayPlan({
+        calendarSync: {
+          status: "fully_synced",
+          syncedAt: "2026-04-06T09:00:00.000Z",
+          hiddenEventCount: 0,
+        },
         calendarEvents: [
           {
             id: "calendar-1",
@@ -98,6 +111,11 @@ describe("usePlannerMutations", () => {
 
     await waitFor(() => {
       expect(queryClient.getQueryData<DayPlan>(key)?.calendarEvents).toHaveLength(0);
+      expect(queryClient.getQueryData<DayPlan>(key)?.calendarSync).toEqual({
+        status: "partially_synced",
+        syncedAt: "2026-04-06T09:00:00.000Z",
+        hiddenEventCount: 1,
+      });
     });
 
     deferred.reject(new Error("Dismiss failed"));
@@ -126,7 +144,15 @@ describe("usePlannerMutations", () => {
     };
 
     queryClient.setQueryData<DayPlan>(key, buildDayPlan({ calendarEvents: [] }));
-    api.syncCalendar.mockResolvedValue({ date: "2026-04-06", events: [restoredEvent] });
+    api.syncCalendar.mockResolvedValue({
+      date: "2026-04-06",
+      events: [restoredEvent],
+      calendarSync: {
+        status: "fully_synced",
+        syncedAt: "2026-04-06T09:05:00.000Z",
+        hiddenEventCount: 0,
+      },
+    });
 
     const onSuccess = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(
@@ -139,6 +165,11 @@ describe("usePlannerMutations", () => {
     });
 
     expect(queryClient.getQueryData<DayPlan>(key)?.calendarEvents).toEqual([restoredEvent]);
+    expect(queryClient.getQueryData<DayPlan>(key)?.calendarSync).toEqual({
+      status: "fully_synced",
+      syncedAt: "2026-04-06T09:05:00.000Z",
+      hiddenEventCount: 0,
+    });
     expect(onSuccess).toHaveBeenCalled();
   });
 });

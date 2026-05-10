@@ -31,7 +31,7 @@ vi.mock("@/components/timeline-board", () => ({
       <div>timeline board</div>
       <div data-testid="selected-calendar-event">{selectedCalendarEventId ?? "none"}</div>
       {calendarEvents[0] ? (
-        <>
+        <div data-planner-selectable="true">
           <button type="button" onClick={() => onSelectCalendarEvent(calendarEvents[0].id)}>
             Select calendar event
           </button>
@@ -41,7 +41,7 @@ vi.mock("@/components/timeline-board", () => ({
           >
             Hide calendar event
           </button>
-        </>
+        </div>
       ) : null}
     </div>
   ),
@@ -371,6 +371,72 @@ describe("PlannerPage", () => {
     expect(screen.queryByRole("tab", { name: "Timer" })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Activity" })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Drafts" })).not.toBeInTheDocument();
+  });
+
+  it("clears the selected task when clicking planner whitespace", async () => {
+    const user = userEvent.setup();
+
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    expect(screen.getByLabelText("Detail title")).toHaveValue("Plan launch week");
+
+    await user.click(screen.getByText("timeline board"));
+
+    expect(screen.queryByLabelText("Detail title")).not.toBeInTheDocument();
+    expect(screen.getByText("Select a task to refine notes, priority, lifecycle, and timers.")).toBeInTheDocument();
+  });
+
+  it("keeps the selected task when clicking inside the detail panel", async () => {
+    const user = userEvent.setup();
+
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    await user.click(screen.getByLabelText("Detail title"));
+
+    expect(screen.getByLabelText("Detail title")).toHaveValue("Plan launch week");
+  });
+
+  it("selects a queue task without the outside-click handler clearing it", async () => {
+    const user = userEvent.setup();
+
+    render(<PlannerPage {...buildPlannerPageProps()} />);
+
+    await user.click(screen.getByText("timeline board"));
+    await user.click(screen.getByText("Review roadmap"));
+
+    expect(screen.getByLabelText("Detail title")).toHaveValue("Review roadmap");
+  });
+
+  it("clears a selected calendar event when clicking outside timeline cards", async () => {
+    const user = userEvent.setup();
+    const dayPlan = buildDayPlan({
+      calendarEvents: [
+        {
+          id: "calendar-1",
+          externalEventId: "google-1",
+          title: "Team sync",
+          startAt: "2026-04-06T15:00:00.000Z",
+          endAt: "2026-04-06T15:30:00.000Z",
+          isAppManaged: false,
+          backgroundColor: null,
+          foregroundColor: null,
+          sourceCalendarId: null,
+          sourceCalendarName: null,
+          togglProjectId: null,
+        },
+      ],
+    });
+
+    render(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
+
+    await user.click(screen.getByRole("button", { name: /select calendar event/i }));
+    expect(screen.getByRole("heading", { name: "Calendar event" })).toBeInTheDocument();
+
+    await user.click(screen.getByText("timeline board"));
+
+    expect(screen.getByTestId("selected-calendar-event")).toHaveTextContent("none");
+    expect(screen.queryByRole("heading", { name: "Calendar event" })).not.toBeInTheDocument();
+    expect(screen.getByText("Select a task to refine notes, priority, lifecycle, and timers.")).toBeInTheDocument();
   });
 
   it("shows the running task and project name in the timer section", () => {

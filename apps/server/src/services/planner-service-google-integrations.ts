@@ -41,7 +41,7 @@ export function readGoogleSyncPlannerBlocksToCalendar(row: IntegrationRowWithMet
   return readBooleanMetadata(row, "syncPlannerBlocksToCalendar", true);
 }
 
-function buildGoogleConnection(row: IntegrationTokenRow | null): GoogleConnection | null {
+export function readGoogleConnection(row: IntegrationTokenRow | null): GoogleConnection | null {
   if (!row?.access_token) {
     return null;
   }
@@ -58,12 +58,12 @@ function buildGoogleConnection(row: IntegrationTokenRow | null): GoogleConnectio
 
 export async function getGoogleConnection(repository: PlannerRepository): Promise<GoogleConnection | null> {
   const row = await repository.getIntegrationToken("google", pool);
-  return buildGoogleConnection(row);
+  return readGoogleConnection(row);
 }
 
 export async function getGoogleCalendarSyncState(repository: PlannerRepository) {
   const row = await repository.getIntegrationToken("google", pool);
-  const connection = buildGoogleConnection(row);
+  const connection = readGoogleConnection(row);
   return {
     connection,
     syncPlannerBlocksToCalendar:
@@ -107,7 +107,7 @@ export async function saveGoogleSession(
 
 export async function getGoogleCalendarSettings(repository: PlannerRepository): Promise<GoogleCalendarSettings> {
   const row = await repository.getIntegrationToken("google", pool);
-  const connection = buildGoogleConnection(row);
+  const connection = readGoogleConnection(row);
   const plannerCalendarId = connection?.plannerCalendarId ?? env.GOOGLE_PLANNER_CALENDAR_ID;
   const savedSyncCalendarIds = readGoogleSyncCalendarIds(row);
   const syncPlannerBlocksToCalendar = readGoogleSyncPlannerBlocksToCalendar(row);
@@ -129,7 +129,7 @@ export async function saveGoogleCalendarSettings(
   input: GoogleCalendarSettingsUpdate,
 ) {
   const row = await repository.getIntegrationToken("google", pool);
-  const connection = buildGoogleConnection(row);
+  const connection = readGoogleConnection(row);
 
   if (!row || !connection) {
     throw dependencyUnavailable("Google integration not connected");

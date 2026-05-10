@@ -38,6 +38,17 @@ export type CalendarEventRecord = {
   updatedAt: string;
 };
 
+export type CalendarSyncRunRecord = {
+  id: string;
+  provider: "google";
+  plannerDate: string;
+  tzOffsetMinutes: number;
+  sourceCalendarIds: string[];
+  syncedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type UserTogglConnectionRecord = {
   userId: string;
   apiTokenCiphertext: string;

@@ -67,6 +67,11 @@ export function buildDayPlan(overrides: Partial<DayPlan> = {}): DayPlan {
       mcpReadOnlyConfigured: true,
       tunnelBaseUrl: "https://example.ngrok.app",
     },
+    calendarSync: {
+      status: "not_synced",
+      syncedAt: null,
+      hiddenEventCount: 0,
+    },
     ...overrides,
   };
 }

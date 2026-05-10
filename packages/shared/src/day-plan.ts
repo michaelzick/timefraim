@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { calendarSyncSchema } from "./calendar-sync.js";
 import { actorRoleSchema, syncDraftSchema } from "./drafts.js";
 import { integrationStatusSchema } from "./integration.js";
 import { calendarEventViewSchema, timerSessionSchema, scheduleBlockSchema } from "./schedule.js";
@@ -25,6 +26,7 @@ export const dayPlanSchema = z.object({
   auditLogs: z.array(auditLogSchema),
   activeTimer: timerSessionSchema.nullable(),
   integrationStatus: integrationStatusSchema,
+  calendarSync: calendarSyncSchema,
 });
 
 export const dayQuerySchema = z.object({

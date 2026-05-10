@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { calendarSyncSchema } from "./calendar-sync.js";
 import { draftKindSchema } from "./drafts.js";
 import { calendarEventViewSchema } from "./schedule.js";
 
@@ -34,6 +35,7 @@ export const plannerDuplicateResultSchema = plannerMutationResultSchema.extend({
 export const calendarSyncResultSchema = z.object({
   date: z.string(),
   events: z.array(calendarEventViewSchema),
+  calendarSync: calendarSyncSchema,
 });
 
 export type PlannerMutationResult = z.infer<typeof plannerMutationResultSchema>;

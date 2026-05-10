@@ -21,7 +21,7 @@ describe("api-client", () => {
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(
-        new Response(JSON.stringify({ date: "2026-04-16", tasks: [], scheduleBlocks: [], calendarEvents: [], drafts: [], auditLogs: [], activeTimer: null, integrationStatus: { googleConnected: false, googleEmail: null, googleCalendarId: "primary", togglConnected: false, togglWorkspaceId: null, togglWorkspaceName: null, togglDefaultProjectId: null, togglDefaultProjectName: null, togglHasSavedToken: false, togglApiTokenHint: null, mcpFullAccessConfigured: false, mcpReadOnlyConfigured: false, tunnelBaseUrl: null } }), { status: 200 }),
+        new Response(JSON.stringify({ date: "2026-04-16", tasks: [], scheduleBlocks: [], calendarEvents: [], drafts: [], auditLogs: [], activeTimer: null, integrationStatus: { googleConnected: false, googleEmail: null, googleCalendarId: "primary", togglConnected: false, togglWorkspaceId: null, togglWorkspaceName: null, togglDefaultProjectId: null, togglDefaultProjectName: null, togglHasSavedToken: false, togglApiTokenHint: null, mcpFullAccessConfigured: false, mcpReadOnlyConfigured: false, tunnelBaseUrl: null }, calendarSync: { status: "not_synced", syncedAt: null, hiddenEventCount: 0 } }), { status: 200 }),
       );
 
     await plannerApi.getDayPlan("session-token", "2026-04-16", -420);

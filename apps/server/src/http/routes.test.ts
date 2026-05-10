@@ -51,7 +51,11 @@ function createBasePlannerServiceMock() {
     rejectDraft: vi.fn().mockResolvedValue({ id: "draft-1" }),
     saveGoogleSession: vi.fn().mockResolvedValue({ ok: true }),
     saveTogglConnection: vi.fn().mockResolvedValue({ ok: true }),
-    syncGoogleCalendar: vi.fn().mockResolvedValue([]),
+    syncGoogleCalendar: vi.fn().mockResolvedValue({
+      date: "2026-04-06",
+      events: [],
+      calendarSync: { status: "fully_synced", syncedAt: "2026-04-06T09:00:00.000Z", hiddenEventCount: 0 },
+    }),
   };
 }
 

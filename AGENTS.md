@@ -97,12 +97,13 @@ Migrations live in `supabase/migrations/` (timestamp-prefixed, applied in order)
 | `calendar_events` | Synced external events: provider, external_event_id, raw_payload JSONB. |
 | `integration_tokens` | Encrypted OAuth/API tokens keyed by provider; metadata JSONB. |
 | `sync_drafts` | Pending/applied change proposals: kind, payload, actor_role, expires_at. |
+| `calendar_sync_runs` | Per-day Google Calendar sync markers keyed by date, timezone, and source calendar set. |
 | `timer_sessions` | Active/finished Toggl timers: task_id, toggl_entry_id, duration_seconds. |
 | `audit_logs` | Append-only change log. |
 
 Conventions: UUID PKs (`gen_random_uuid()`), `timestamptz` for every date, `updated_at` trigger on mutable tables, FK `on delete cascade`, indexes on time ranges and common filters.
 
-Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event.
+Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event, per-day calendar sync runs.
 
 ## 6. External integrations
 

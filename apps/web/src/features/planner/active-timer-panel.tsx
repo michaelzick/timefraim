@@ -53,6 +53,7 @@ export function ActiveTimerPanel({
         {activeTimer.taskId && onSelectTimerTask ? (
           <button
             type="button"
+            data-planner-selectable="true"
             className="cursor-pointer text-sm text-[var(--muted-strong)] underline-offset-4 hover:text-[var(--heading)] hover:underline"
             onClick={() => onSelectTimerTask(activeTimer.taskId as string)}
           >

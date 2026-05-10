@@ -61,7 +61,10 @@ function createRepositoryMock() {
   return {
     getActiveTimer: vi.fn().mockResolvedValue(null),
     getIntegrationStatus: vi.fn().mockReturnValue(integrationStatus),
+    getIntegrationToken: vi.fn().mockResolvedValue(null),
+    getCalendarSyncRun: vi.fn().mockResolvedValue(null),
     getUserTogglConnection: vi.fn().mockResolvedValue(null),
+    countHiddenCalendarEventsForRange: vi.fn().mockResolvedValue(0),
     listCalendarEventsForRange: vi.fn().mockResolvedValue([]),
     listDrafts: vi.fn().mockResolvedValue([]),
     listIntegrationTokens: vi.fn().mockResolvedValue([]),
@@ -79,5 +82,113 @@ describe("PlannerService.getDayPlan", () => {
     const dayPlan = await service.getDayPlan("user-1", "2026-04-20", 0);
 
     expect(dayPlan.auditLogs[0]?.displaySummary).toBe('Start timer for task "Journal"');
+    expect(dayPlan.calendarSync).toEqual({
+      status: "not_synced",
+      syncedAt: null,
+      hiddenEventCount: 0,
+    });
+  });
+
+  it("returns a fully synced calendar status for a matching sync run", async () => {
+    const repository = createRepositoryMock();
+    repository.getIntegrationToken.mockResolvedValue({
+      provider: "google",
+      access_token: "google-token",
+      refresh_token: null,
+      expires_at: null,
+      metadata: {
+        calendarId: "primary",
+        email: "allowed@example.com",
+      },
+    });
+    repository.getCalendarSyncRun.mockResolvedValue({
+      id: "sync-run-1",
+      provider: "google",
+      plannerDate: "2026-04-20",
+      tzOffsetMinutes: 0,
+      sourceCalendarIds: ["primary"],
+      syncedAt: "2026-04-20T09:00:00.000Z",
+      createdAt: "2026-04-20T09:00:00.000Z",
+      updatedAt: "2026-04-20T09:00:00.000Z",
+    });
+
+    const service = new PlannerService(repository as never);
+
+    const dayPlan = await service.getDayPlan("user-1", "2026-04-20", 0);
+
+    expect(dayPlan.calendarSync).toEqual({
+      status: "fully_synced",
+      syncedAt: "2026-04-20T09:00:00.000Z",
+      hiddenEventCount: 0,
+    });
+  });
+
+  it("returns a partially synced calendar status when synced events are hidden", async () => {
+    const repository = createRepositoryMock();
+    repository.getIntegrationToken.mockResolvedValue({
+      provider: "google",
+      access_token: "google-token",
+      refresh_token: null,
+      expires_at: null,
+      metadata: {
+        calendarId: "primary",
+        email: "allowed@example.com",
+      },
+    });
+    repository.getCalendarSyncRun.mockResolvedValue({
+      id: "sync-run-1",
+      provider: "google",
+      plannerDate: "2026-04-20",
+      tzOffsetMinutes: 0,
+      sourceCalendarIds: ["primary"],
+      syncedAt: "2026-04-20T09:00:00.000Z",
+      createdAt: "2026-04-20T09:00:00.000Z",
+      updatedAt: "2026-04-20T09:00:00.000Z",
+    });
+    repository.countHiddenCalendarEventsForRange.mockResolvedValue(2);
+
+    const service = new PlannerService(repository as never);
+
+    const dayPlan = await service.getDayPlan("user-1", "2026-04-20", 0);
+
+    expect(dayPlan.calendarSync).toEqual({
+      status: "partially_synced",
+      syncedAt: "2026-04-20T09:00:00.000Z",
+      hiddenEventCount: 2,
+    });
+  });
+
+  it("uses selected source calendars as part of the sync-run lookup", async () => {
+    const repository = createRepositoryMock();
+    repository.getIntegrationToken.mockResolvedValue({
+      provider: "google",
+      access_token: "google-token",
+      refresh_token: null,
+      expires_at: null,
+      metadata: {
+        calendarId: "primary",
+        email: "allowed@example.com",
+        syncCalendarIds: ["work", "primary"],
+      },
+    });
+
+    const service = new PlannerService(repository as never);
+
+    const dayPlan = await service.getDayPlan("user-1", "2026-04-20", -420);
+
+    expect(repository.getCalendarSyncRun).toHaveBeenCalledWith(
+      {
+        provider: "google",
+        plannerDate: "2026-04-20",
+        tzOffsetMinutes: -420,
+        sourceCalendarIds: ["primary", "work"],
+      },
+      fakeDb,
+    );
+    expect(dayPlan.calendarSync).toEqual({
+      status: "not_synced",
+      syncedAt: null,
+      hiddenEventCount: 0,
+    });
   });
 });

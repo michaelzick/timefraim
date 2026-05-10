@@ -38,7 +38,7 @@ export function CalendarEventDetailCard({
     event.togglProjectId && projectOptions[0]?.id === event.togglProjectId && projectOptions[0]?.name.startsWith("Missing project");
 
   return (
-    <Card ref={detailPanelRef}>
+    <Card ref={detailPanelRef} data-planner-detail-panel="true">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Focus</p>
