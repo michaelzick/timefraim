@@ -3,7 +3,7 @@ import { pool } from "../db/pool.js";
 import { syncGoogleCalendarWindow } from "../integration/google-calendar.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
 import {
-  getGoogleConnection,
+  readGoogleConnection,
   readGoogleSyncCalendarIds,
 } from "./planner-service-integrations.js";
 import {
@@ -11,19 +11,14 @@ import {
   recordGoogleCalendarSync,
 } from "./planner-service-calendar-sync.js";
 
-function getSyncCalendarIds(repository: PlannerRepository): Promise<string[] | undefined> {
-  return repository.getIntegrationToken("google", pool).then((row) => {
-    return readGoogleSyncCalendarIds(row);
-  });
-}
-
 export async function syncPlannerGoogleCalendar(
   repository: PlannerRepository,
   date: string,
   tzOffsetMinutes: number,
 ): Promise<CalendarSyncResult> {
-  const connection = await getGoogleConnection(repository);
-  const syncCalendarIds = await getSyncCalendarIds(repository);
+  const row = await repository.getIntegrationToken("google", pool);
+  const connection = readGoogleConnection(row);
+  const syncCalendarIds = readGoogleSyncCalendarIds(row);
   const scope = buildGoogleCalendarSyncScope({ connection, date, syncCalendarIds, tzOffsetMinutes });
   if (!connection) {
     const events = await repository.listCalendarEventsForRange(scope.range, pool);

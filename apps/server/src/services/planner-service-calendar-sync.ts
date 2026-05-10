@@ -3,7 +3,7 @@ import { pool } from "../db/pool.js";
 import type { GoogleConnection } from "../integration/google-calendar.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
 import { endOfDay, startOfDay } from "../utils/date.js";
-import { getGoogleConnection, readGoogleSyncCalendarIds } from "./planner-service-integrations.js";
+import { readGoogleConnection, readGoogleSyncCalendarIds } from "./planner-service-integrations.js";
 
 const NOT_SYNCED: CalendarSync = {
   status: "not_synced",
@@ -58,12 +58,9 @@ export async function getGoogleCalendarSyncScope(
   date: string,
   tzOffsetMinutes: number,
 ) {
-  const [connection, row] = await Promise.all([
-    getGoogleConnection(repository),
-    repository.getIntegrationToken("google", pool),
-  ]);
+  const row = await repository.getIntegrationToken("google", pool);
   return buildGoogleCalendarSyncScope({
-    connection,
+    connection: readGoogleConnection(row),
     date,
     syncCalendarIds: readGoogleSyncCalendarIds(row),
     tzOffsetMinutes,

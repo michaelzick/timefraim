@@ -3,6 +3,7 @@ export {
   getGoogleCalendarSyncState,
   getGoogleCalendarSettings,
   readGoogleSyncCalendarIds,
+  readGoogleConnection,
   saveGoogleCalendarSettings,
   saveGoogleSession,
 } from "./planner-service-google-integrations.js";
