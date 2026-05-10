@@ -76,7 +76,10 @@ export function usePlannerPageController({
       }),
     [dayPlan.tasks, filteredQueueTasks, selectedTaskState.taskId, selectedTaskState.source],
   );
-  const selectedTask = plannerSelection.type === "calendar-event" ? null : resolvedTaskSelection.selectedTask;
+  const selectedTask =
+    plannerSelection.type === "queue-task" || plannerSelection.type === "timeline-task"
+      ? resolvedTaskSelection.selectedTask
+      : null;
   const selectedCalendarEvent = resolveSelectedCalendarEvent(plannerSelection, dayPlan.calendarEvents);
   const mutationHandlers = createPlannerMutationHandlers({
     selectedTask,
@@ -99,7 +102,7 @@ export function usePlannerPageController({
   const selectedTimelineCalendarEventId = getSelectedCalendarEventId(plannerSelection);
 
   useEffect(() => {
-    if (plannerSelection.type === "calendar-event") {
+    if (plannerSelection.type === "calendar-event" || plannerSelection.type === "none") {
       return;
     }
 
@@ -123,6 +126,17 @@ export function usePlannerPageController({
     selectedTaskState.source,
     selectedTaskState.taskId,
   ]);
+
+  function handleClearSelection() {
+    if (plannerSelection.type === "none" && selectedTaskState.taskId === null) {
+      return;
+    }
+
+    startTransition(() => {
+      setSelectedTaskState({ taskId: null, source: "queue" });
+      setPlannerSelection({ type: "none" });
+    });
+  }
 
   const {
     handleCreateTask,
@@ -148,6 +162,7 @@ export function usePlannerPageController({
     onUpdateCalendarEvent,
     plannerSelection,
     resolvedTaskSelection,
+    selectedTaskState,
     selectedCalendarEvent,
     selectedTask,
     setPlannerSelection,
@@ -168,6 +183,7 @@ export function usePlannerPageController({
     handleCreateTask,
     handleDismissCalendarEvent,
     handleDragEnd,
+    handleClearSelection,
     handleSaveCalendarEvent,
     handleSaveTask,
     handleSelectCalendarEvent,

@@ -1,11 +1,11 @@
-import { dayPlanSchema, formatDraftSummary, type ActorRole, type DraftKind, type GoogleCalendarSettingsUpdate, type ScheduleBlockDuplicatePayload, type TaskDuplicatePayload } from "@timefraim/shared";
+import { formatDraftSummary, type ActorRole, type DraftKind, type GoogleCalendarSettingsUpdate, type ScheduleBlockDuplicatePayload, type TaskDuplicatePayload } from "@timefraim/shared";
 import { env } from "../config/env.js";
 import { pool, withTransaction } from "../db/pool.js";
 import { PlannerRepository } from "../repositories/planner-repository.js";
-import { endOfDay, startOfDay, todayIsoDate } from "../utils/date.js";
+import { todayIsoDate } from "../utils/date.js";
 import { applyPlannerDraft } from "./planner-service-apply.js";
-import { resolveAuditLogDisplaySummaries } from "./planner-audit-log-display.js";
 import { syncPlannerGoogleCalendar } from "./planner-service-calendar.js";
+import { getPlannerDayPlan } from "./planner-service-day-plan.js";
 import {
   duplicateScheduleBlockForUser,
   duplicateTaskForUser,
@@ -69,32 +69,12 @@ export class PlannerService {
     return getGoogleCalendarSettings(this.repository);
   }
   async getDayPlan(userId: string | null = null, date = todayIsoDate(), tzOffsetMinutes = 0) {
-    const effectiveUserId = userId ?? await getAllowedPlannerUserId(this.repository);
-    const range = {
-      startAt: startOfDay(date, tzOffsetMinutes).toISOString(),
-      endAt: endOfDay(date, tzOffsetMinutes).toISOString(),
-    };
-
-    const [tasks, scheduleBlocks, calendarEvents, drafts, auditLogs, activeTimer, integrationStatus] =
-      await Promise.all([
-        this.repository.listTasks(pool),
-        this.repository.listScheduleBlocksForRange(range, pool),
-        this.repository.listCalendarEventsForRange(range, pool),
-        this.repository.listDrafts("pending", effectiveUserId, pool),
-        this.repository.listRecentAuditLogs(pool),
-        this.repository.getActiveTimer(pool),
-        this.getIntegrationStatus(effectiveUserId),
-      ]);
-
-    return dayPlanSchema.parse({
+    return getPlannerDayPlan({
+      repository: this.repository,
+      userId,
       date,
-      tasks,
-      scheduleBlocks,
-      calendarEvents,
-      drafts,
-      auditLogs: resolveAuditLogDisplaySummaries(auditLogs, { tasks, scheduleBlocks, calendarEvents }),
-      activeTimer,
-      integrationStatus,
+      tzOffsetMinutes,
+      getIntegrationStatus: (effectiveUserId) => this.getIntegrationStatus(effectiveUserId),
     });
   }
   async syncGoogleCalendar(date = todayIsoDate(), tzOffsetMinutes = 0) { return syncPlannerGoogleCalendar(this.repository, date, tzOffsetMinutes); }

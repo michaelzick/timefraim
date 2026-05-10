@@ -1,4 +1,5 @@
 export * from "./api.js";
+export * from "./calendar-sync.js";
 export * from "./date.js";
 export * from "./day-plan.js";
 export * from "./drafts.js";

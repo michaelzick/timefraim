@@ -113,6 +113,18 @@ function createRepositoryMock() {
     updateDraftStatus: vi.fn(),
     updateScheduleBlock: vi.fn(),
     updateTask: vi.fn(),
+    countHiddenCalendarEventsForRange: vi.fn().mockResolvedValue(0),
+    getCalendarSyncRun: vi.fn(),
+    upsertCalendarSyncRun: vi.fn().mockResolvedValue({
+      id: "sync-run-1",
+      provider: "google",
+      plannerDate: "2026-04-06",
+      tzOffsetMinutes: 0,
+      sourceCalendarIds: ["primary"],
+      syncedAt: "2026-04-06T09:00:00.000Z",
+      createdAt: "2026-04-06T09:00:00.000Z",
+      updatedAt: "2026-04-06T09:00:00.000Z",
+    }),
     upsertCalendarEvent: vi.fn(),
     upsertIntegrationToken: vi.fn(),
     deleteStaleCalendarEvents: vi.fn(),
@@ -891,5 +903,41 @@ describe("planner-service", () => {
       }),
       fakeDb,
     );
+  });
+
+  it("records the selected calendar set when a manual calendar sync succeeds", async () => {
+    const repository = createRepositoryMock();
+    repository.getIntegrationToken.mockResolvedValue({
+      provider: "google",
+      access_token: "google-token",
+      refresh_token: null,
+      expires_at: null,
+      metadata: {
+        calendarId: "primary",
+        email: "allowed@example.com",
+        syncCalendarIds: ["work", "primary"],
+      },
+    });
+    repository.listCalendarEventsForRange.mockResolvedValue([]);
+    syncGoogleCalendarWindow.mockResolvedValueOnce([]);
+
+    const service = new PlannerService(repository as never);
+
+    const result = await service.syncGoogleCalendar("2026-04-06", -420);
+
+    expect(repository.upsertCalendarSyncRun).toHaveBeenCalledWith(
+      {
+        provider: "google",
+        plannerDate: "2026-04-06",
+        tzOffsetMinutes: -420,
+        sourceCalendarIds: ["primary", "work"],
+      },
+      fakeDb,
+    );
+    expect(result.calendarSync).toEqual({
+      status: "fully_synced",
+      syncedAt: "2026-04-06T09:00:00.000Z",
+      hiddenEventCount: 0,
+    });
   });
 });

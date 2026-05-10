@@ -1,5 +1,5 @@
 import { DndContext, DragOverlay, pointerWithin, type DragStartEvent } from "@dnd-kit/core";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import { ActiveDragPreview, type ActiveDragPayload } from "@/features/planner/active-drag-preview";
 import { PlannerDetailColumn, PlannerQueueColumn, PlannerTimelineColumn } from "@/features/planner/planner-page-columns";
 import { PlannerToolbar } from "@/features/planner/planner-toolbar";
@@ -40,6 +40,7 @@ export function PlannerPage({
     handleCreateTask,
     handleDismissCalendarEvent,
     handleDragEnd,
+    handleClearSelection,
     handleSaveCalendarEvent,
     handleSaveTask,
     handleSelectCalendarEvent,
@@ -81,6 +82,19 @@ export function PlannerPage({
   };
   const clearActiveDrag = () => setActiveDrag(null);
 
+  const handlePlannerSurfaceClick = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (
+      target.closest(
+        "[data-planner-selectable='true'], [data-planner-detail-panel='true'], [data-planner-preserve-selection='true']",
+      )
+    ) {
+      return;
+    }
+    handleClearSelection();
+  };
+
   const activeDragPayload = activeDrag ? applyCopyIntent(activeDrag, isAltPressed) : null;
   const copyDragTaskId = activeDrag?.dragType === "queue-task" && isAltPressed ? activeDrag.task.id : null;
   const copyDragScheduleBlockId =
@@ -102,10 +116,11 @@ export function PlannerPage({
       }}
       onDragCancel={clearActiveDrag}
     >
-      <div className="space-y-6">
+      <div className="space-y-6" onClick={handlePlannerSurfaceClick}>
         <PlannerToolbar
           date={date}
           isSyncing={isSyncing}
+          calendarSync={dayPlan.calendarSync}
           linkedGoogleEmail={linkedGoogleEmail}
           onDateChange={onDateChange}
           onSyncCalendar={() => void onSyncCalendar()}

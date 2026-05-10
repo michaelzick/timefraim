@@ -1,5 +1,5 @@
-import { stepLocalDate } from "@timefraim/shared";
-import { ChevronLeft, ChevronRight, LoaderCircle, RefreshCcw } from "lucide-react";
+import { stepLocalDate, type CalendarSync } from "@timefraim/shared";
+import { ChevronLeft, ChevronRight, CircleCheck, CircleMinus, LoaderCircle, RefreshCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ type PlannerToolbarProps = {
   date: string;
   isSyncing: boolean;
   linkedGoogleEmail: string | null;
+  calendarSync: CalendarSync;
   onDateChange: (nextDate: string) => void;
   onSyncCalendar: () => void;
 };
@@ -17,6 +18,7 @@ export function PlannerToolbar({
   date,
   isSyncing,
   linkedGoogleEmail,
+  calendarSync,
   onDateChange,
   onSyncCalendar,
 }: PlannerToolbarProps) {
@@ -84,12 +86,33 @@ export function PlannerToolbar({
             Sync calendar
           </Button>
           {linkedGoogleEmail ? (
-            <Badge className="min-w-0 max-w-full truncate xl:order-6 xl:ml-3">
+            <Badge className="min-w-0 max-w-full gap-1.5 truncate xl:order-6 xl:ml-3">
+              <CalendarSyncIndicator calendarSync={calendarSync} />
               Synced with {linkedGoogleEmail}
             </Badge>
           ) : null}
         </div>
       </div>
     </section>
+  );
+}
+
+function CalendarSyncIndicator({ calendarSync }: { calendarSync: CalendarSync }) {
+  if (calendarSync.status === "not_synced") {
+    return null;
+  }
+
+  const isPartial = calendarSync.status === "partially_synced";
+  const Icon = isPartial ? CircleMinus : CircleCheck;
+  const label = isPartial ? "Calendar partially synced" : "Calendar fully synced";
+
+  return (
+    <span
+      aria-label={label}
+      className={isPartial ? "shrink-0 text-amber-300" : "shrink-0 text-emerald-400"}
+      title={label}
+    >
+      <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+    </span>
   );
 }

@@ -76,6 +76,14 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
           ? {
               ...current,
               calendarEvents: current.calendarEvents.filter((event) => event.id !== calendarEventId),
+              calendarSync:
+                current.calendarSync.status === "not_synced"
+                  ? current.calendarSync
+                  : {
+                      ...current.calendarSync,
+                      status: "partially_synced",
+                      hiddenEventCount: current.calendarSync.hiddenEventCount + 1,
+                    },
             }
           : current,
       );
@@ -116,6 +124,7 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
           ? {
               ...current,
               calendarEvents: result.events,
+              calendarSync: result.calendarSync,
             }
           : current,
       );

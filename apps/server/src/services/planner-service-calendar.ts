@@ -1,11 +1,15 @@
+import type { CalendarSyncResult } from "@timefraim/shared";
 import { pool } from "../db/pool.js";
 import { syncGoogleCalendarWindow } from "../integration/google-calendar.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
-import { endOfDay, startOfDay } from "../utils/date.js";
 import {
   getGoogleConnection,
   readGoogleSyncCalendarIds,
 } from "./planner-service-integrations.js";
+import {
+  buildGoogleCalendarSyncScope,
+  recordGoogleCalendarSync,
+} from "./planner-service-calendar-sync.js";
 
 function getSyncCalendarIds(repository: PlannerRepository): Promise<string[] | undefined> {
   return repository.getIntegrationToken("google", pool).then((row) => {
@@ -17,14 +21,24 @@ export async function syncPlannerGoogleCalendar(
   repository: PlannerRepository,
   date: string,
   tzOffsetMinutes: number,
-) {
+): Promise<CalendarSyncResult> {
   const connection = await getGoogleConnection(repository);
   const syncCalendarIds = await getSyncCalendarIds(repository);
-  const range = {
-    timeMin: startOfDay(date, tzOffsetMinutes).toISOString(),
-    timeMax: endOfDay(date, tzOffsetMinutes).toISOString(),
-  };
-  const records = await syncGoogleCalendarWindow(connection, range, syncCalendarIds);
+  const scope = buildGoogleCalendarSyncScope({ connection, date, syncCalendarIds, tzOffsetMinutes });
+  if (!connection) {
+    const events = await repository.listCalendarEventsForRange(scope.range, pool);
+    return {
+      date,
+      events,
+      calendarSync: { status: "not_synced", syncedAt: null, hiddenEventCount: 0 },
+    };
+  }
+
+  const records = await syncGoogleCalendarWindow(
+    connection,
+    { timeMin: scope.range.startAt, timeMax: scope.range.endAt },
+    syncCalendarIds,
+  );
 
   const syncedExternalEventIds: string[] = [];
   for (const record of records) {
@@ -49,13 +63,17 @@ export async function syncPlannerGoogleCalendar(
     );
   }
 
-  const effectiveCalendarIds = syncCalendarIds ?? [connection?.calendarId ?? "primary"];
   await repository.deleteStaleCalendarEvents(
-    { startAt: range.timeMin, endAt: range.timeMax },
+    scope.range,
     syncedExternalEventIds,
-    effectiveCalendarIds,
+    scope.runInput.sourceCalendarIds,
     pool,
   );
 
-  return repository.listCalendarEventsForRange({ startAt: range.timeMin, endAt: range.timeMax }, pool);
+  const events = await repository.listCalendarEventsForRange(scope.range, pool);
+  return {
+    date,
+    events,
+    calendarSync: await recordGoogleCalendarSync(repository, scope),
+  };
 }

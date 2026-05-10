@@ -77,6 +77,7 @@ export function TimelineScheduleBlock({
   return (
     <div
       ref={setNodeRef}
+      data-planner-selectable="true"
       style={{
         top: placement.top,
         height: placement.height,

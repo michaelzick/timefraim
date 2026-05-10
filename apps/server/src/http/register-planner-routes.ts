@@ -19,7 +19,7 @@ export function registerPlannerRoutes(app: FastifyInstance, plannerService: Plan
     "/api/calendar/sync",
     withAuthenticatedRoute(async (request) => {
       const { date, tz } = parseDayQuery(request.query);
-      return { date, events: await plannerService.syncGoogleCalendar(date, tz) };
+      return plannerService.syncGoogleCalendar(date, tz);
     }),
   );
   registerPlannerMutationRoutes(app, plannerService);

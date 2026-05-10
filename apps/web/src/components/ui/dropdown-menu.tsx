@@ -14,6 +14,7 @@ export const DropdownMenuContent = forwardRef<
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
+      data-planner-preserve-selection="true"
       sideOffset={sideOffset}
       className={cn(
         "z-50 min-w-[180px] overflow-hidden rounded-2xl border border-[var(--panel-border)] bg-[var(--overlay)] p-1 text-sm text-[var(--text)] shadow-[var(--shadow-elevated)] backdrop-blur-xl",

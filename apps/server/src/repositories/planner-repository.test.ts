@@ -136,6 +136,64 @@ describe("planner-repository", () => {
     expect(event?.dismissedExternalUpdatedAt).toBe("2026-04-06T08:00:00.000Z");
   });
 
+  it("upserts calendar sync runs by date, timezone, and selected source calendars", async () => {
+    const db = {
+      query: vi.fn().mockResolvedValue({
+        rows: [
+          {
+            id: "59902b89-4476-49d4-a15c-8fbac75cb5c5",
+            provider: "google",
+            planner_date: "2026-04-06",
+            tz_offset_minutes: -420,
+            source_calendar_ids: ["primary", "work"],
+            synced_at: "2026-04-06T09:00:00.000Z",
+            created_at: "2026-04-06T09:00:00.000Z",
+            updated_at: "2026-04-06T09:00:00.000Z",
+          },
+        ],
+      }),
+    };
+    const repository = new PlannerRepository();
+
+    const run = await repository.upsertCalendarSyncRun(
+      {
+        provider: "google",
+        plannerDate: "2026-04-06",
+        tzOffsetMinutes: -420,
+        sourceCalendarIds: ["primary", "work"],
+      },
+      db as never,
+    );
+
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining("on conflict (provider, planner_date, tz_offset_minutes, source_calendar_ids)"),
+      ["google", "2026-04-06", -420, ["primary", "work"]],
+    );
+    expect(run.syncedAt).toBe("2026-04-06T09:00:00.000Z");
+  });
+
+  it("counts locally hidden calendar rows for the current source calendar set", async () => {
+    const db = {
+      query: vi.fn().mockResolvedValue({ rows: [{ hidden_count: 2 }] }),
+    };
+    const repository = new PlannerRepository();
+
+    const count = await repository.countHiddenCalendarEventsForRange(
+      {
+        startAt: "2026-04-06T00:00:00.000Z",
+        endAt: "2026-04-07T00:00:00.000Z",
+      },
+      ["primary", "work"],
+      db as never,
+    );
+
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining("dismissed_external_updated_at is not null"),
+      ["2026-04-06T00:00:00.000Z", "2026-04-07T00:00:00.000Z", ["primary", "work"]],
+    );
+    expect(count).toBe(2);
+  });
+
   it("stores Toggl catalogs as jsonb strings and maps the saved row", async () => {
     const availableWorkspaces = [{ id: "workspace-1", name: "Personal" }];
     const availableProjects = [{ id: "project-1", name: "Deep Work", workspaceId: "workspace-1", active: true }];

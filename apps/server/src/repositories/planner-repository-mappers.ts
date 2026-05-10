@@ -10,7 +10,11 @@ import {
 } from "@timefraim/shared";
 import type { QueryResultRow } from "pg";
 import { asIso } from "../utils/date.js";
-import type { CalendarEventRecord, UserTogglConnectionRecord } from "./planner-repository-types.js";
+import type {
+  CalendarEventRecord,
+  CalendarSyncRunRecord,
+  UserTogglConnectionRecord,
+} from "./planner-repository-types.js";
 
 function toDateOnly(value: unknown): string | null {
   if (!value) return null;
@@ -82,6 +86,19 @@ export function mapCalendarEventRecord(row: QueryResultRow): CalendarEventRecord
     sourceCalendarId: row.source_calendar_id ?? null,
     sourceCalendarName: row.source_calendar_name ?? null,
     togglProjectId: row.toggl_project_id ?? null,
+    createdAt: asIso(row.created_at)!,
+    updatedAt: asIso(row.updated_at)!,
+  };
+}
+
+export function mapCalendarSyncRun(row: QueryResultRow): CalendarSyncRunRecord {
+  return {
+    id: row.id,
+    provider: "google",
+    plannerDate: toDateOnly(row.planner_date)!,
+    tzOffsetMinutes: row.tz_offset_minutes,
+    sourceCalendarIds: Array.isArray(row.source_calendar_ids) ? row.source_calendar_ids : [],
+    syncedAt: asIso(row.synced_at)!,
     createdAt: asIso(row.created_at)!,
     updatedAt: asIso(row.updated_at)!,
   };

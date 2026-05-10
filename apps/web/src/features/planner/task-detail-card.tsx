@@ -50,7 +50,7 @@ export function TaskDetailCard({
   const projectOptions = getTogglProjectOptions(togglSettings, selectedTask?.togglProjectId ?? null);
 
   return (
-    <Card ref={detailPanelRef}>
+    <Card ref={detailPanelRef} data-planner-detail-panel="true">
       <PlannerSectionHeader
         eyebrow="Focus"
         title="Task detail"

@@ -39,6 +39,10 @@ export function createPlannerPageHandlers(args: {
     selectedTaskId: string | null;
     selectedTaskSource: SelectedTaskSource;
   };
+  selectedTaskState: {
+    taskId: string | null;
+    source: SelectedTaskSource;
+  };
   selectedCalendarEvent: { id: string } | null;
   selectedTask: Parameters<typeof buildPlannerTaskUpdateInput>[0] | null;
   setPlannerSelection: (selection: PlannerSelection) => void;
@@ -103,7 +107,7 @@ export function createPlannerPageHandlers(args: {
   }
 
   function buildFallbackPlannerSelection(): PlannerSelection {
-    if (!args.resolvedTaskSelection.selectedTaskId) {
+    if (!args.selectedTaskState.taskId || !args.resolvedTaskSelection.selectedTaskId) {
       return { type: "none" };
     }
 

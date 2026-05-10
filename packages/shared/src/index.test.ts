@@ -47,6 +47,11 @@ describe("shared barrel exports", () => {
       calendarSyncResultSchema.parse({
         date: "2026-04-06",
         events: [],
+        calendarSync: {
+          status: "fully_synced",
+          syncedAt: "2026-04-06T09:00:00.000Z",
+          hiddenEventCount: 0,
+        },
       }).date,
     ).toBe("2026-04-06");
 

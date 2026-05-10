@@ -44,6 +44,7 @@ export function TaskPill({
   return (
     <div
       ref={setNodeRef}
+      data-planner-selectable="true"
       style={{ transform: dragTransform }}
       className={cn(
         "group w-full cursor-pointer rounded-[24px] border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]",

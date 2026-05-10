@@ -51,6 +51,7 @@ export function TimelineBoardCalendarEvent({
   return (
     <div
       key={event.id}
+      data-planner-selectable="true"
       className={cn(
         "absolute left-2 right-2 cursor-pointer overflow-hidden rounded-[24px] border px-3 text-sm sm:left-3 sm:right-3 sm:px-4",
         isShort ? "py-0" : "py-3 sm:py-4",
