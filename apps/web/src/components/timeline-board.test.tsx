@@ -85,10 +85,9 @@ describe("TimelineBoard", () => {
     expect(item.style.borderColor).toBe("rgb(99, 116, 173)");
     expect(item.style.borderWidth).toBe("3px");
     expect(item.style.color).toBe("var(--calendar-event-title)");
-    expect(getTimelineItem("Ship planner polish")).toHaveClass(
-      "bg-[var(--priority-high-block)]",
-      "shadow-[0_22px_54px_rgba(145,84,181,0.28)]",
-    );
+    const scheduledItem = getTimelineItem("Ship planner polish");
+    expect(scheduledItem).toHaveClass("bg-[var(--priority-high-block)]");
+    expect(scheduledItem.className).not.toContain("shadow-[");
   });
 
   it("keeps resolved Google colors opaque while using theme-aware text", () => {
