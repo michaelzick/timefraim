@@ -11,35 +11,49 @@ type CalendarSyncRunInput = {
 
 export class PlannerRepositoryCalendarSyncStore extends PlannerRepositoryCalendarStore {
   async upsertCalendarSyncRun(input: CalendarSyncRunInput, db: Queryable) {
-    const result = await db.query(
-      `insert into public.calendar_sync_runs (
-         provider,
-         planner_date,
-         tz_offset_minutes,
-         source_calendar_ids
-       )
-       values ($1, $2, $3, $4::text[])
-       on conflict (provider, planner_date, tz_offset_minutes, source_calendar_ids)
-       do update
-         set synced_at = timezone('utc', now())
-       returning *`,
-      [input.provider, input.plannerDate, input.tzOffsetMinutes, input.sourceCalendarIds],
-    );
-    return mapCalendarSyncRun(result.rows[0]);
+    try {
+      const result = await db.query(
+        `insert into public.calendar_sync_runs (
+           provider,
+           planner_date,
+           tz_offset_minutes,
+           source_calendar_ids
+         )
+         values ($1, $2, $3, $4::text[])
+         on conflict (provider, planner_date, tz_offset_minutes, source_calendar_ids)
+         do update
+           set synced_at = timezone('utc', now())
+         returning *`,
+        [input.provider, input.plannerDate, input.tzOffsetMinutes, input.sourceCalendarIds],
+      );
+      return mapCalendarSyncRun(result.rows[0]);
+    } catch (error) {
+      if (isMissingCalendarSyncRunsTable(error)) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async getCalendarSyncRun(input: CalendarSyncRunInput, db: Queryable) {
-    const result = await db.query(
-      `select *
-       from public.calendar_sync_runs
-       where provider = $1
-         and planner_date = $2
-         and tz_offset_minutes = $3
-         and source_calendar_ids = $4::text[]
-       limit 1`,
-      [input.provider, input.plannerDate, input.tzOffsetMinutes, input.sourceCalendarIds],
-    );
-    return result.rows[0] ? mapCalendarSyncRun(result.rows[0]) : null;
+    try {
+      const result = await db.query(
+        `select *
+         from public.calendar_sync_runs
+         where provider = $1
+           and planner_date = $2
+           and tz_offset_minutes = $3
+           and source_calendar_ids = $4::text[]
+         limit 1`,
+        [input.provider, input.plannerDate, input.tzOffsetMinutes, input.sourceCalendarIds],
+      );
+      return result.rows[0] ? mapCalendarSyncRun(result.rows[0]) : null;
+    } catch (error) {
+      if (isMissingCalendarSyncRunsTable(error)) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async countHiddenCalendarEventsForRange(
@@ -67,4 +81,8 @@ export class PlannerRepositoryCalendarSyncStore extends PlannerRepositoryCalenda
     const row = result.rows[0] as { hidden_count?: unknown } | undefined;
     return Number(row?.hidden_count ?? 0);
   }
+}
+
+function isMissingCalendarSyncRunsTable(error: unknown) {
+  return typeof error === "object" && error !== null && (error as { code?: unknown }).code === "42P01";
 }

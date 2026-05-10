@@ -169,7 +169,26 @@ describe("planner-repository", () => {
       expect.stringContaining("on conflict (provider, planner_date, tz_offset_minutes, source_calendar_ids)"),
       ["google", "2026-04-06", -420, ["primary", "work"]],
     );
-    expect(run.syncedAt).toBe("2026-04-06T09:00:00.000Z");
+    expect(run?.syncedAt).toBe("2026-04-06T09:00:00.000Z");
+  });
+
+  it("treats missing calendar sync run storage as unsynced instead of failing day-plan loads", async () => {
+    const db = {
+      query: vi.fn().mockRejectedValue({ code: "42P01" }),
+    };
+    const repository = new PlannerRepository();
+
+    await expect(
+      repository.getCalendarSyncRun(
+        {
+          provider: "google",
+          plannerDate: "2026-04-06",
+          tzOffsetMinutes: -420,
+          sourceCalendarIds: ["primary"],
+        },
+        db as never,
+      ),
+    ).resolves.toBeNull();
   });
 
   it("counts locally hidden calendar rows for the current source calendar set", async () => {

@@ -107,5 +107,5 @@ export async function recordGoogleCalendarSync(
   scope: GoogleCalendarSyncScope,
 ) {
   const run = await repository.upsertCalendarSyncRun(scope.runInput, pool);
-  return buildCalendarSync(repository, scope, run.syncedAt);
+  return buildCalendarSync(repository, scope, run?.syncedAt ?? new Date().toISOString());
 }
