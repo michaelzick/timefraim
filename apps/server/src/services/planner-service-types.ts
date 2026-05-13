@@ -9,7 +9,14 @@ import type { Queryable } from "../db/pool.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
 
 export type SideEffect =
-  | { type: "google.upsert"; taskId: string; scheduleBlockId: string; target: Exclude<GooglePlannerSyncTarget, "none"> }
+  | {
+      type: "google.upsert";
+      taskId: string;
+      scheduleBlockId: string;
+      target: Exclude<GooglePlannerSyncTarget, "none">;
+      plannerDate?: string;
+      tzOffsetMinutes?: number;
+    }
   | { type: "google.delete"; googleEventId: string | null; googleTaskId: string | null; scheduleBlockId: string }
   | { type: "toggl.start"; taskId: string; timerSessionId: string; source: "manual" | "ai" | "sync" }
   | {

@@ -27,6 +27,7 @@ export type LocalPlannerTaskInput = {
   status: PlannerStatus;
   togglProjectId?: string | null;
   plannerDate?: string;
+  tzOffsetMinutes?: number;
 };
 export type LocalPlannerTaskUpdateInput = {
   title: string;
@@ -36,8 +37,15 @@ export type LocalPlannerTaskUpdateInput = {
   status: PlannerStatus;
   togglProjectId?: string | null;
   completedOnDate?: string | null;
+  plannerDate?: string;
+  tzOffsetMinutes?: number;
 };
-export type LocalPlannerScheduleBlockUpdateInput = { startAt: string; endAt: string };
+export type LocalPlannerScheduleBlockUpdateInput = {
+  startAt: string;
+  endAt: string;
+  plannerDate?: string;
+  tzOffsetMinutes?: number;
+};
 export type PlannerSaveTaskValues = {
   title: string;
   notes: string;

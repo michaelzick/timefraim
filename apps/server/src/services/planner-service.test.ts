@@ -671,6 +671,8 @@ describe("planner-service", () => {
       startAt: "2026-04-06T18:00:00.000Z",
       endAt: "2026-04-06T18:45:00.000Z",
       source: "manual",
+      plannerDate: "2026-04-06",
+      tzOffsetMinutes: 420,
     };
     const createdBlock = {
       ...baseBlock,
@@ -778,6 +780,8 @@ describe("planner-service", () => {
       startAt: "2026-04-06T18:00:00.000Z",
       endAt: "2026-04-06T18:45:00.000Z",
       source: "manual",
+      plannerDate: "2026-04-06",
+      tzOffsetMinutes: 420,
     };
     const createdBlock = {
       ...baseBlock,
@@ -836,6 +840,8 @@ describe("planner-service", () => {
         connection: expect.objectContaining({ accessToken: "google-token", calendarId: "primary" }),
         task: unscheduledTask,
         block: createdBlock,
+        plannerDate: "2026-04-06",
+        tzOffsetMinutes: 420,
       }),
     );
     expect(repository.updateScheduleBlock).toHaveBeenCalledWith(

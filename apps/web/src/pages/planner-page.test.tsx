@@ -107,6 +107,7 @@ describe("PlannerPage", () => {
         status: "planned",
         togglProjectId: null,
         plannerDate: "2026-04-06",
+        tzOffsetMinutes: new Date("2026-04-06T12:00:00").getTimezoneOffset(),
       });
     });
     expect(screen.getByLabelText("Task title")).toHaveValue("");

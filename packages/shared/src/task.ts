@@ -16,6 +16,7 @@ const taskEstimatedMinutesInputSchema = z.number().int().positive().max(12 * 60)
 const togglProjectIdInputSchema = z.string().optional().nullable();
 const completedOnDateInputSchema = z.string().regex(plannerDateRegex).nullable().optional();
 const plannerDateInputSchema = z.string().regex(plannerDateRegex).optional();
+const tzOffsetMinutesInputSchema = z.number().int().min(-14 * 60).max(14 * 60).optional();
 
 export const taskSchema = z.object({
   id: z.string().uuid(),
@@ -40,6 +41,7 @@ export const taskInputSchema = z.object({
   togglProjectId: togglProjectIdInputSchema,
   completedOnDate: completedOnDateInputSchema,
   plannerDate: plannerDateInputSchema,
+  tzOffsetMinutes: tzOffsetMinutesInputSchema,
 });
 
 export const taskUpdateSchema = z.object({
@@ -52,6 +54,7 @@ export const taskUpdateSchema = z.object({
   togglProjectId: togglProjectIdInputSchema,
   completedOnDate: completedOnDateInputSchema,
   plannerDate: plannerDateInputSchema,
+  tzOffsetMinutes: tzOffsetMinutesInputSchema,
 });
 
 export const taskDuplicatePayloadSchema = z.object({
@@ -59,6 +62,7 @@ export const taskDuplicatePayloadSchema = z.object({
   startAt: z.string().datetime().optional(),
   endAt: z.string().datetime().optional(),
   plannerDate: z.string().regex(plannerDateRegex).optional(),
+  tzOffsetMinutes: tzOffsetMinutesInputSchema,
 });
 
 export type Task = z.infer<typeof taskSchema>;

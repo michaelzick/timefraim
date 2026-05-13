@@ -95,7 +95,11 @@ export async function applyTaskUpdateDraft(context: DraftHandlerContext) {
 
       await updateScheduleBlockWithValidation(context, {
         existingBlock,
-        patch: { endAt: nextEndAt },
+        patch: {
+          endAt: nextEndAt,
+          plannerDate: payload.plannerDate,
+          tzOffsetMinutes: payload.tzOffsetMinutes,
+        },
       });
     }
   }

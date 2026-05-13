@@ -125,6 +125,30 @@ describe("google-tasks integration", () => {
     expect(googleTaskId).toBe("google-task-123");
   });
 
+  it("uses the local planner date and writes the time range into notes", async () => {
+    tasksInsert.mockResolvedValue({ data: { id: "google-task-123" } });
+
+    await upsertGoogleScheduledTask({
+      connection,
+      task,
+      block: {
+        ...block,
+        startAt: "2026-04-07T00:00:00.000Z",
+        endAt: "2026-04-07T00:45:00.000Z",
+      },
+      plannerDate: "2026-04-06",
+      tzOffsetMinutes: 420,
+    });
+
+    expect(tasksInsert).toHaveBeenCalledWith({
+      tasklist: "@default",
+      requestBody: expect.objectContaining({
+        due: "2026-04-06T00:00:00.000Z",
+        notes: "Outline the week.\n\nTimeFraim: Mon, Apr 6 5:00 PM to 5:45 PM (45 min)",
+      }),
+    });
+  });
+
   it("patches the existing Google Task for timeline updates", async () => {
     await upsertGoogleScheduledTask({
       connection,

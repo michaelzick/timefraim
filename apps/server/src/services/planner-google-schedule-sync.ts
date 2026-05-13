@@ -17,6 +17,7 @@ export function queueScheduleBlockSync(
   context: ScheduleSyncContext,
   taskId: string,
   scheduleBlockId: string,
+  metadata: { plannerDate?: string; tzOffsetMinutes?: number } = {},
 ) {
   const target = resolvePlannerSyncTarget(context);
   if (target === "none") {
@@ -28,5 +29,6 @@ export function queueScheduleBlockSync(
     taskId,
     scheduleBlockId,
     target,
+    ...metadata,
   });
 }

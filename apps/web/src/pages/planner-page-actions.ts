@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import type { LocalPlannerTaskInput, LocalPlannerTaskUpdateInput, PlannerCreateTaskValues, PlannerSaveTaskValues } from "@/features/planner/planner-page-utils";
 import { resolvePlannerTaskStatus, showActionError } from "@/features/planner/planner-page-utils";
 import type { CalendarEventFormValues, PlannerCalendarEventUpdateInput, PlannerTaskUpdateInput } from "@/features/planner/types";
+import { getTimezoneOffsetForDate } from "@/lib/utils";
 
 type PlannerPageActionTaskStatus =
   | "inbox"
@@ -39,6 +40,7 @@ export function buildPlannerCreateTaskInput(values: PlannerCreateTaskValues, dat
     status: "planned",
     togglProjectId: values.togglProjectId || null,
     plannerDate: date,
+    tzOffsetMinutes: getTimezoneOffsetForDate(date),
   };
 }
 
@@ -97,7 +99,7 @@ export function createPlannerMutationHandlers(args: {
   onUpdateTask: (taskId: string, values: PlannerTaskUpdateInput) => Promise<unknown>;
   onDuplicateTask: (
     taskId: string,
-    body?: { startAt?: string; endAt?: string; plannerDate?: string },
+    body?: { startAt?: string; endAt?: string; plannerDate?: string; tzOffsetMinutes?: number },
   ) => Promise<PlannerDuplicateResult>;
   onStartTimer: (taskId: string) => Promise<unknown>;
 }) {
@@ -161,7 +163,11 @@ export function createPlannerMutationHandlers(args: {
       }
 
       void args
-        .onUpdateTask(task.id, { estimatedMinutes })
+        .onUpdateTask(task.id, {
+          estimatedMinutes,
+          plannerDate: args.date,
+          tzOffsetMinutes: getTimezoneOffsetForDate(args.date),
+        })
         .catch((error) => showActionError("Failed to resize the scheduled task. Please try again.", error));
     },
     handleMarkTaskDone(task: PlannerPageActionTask) {

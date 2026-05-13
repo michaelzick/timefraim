@@ -69,7 +69,10 @@ export async function duplicateTaskInContext(context: DraftHandlerContext): Prom
         { scheduledBlockId: block.id, status: "scheduled" },
         context.client,
       );
-      queueScheduleBlockSync(context, newTask.id, block.id);
+      queueScheduleBlockSync(context, newTask.id, block.id, {
+        plannerDate: payload.plannerDate,
+        tzOffsetMinutes: payload.tzOffsetMinutes,
+      });
       createdScheduleBlockId = block.id;
     } catch (error) {
       if (isUniqueViolation(error)) {
@@ -136,7 +139,10 @@ export async function duplicateScheduleBlockInContext(
   },
   context.client,
   );
-  queueScheduleBlockSync(context, sourceBlock.taskId, block.id);
+  queueScheduleBlockSync(context, sourceBlock.taskId, block.id, {
+    plannerDate: payload.plannerDate,
+    tzOffsetMinutes: payload.tzOffsetMinutes,
+  });
 
   await context.repository.createAuditLog(
     {

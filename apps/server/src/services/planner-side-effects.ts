@@ -66,7 +66,13 @@ async function upsertGoogleTaskBlock(
   }
   await repository.deleteCalendarEventByScheduleBlockId(block.id, pool);
 
-  const googleTaskId = await upsertGoogleScheduledTask({ connection: googleConnection, task, block });
+  const googleTaskId = await upsertGoogleScheduledTask({
+    connection: googleConnection,
+    task,
+    block,
+    plannerDate: effect.plannerDate,
+    tzOffsetMinutes: effect.tzOffsetMinutes,
+  });
   await repository.updateScheduleBlock(
     block.id,
     { googleEventId: null, googleTaskId, state: googleTaskId ? "synced" : "confirmed" },

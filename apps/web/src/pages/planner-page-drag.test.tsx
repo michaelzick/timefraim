@@ -142,6 +142,9 @@ function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerP
 }
 
 describe("PlannerPage drag behavior", () => {
+  const plannerDate = "2026-04-06";
+  const tzOffsetMinutes = new Date(`${plannerDate}T12:00:00`).getTimezoneOffset();
+
   it("creates a schedule block when a queue task drops on a quarter-hour slot", async () => {
     const user = userEvent.setup();
     const onCreateScheduleBlock = vi.fn().mockResolvedValue(undefined);
@@ -156,6 +159,8 @@ describe("PlannerPage drag behavior", () => {
         startAt: "2026-04-06T17:15:00.000Z",
         endAt: "2026-04-06T18:00:00.000Z",
         source: "manual",
+        plannerDate,
+        tzOffsetMinutes,
       });
     });
   });
@@ -195,6 +200,8 @@ describe("PlannerPage drag behavior", () => {
       expect(onUpdateScheduleBlock).toHaveBeenCalledWith("block-1", {
         startAt: "2026-04-06T17:15:00.000Z",
         endAt: "2026-04-06T18:00:00.000Z",
+        plannerDate,
+        tzOffsetMinutes,
       });
     });
     expect(onUpdateTask).not.toHaveBeenCalled();
@@ -232,6 +239,8 @@ describe("PlannerPage drag behavior", () => {
         {
           startAt: "2026-04-06T17:15:00.000Z",
           endAt: "2026-04-06T18:00:00.000Z",
+          plannerDate,
+          tzOffsetMinutes,
         },
       );
     });
@@ -261,7 +270,11 @@ describe("PlannerPage drag behavior", () => {
     await user.click(screen.getByRole("button", { name: /trigger timeline resize/i }));
 
     await waitFor(() => {
-      expect(onUpdateTask).toHaveBeenCalledWith(task.id, { estimatedMinutes: 60 });
+      expect(onUpdateTask).toHaveBeenCalledWith(task.id, {
+        estimatedMinutes: 60,
+        plannerDate,
+        tzOffsetMinutes,
+      });
     });
     expect(onUpdateScheduleBlock).not.toHaveBeenCalled();
   });
