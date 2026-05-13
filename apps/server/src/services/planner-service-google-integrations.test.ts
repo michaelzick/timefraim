@@ -59,6 +59,7 @@ describe("planner-service-google-integrations", () => {
       ],
       syncCalendarIds: ["team"],
       syncPlannerBlocksToCalendar: true,
+      plannerSyncTarget: "calendar_event",
       plannerCalendarId: "planner",
     });
   });
@@ -84,6 +85,7 @@ describe("planner-service-google-integrations", () => {
     await expect(
       saveGoogleCalendarSettings(repository as never, {
         syncCalendarIds: ["team", "missing"],
+        plannerSyncTarget: "calendar_event",
         syncPlannerBlocksToCalendar: true,
       }),
     ).rejects.toThrow("Selected Google calendars are invalid or no longer available");
@@ -110,6 +112,7 @@ describe("planner-service-google-integrations", () => {
 
     await saveGoogleCalendarSettings(repository as never, {
       syncCalendarIds: ["team"],
+      plannerSyncTarget: "none",
       syncPlannerBlocksToCalendar: false,
     });
 
@@ -118,6 +121,43 @@ describe("planner-service-google-integrations", () => {
       expect.objectContaining({
         metadata: expect.objectContaining({
           syncCalendarIds: ["team"],
+          plannerSyncTarget: "none",
+          syncPlannerBlocksToCalendar: false,
+        }),
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("saves Google Tasks as the planner block sync target", async () => {
+    const repository = createRepository({
+      access_token: "google-token",
+      refresh_token: "refresh-token",
+      expires_at: "2026-04-16T12:00:00.000Z",
+      metadata: {
+        calendarId: "primary",
+        plannerCalendarId: "planner",
+        email: "allowed@example.com",
+      },
+    });
+
+    listGoogleCalendars.mockResolvedValue([
+      { id: "planner", name: "Planner", primary: false, backgroundColor: null },
+      { id: "primary", name: "Personal", primary: true, backgroundColor: "#123456" },
+      { id: "team", name: "Team", primary: false, backgroundColor: "#654321" },
+    ]);
+
+    await saveGoogleCalendarSettings(repository as never, {
+      syncCalendarIds: ["team"],
+      plannerSyncTarget: "task",
+      syncPlannerBlocksToCalendar: false,
+    });
+
+    expect(repository.upsertIntegrationToken).toHaveBeenCalledWith(
+      "google",
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          plannerSyncTarget: "task",
           syncPlannerBlocksToCalendar: false,
         }),
       }),
@@ -135,6 +175,7 @@ describe("planner-service-google-integrations", () => {
         plannerCalendarId: "planner",
         email: "allowed@example.com",
         syncCalendarIds: ["team"],
+        plannerSyncTarget: "task",
         syncPlannerBlocksToCalendar: false,
       },
     });
@@ -152,6 +193,7 @@ describe("planner-service-google-integrations", () => {
       expect.objectContaining({
         metadata: expect.objectContaining({
           syncCalendarIds: ["team"],
+          plannerSyncTarget: "task",
           syncPlannerBlocksToCalendar: false,
         }),
       }),

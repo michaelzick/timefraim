@@ -62,6 +62,7 @@ describe("SettingsPage", () => {
           ],
           syncCalendarIds: ["primary"],
           syncPlannerBlocksToCalendar: true,
+          plannerSyncTarget: "calendar_event",
           plannerCalendarId: "planner",
         }}
         isLoadingGoogleCalendars={false}
@@ -74,16 +75,17 @@ describe("SettingsPage", () => {
       />,
     );
 
-    const checkbox = screen.getByRole("checkbox", { name: /add scheduled tasks to google calendar/i });
-    expect(checkbox).toBeChecked();
+    const googleTasksOption = screen.getByRole("radio", { name: /create google tasks/i });
+    expect(screen.getByRole("radio", { name: /create google calendar events/i })).toBeChecked();
 
-    await user.click(checkbox);
+    await user.click(googleTasksOption);
     await user.click(screen.getByRole("button", { name: /save google calendar settings/i }));
 
     await waitFor(() => {
       expect(onSaveGoogleCalendars).toHaveBeenCalledWith({
         syncCalendarIds: ["primary"],
         syncPlannerBlocksToCalendar: false,
+        plannerSyncTarget: "task",
       });
     });
   });

@@ -8,11 +8,11 @@ Sibling files [CLAUDE.md](CLAUDE.md) (Claude Code) and [GEMINI.md](GEMINI.md) (G
 
 ## 1. Project overview
 
-**TimeFraim** is a single-user local-first scheduling app — a Sunsama-style planner. Users manage tasks, build time-blocked day plans on a visual timeline, sync with Google Calendar, and track time via Toggl. A remote MCP endpoint lets AI agents propose and confirm planner changes.
+**TimeFraim** is a single-user local-first scheduling app — a Sunsama-style planner. Users manage tasks, build time-blocked day plans on a visual timeline, sync with Google Calendar / Tasks, and track time via Toggl. A remote MCP endpoint lets AI agents propose and confirm planner changes.
 
 Primary flows:
 - Planner: three-column layout (task queue / timeline / detail panel) with drag-and-drop scheduling.
-- Settings: connect Google Calendar (multi-calendar, colors, optional planner-block sync) and Toggl (workspace + per-task project overrides).
+- Settings: connect Google Calendar (multi-calendar, colors, timeline sync as Calendar events or Google Tasks) and Toggl (workspace + per-task project overrides).
 - Draft-first mutations: AI-proposed changes land as `sync_drafts` rows; the user confirms before they apply.
 
 ## 2. Tech stack
@@ -21,7 +21,7 @@ Primary flows:
 - **Backend:** Fastify 5 + TypeScript on Node ≥ 24.
 - **Database:** PostgreSQL via local Supabase (host ports `55331`–`55337`), accessed with `pg` (parameterized queries).
 - **Shared contracts:** Zod schemas in `packages/shared` consumed by both apps.
-- **Integrations:** Google Calendar (`googleapis`), Toggl Track REST, MCP (`@modelcontextprotocol/sdk`) over HTTP Streamable transport.
+- **Integrations:** Google Calendar + Google Tasks (`googleapis`), Toggl Track REST, MCP (`@modelcontextprotocol/sdk`) over HTTP Streamable transport.
 - **Tooling:** pnpm 10.11.0 workspaces, ESLint flat config, Vitest, React Testing Library.
 
 ## 3. Monorepo layout
@@ -79,9 +79,9 @@ timefraim/
 Zod schemas and inferred types, barrel-exported from `src/index.ts`. Consumed as TypeScript source (no build step required for dev).
 
 - `task.ts` — `Task`, `TaskInput`, `TaskUpdate`, `TaskStatus`, `TaskPriority` (`low | medium | high | urgent`).
-- `schedule.ts` — `ScheduleBlock`, `ScheduleBlockCreate/Update`, `CalendarEvent`, `CalendarEventView`.
+- `schedule.ts` — `ScheduleBlock`, `ScheduleBlockCreate/Update`, Google event/task mirror IDs, `CalendarEvent`, `CalendarEventView`.
 - `drafts.ts` — `SyncDraft`, `DraftKind`, `DraftStatus`, `ActorRole`, `formatDraftSummary()`.
-- `integration.ts` — Google/Toggl schemas, `AuthUser`, `AuthSession`.
+- `integration.ts` — Google/Toggl schemas, Google planner sync target, `AuthUser`, `AuthSession`.
 - `day-plan.ts` — `DayPlan` (aggregated snapshot returned by `GET /api/day-plan`).
 - `api.ts` — `PlannerMutationResult`, `CalendarSyncResult`.
 - `date.ts` — date parsing helpers.
@@ -93,7 +93,7 @@ Migrations live in `supabase/migrations/` (timestamp-prefixed, applied in order)
 | Table | Purpose |
 |---|---|
 | `tasks` | User tasks: status, priority, estimated minutes, notes, toggl_project_id. |
-| `schedule_blocks` | Time blocks tied to tasks; `google_event_id` links to a Calendar event. |
+| `schedule_blocks` | Time blocks tied to tasks; `google_event_id` / `google_task_id` are mutually exclusive external mirrors. |
 | `calendar_events` | Synced external events: provider, external_event_id, raw_payload JSONB. |
 | `integration_tokens` | Encrypted OAuth/API tokens keyed by provider; metadata JSONB. |
 | `sync_drafts` | Pending/applied change proposals: kind, payload, actor_role, expires_at. |
@@ -103,11 +103,12 @@ Migrations live in `supabase/migrations/` (timestamp-prefixed, applied in order)
 
 Conventions: UUID PKs (`gen_random_uuid()`), `timestamptz` for every date, `updated_at` trigger on mutable tables, FK `on delete cascade`, indexes on time ranges and common filters.
 
-Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event, per-day calendar sync runs.
+Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event, per-day calendar sync runs, schedule block Google Task mirror IDs.
 
 ## 6. External integrations
 
 - **Google Calendar** — OAuth 2.0 (`googleapis`). Lists calendars, fetches events per date range, optionally creates/updates/deletes events for schedule blocks (uses `extendedProperties` for linkage), resolves colors. Primary + "Free Time Tasks" planner calendar via `GOOGLE_CALENDAR_ID` / `GOOGLE_PLANNER_CALENDAR_ID`.
+- **Google Tasks** — OAuth 2.0 (`googleapis`). Timeline sync can target the default Google Tasks list instead of Calendar events; scheduled block add/update/delete mirrors create/update/delete a single Google Task, mutually exclusive with `google_event_id`.
 - **Toggl Track** — Personal API token, encrypted at rest in `integration_tokens`. Discover workspaces/projects, start/stop time entries, per-task and per-event project overrides.
 - **MCP** — `POST /mcp` with `Authorization: Bearer <token>`. `MCP_BEARER_TOKEN` grants full-access tools; `MCP_READ_ONLY_TOKEN` grants read-only. Tools include `list_tasks`, `list_calendar_view`, `get_day_plan`, `propose_task_create`, `propose_schedule_block_*`, `confirm_draft`, `start_task_timer`, `stop_active_timer`.
 
@@ -190,6 +191,7 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 | [apps/server/src/services/planner-service.ts](apps/server/src/services/planner-service.ts) | Business-logic orchestrator |
 | [apps/server/src/repositories/planner-repository.ts](apps/server/src/repositories/planner-repository.ts) | Data access entry point |
 | [apps/server/src/integration/google-calendar.ts](apps/server/src/integration/google-calendar.ts) | Google Calendar client |
+| [apps/server/src/integration/google-tasks.ts](apps/server/src/integration/google-tasks.ts) | Google Tasks client |
 | [apps/server/src/integration/toggl-track.ts](apps/server/src/integration/toggl-track.ts) | Toggl client |
 | [apps/server/src/mcp/create-mcp-server.ts](apps/server/src/mcp/create-mcp-server.ts) | MCP tools exposed to agents |
 | [packages/shared/src/index.ts](packages/shared/src/index.ts) | Shared schema barrel |

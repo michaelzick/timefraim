@@ -99,6 +99,7 @@ export type ScheduleBlockPatch = Partial<{
   source: ScheduleBlockSource;
   state: ScheduleBlockState;
   googleEventId: string | null;
+  googleTaskId: string | null;
 }>;
 
 export type UpsertCalendarEventInput = {

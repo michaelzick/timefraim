@@ -79,16 +79,42 @@ export const googleCalendarOptionSchema = z.object({
   backgroundColor: z.string().nullable().default(null),
 });
 
+export const googlePlannerSyncTargetSchema = z.enum(["calendar_event", "task", "none"]);
+
+function resolveGooglePlannerSyncTarget(value: {
+  plannerSyncTarget?: z.infer<typeof googlePlannerSyncTargetSchema>;
+  syncPlannerBlocksToCalendar?: boolean;
+}) {
+  return value.plannerSyncTarget
+    ?? (value.syncPlannerBlocksToCalendar === false ? "none" : "calendar_event");
+}
+
 export const googleCalendarSettingsSchema = z.object({
   availableCalendars: z.array(googleCalendarOptionSchema),
   syncCalendarIds: z.array(z.string()),
-  syncPlannerBlocksToCalendar: z.boolean().default(true),
+  syncPlannerBlocksToCalendar: z.boolean().optional(),
+  plannerSyncTarget: googlePlannerSyncTargetSchema.optional(),
   plannerCalendarId: z.string(),
+}).transform((settings) => {
+  const plannerSyncTarget = resolveGooglePlannerSyncTarget(settings);
+  return {
+    ...settings,
+    syncPlannerBlocksToCalendar: plannerSyncTarget === "calendar_event",
+    plannerSyncTarget,
+  };
 });
 
 export const googleCalendarSettingsUpdateSchema = z.object({
   syncCalendarIds: z.array(z.string()).min(1),
-  syncPlannerBlocksToCalendar: z.boolean().default(true),
+  syncPlannerBlocksToCalendar: z.boolean().optional(),
+  plannerSyncTarget: googlePlannerSyncTargetSchema.optional(),
+}).transform((settings) => {
+  const plannerSyncTarget = resolveGooglePlannerSyncTarget(settings);
+  return {
+    ...settings,
+    syncPlannerBlocksToCalendar: plannerSyncTarget === "calendar_event",
+    plannerSyncTarget,
+  };
 });
 
 export const authUserSchema = z.object({
@@ -112,6 +138,7 @@ export type TogglWorkspaceOption = z.infer<typeof togglWorkspaceOptionSchema>;
 export type TogglProjectOption = z.infer<typeof togglProjectOptionSchema>;
 export type GoogleConnect = z.infer<typeof googleConnectSchema>;
 export type GoogleCalendarOption = z.infer<typeof googleCalendarOptionSchema>;
+export type GooglePlannerSyncTarget = z.infer<typeof googlePlannerSyncTargetSchema>;
 export type GoogleCalendarSettings = z.infer<typeof googleCalendarSettingsSchema>;
 export type GoogleCalendarSettingsUpdate = z.infer<typeof googleCalendarSettingsUpdateSchema>;
 export type AuthUser = z.infer<typeof authUserSchema>;

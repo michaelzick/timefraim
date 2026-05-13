@@ -1,4 +1,4 @@
-import type { GoogleCalendarSettings } from "@timefraim/shared";
+import type { GoogleCalendarSettings, GooglePlannerSyncTarget } from "@timefraim/shared";
 import type { GoogleCalendarListEntry } from "../integration/google-calendar.js";
 import { invalidInput } from "./planner-errors.js";
 
@@ -49,7 +49,7 @@ export function buildGoogleCalendarSettings(args: {
   calendars: GoogleCalendarListEntry[];
   plannerCalendarId: string;
   savedSyncCalendarIds?: string[];
-  syncPlannerBlocksToCalendar: boolean;
+  plannerSyncTarget: GooglePlannerSyncTarget;
 }): GoogleCalendarSettings {
   const availableCalendars = getSelectableGoogleCalendars([...args.calendars], args.plannerCalendarId);
   sortGoogleCalendars(availableCalendars);
@@ -66,7 +66,8 @@ export function buildGoogleCalendarSettings(args: {
       backgroundColor: calendar.backgroundColor,
     })),
     syncCalendarIds,
-    syncPlannerBlocksToCalendar: args.syncPlannerBlocksToCalendar,
+    syncPlannerBlocksToCalendar: args.plannerSyncTarget === "calendar_event",
+    plannerSyncTarget: args.plannerSyncTarget,
     plannerCalendarId: args.plannerCalendarId,
   };
 }

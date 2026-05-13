@@ -39,14 +39,6 @@ export async function applyTaskCreateDraft(context: DraftHandlerContext) {
     context.client,
   );
 
-  if (context.googleConnected) {
-    context.sideEffects.push({
-      type: "google.task.create",
-      taskId: task.id,
-      plannerDate: payload.plannerDate ?? null,
-    });
-  }
-
   await context.repository.createAuditLog(
     {
       actorRole: context.actorRole,
@@ -145,6 +137,7 @@ export async function applyTaskDeleteDraft(context: DraftHandlerContext) {
     context.sideEffects.push({
       type: "google.delete",
       googleEventId: existingBlock.googleEventId ?? null,
+      googleTaskId: existingBlock.googleTaskId ?? null,
       scheduleBlockId: existingBlock.id,
     });
   }

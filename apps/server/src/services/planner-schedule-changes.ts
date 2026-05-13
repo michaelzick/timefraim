@@ -3,10 +3,14 @@ import { detectScheduleConflicts } from "./planner-domain.js";
 import { conflict, notFound } from "./planner-errors.js";
 import { endOfDay, startOfDay } from "../utils/date.js";
 import { isUniqueViolation, type DraftHandlerContext } from "./planner-service-types.js";
+import {
+  queueScheduleBlockSync,
+  resolveScheduleBlockSyncState,
+} from "./planner-google-schedule-sync.js";
 
 type ScheduleBlockMutationContext = Pick<
   DraftHandlerContext,
-  "client" | "repository" | "sideEffects" | "syncPlannerBlocksToCalendar"
+  "client" | "googlePlannerSyncTarget" | "repository" | "sideEffects" | "syncPlannerBlocksToCalendar"
 >;
 
 export async function updateScheduleBlockWithValidation(
@@ -43,13 +47,11 @@ export async function updateScheduleBlockWithValidation(
       startAt: params.patch.startAt,
       endAt: params.patch.endAt,
       source: params.patch.source,
-      state: context.syncPlannerBlocksToCalendar ? "sync_pending" : "confirmed",
+      state: resolveScheduleBlockSyncState(context),
     },
     context.client,
   );
-  if (context.syncPlannerBlocksToCalendar) {
-    context.sideEffects.push({ type: "google.upsert", taskId: block.taskId, scheduleBlockId: block.id });
-  }
+  queueScheduleBlockSync(context, block.taskId, block.id);
   return block;
 }
 
@@ -99,7 +101,7 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
         startAt: payload.startAt,
         endAt: payload.endAt,
         source: payload.source,
-        state: context.syncPlannerBlocksToCalendar ? "sync_pending" : "confirmed",
+        state: resolveScheduleBlockSyncState(context),
       },
       context.client,
     );
@@ -122,9 +124,7 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
     },
     context.client,
   );
-  if (context.syncPlannerBlocksToCalendar) {
-    context.sideEffects.push({ type: "google.upsert", taskId: task.id, scheduleBlockId: block.id });
-  }
+  queueScheduleBlockSync(context, task.id, block.id);
   return context.markApplied();
 }
 
@@ -192,6 +192,7 @@ export async function applyScheduleBlockDeleteDraft(context: DraftHandlerContext
   context.sideEffects.push({
     type: "google.delete",
     googleEventId: existingBlock.googleEventId ?? null,
+    googleTaskId: existingBlock.googleTaskId ?? null,
     scheduleBlockId: existingBlock.id,
   });
   return context.markApplied();

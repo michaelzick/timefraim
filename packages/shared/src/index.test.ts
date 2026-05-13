@@ -75,6 +75,15 @@ describe("shared barrel exports", () => {
         plannerCalendarId: "planner",
       }).syncPlannerBlocksToCalendar,
     ).toBe(true);
+
+    expect(
+      googleCalendarSettingsSchema.parse({
+        availableCalendars: [],
+        syncCalendarIds: ["primary"],
+        syncPlannerBlocksToCalendar: false,
+        plannerCalendarId: "planner",
+      }).plannerSyncTarget,
+    ).toBe("none");
   });
 
   it("keeps create defaults out of sparse task updates", () => {

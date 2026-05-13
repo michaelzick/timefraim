@@ -18,6 +18,7 @@ export const scheduleBlockSchema = z.object({
   source: scheduleBlockSourceSchema,
   state: scheduleBlockStateSchema,
   googleEventId: z.string().nullable().optional(),
+  googleTaskId: z.string().nullable().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

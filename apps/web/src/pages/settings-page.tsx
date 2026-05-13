@@ -75,7 +75,7 @@ export function SettingsPage({
             <div className="rounded-[24px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] p-4">
               <p className="text-sm font-medium text-[var(--heading)]">Scope guardrails</p>
               <p className="mt-2 text-sm text-[var(--muted-strong)]">
-                Selected calendars show up as blockers on the timeline. Scheduled tasks can sync to the planner calendar, and new planner tasks copy to your default Google Tasks list.
+                Selected calendars show up as blockers on the timeline. Scheduled tasks can sync as either Google Calendar events or Google Tasks.
               </p>
             </div>
           </div>

@@ -48,6 +48,7 @@ export function mapScheduleBlock(row: QueryResultRow) {
     source: row.source,
     state: row.state,
     googleEventId: row.google_event_id,
+    googleTaskId: row.google_task_id,
     createdAt: asIso(row.created_at),
     updatedAt: asIso(row.updated_at),
   });

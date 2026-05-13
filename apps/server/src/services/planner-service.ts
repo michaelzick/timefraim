@@ -118,6 +118,7 @@ export class PlannerService {
         client,
         sideEffects,
         googleConnected: Boolean(googleConnection),
+        googlePlannerSyncTarget: googleSyncState.plannerSyncTarget,
         syncPlannerBlocksToCalendar: googleSyncState.syncPlannerBlocksToCalendar,
         persistDraftStatus: false,
       }),
@@ -175,6 +176,7 @@ export class PlannerService {
         client,
         sideEffects,
         googleConnected: Boolean(googleConnection),
+        googlePlannerSyncTarget: googleSyncState.plannerSyncTarget,
         syncPlannerBlocksToCalendar: googleSyncState.syncPlannerBlocksToCalendar,
         persistDraftStatus: true,
       });
