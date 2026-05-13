@@ -3,17 +3,15 @@ import { detectScheduleConflicts } from "./planner-domain.js";
 import { conflict, notFound } from "./planner-errors.js";
 import { endOfDay, startOfDay } from "../utils/date.js";
 import { isUniqueViolation, type DraftHandlerContext } from "./planner-service-types.js";
+import { queueScheduleBlockSync, resolveScheduleBlockSyncState } from "./planner-google-schedule-sync.js";
 
-type ScheduleBlockMutationContext = Pick<
-  DraftHandlerContext,
-  "client" | "repository" | "sideEffects" | "syncPlannerBlocksToCalendar"
->;
+type ScheduleBlockMutationContext = Pick<DraftHandlerContext, "client" | "googlePlannerSyncTarget" | "repository" | "sideEffects" | "syncPlannerBlocksToCalendar">;
 
 export async function updateScheduleBlockWithValidation(
   context: ScheduleBlockMutationContext,
   params: {
     existingBlock: ScheduleBlock;
-    patch: Pick<ScheduleBlockUpdate, "startAt" | "endAt" | "source">;
+    patch: Pick<ScheduleBlockUpdate, "startAt" | "endAt" | "source" | "plannerDate" | "tzOffsetMinutes">;
   },
 ) {
   const nextStartAt = params.patch.startAt ?? params.existingBlock.startAt;
@@ -43,13 +41,11 @@ export async function updateScheduleBlockWithValidation(
       startAt: params.patch.startAt,
       endAt: params.patch.endAt,
       source: params.patch.source,
-      state: context.syncPlannerBlocksToCalendar ? "sync_pending" : "confirmed",
+      state: resolveScheduleBlockSyncState(context),
     },
     context.client,
   );
-  if (context.syncPlannerBlocksToCalendar) {
-    context.sideEffects.push({ type: "google.upsert", taskId: block.taskId, scheduleBlockId: block.id });
-  }
+  queueScheduleBlockSync(context, block.taskId, block.id, { plannerDate: params.patch.plannerDate, tzOffsetMinutes: params.patch.tzOffsetMinutes });
   return block;
 }
 
@@ -59,6 +55,8 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
     startAt: string;
     endAt: string;
     source: "manual" | "ai" | "sync";
+    plannerDate?: string;
+    tzOffsetMinutes?: number;
   };
   const task = await context.repository.getTask(payload.taskId, context.client);
   if (!task) {
@@ -99,7 +97,7 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
         startAt: payload.startAt,
         endAt: payload.endAt,
         source: payload.source,
-        state: context.syncPlannerBlocksToCalendar ? "sync_pending" : "confirmed",
+        state: resolveScheduleBlockSyncState(context),
       },
       context.client,
     );
@@ -122,9 +120,7 @@ export async function applyScheduleBlockCreateDraft(context: DraftHandlerContext
     },
     context.client,
   );
-  if (context.syncPlannerBlocksToCalendar) {
-    context.sideEffects.push({ type: "google.upsert", taskId: task.id, scheduleBlockId: block.id });
-  }
+  queueScheduleBlockSync(context, task.id, block.id, { plannerDate: payload.plannerDate, tzOffsetMinutes: payload.tzOffsetMinutes });
   return context.markApplied();
 }
 
@@ -142,6 +138,8 @@ export async function applyScheduleBlockUpdateDraft(context: DraftHandlerContext
       startAt: payload.startAt,
       endAt: payload.endAt,
       source: payload.source,
+      plannerDate: payload.plannerDate,
+      tzOffsetMinutes: payload.tzOffsetMinutes,
     },
   });
   await context.repository.createAuditLog(
@@ -192,6 +190,7 @@ export async function applyScheduleBlockDeleteDraft(context: DraftHandlerContext
   context.sideEffects.push({
     type: "google.delete",
     googleEventId: existingBlock.googleEventId ?? null,
+    googleTaskId: existingBlock.googleTaskId ?? null,
     scheduleBlockId: existingBlock.id,
   });
   return context.markApplied();

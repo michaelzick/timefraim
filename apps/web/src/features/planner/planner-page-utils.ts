@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import type { Task } from "@timefraim/shared";
 import { getTaskLifecycleValue } from "@/features/planner/task-presentation";
+import { ApiRequestError } from "@/lib/api-client";
 import type {
   CreateTaskValues,
   PlannerScheduleBlockUpdateInput,
@@ -26,6 +27,7 @@ export type LocalPlannerTaskInput = {
   status: PlannerStatus;
   togglProjectId?: string | null;
   plannerDate?: string;
+  tzOffsetMinutes?: number;
 };
 export type LocalPlannerTaskUpdateInput = {
   title: string;
@@ -35,8 +37,15 @@ export type LocalPlannerTaskUpdateInput = {
   status: PlannerStatus;
   togglProjectId?: string | null;
   completedOnDate?: string | null;
+  plannerDate?: string;
+  tzOffsetMinutes?: number;
 };
-export type LocalPlannerScheduleBlockUpdateInput = { startAt: string; endAt: string };
+export type LocalPlannerScheduleBlockUpdateInput = {
+  startAt: string;
+  endAt: string;
+  plannerDate?: string;
+  tzOffsetMinutes?: number;
+};
 export type PlannerSaveTaskValues = {
   title: string;
   notes: string;
@@ -95,6 +104,10 @@ export function resolvePlannerTaskStatus(task: Pick<Task, "id" | "scheduledBlock
 }
 
 function getActionErrorMessage(message: string, error: unknown) {
+  if (error instanceof ApiRequestError && error.code === "dependency_unavailable") {
+    return error.message;
+  }
+
   if (error instanceof Error && error.message.startsWith("Schedule conflict with ")) {
     const conflictingTitle = error.message.slice("Schedule conflict with ".length).trim();
     return `Tasks can't overlap on the timeline. This change would overlap with "${conflictingTitle}". Shorten or move this task, or clear the conflicting event first.`;

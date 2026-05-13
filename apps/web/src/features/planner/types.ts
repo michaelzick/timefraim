@@ -35,6 +35,7 @@ export type PlannerTaskInput = {
   status: TaskStatus;
   togglProjectId?: string | null;
   plannerDate?: string;
+  tzOffsetMinutes?: number;
 };
 
 export type PlannerTaskUpdateInput = Partial<
@@ -42,6 +43,8 @@ export type PlannerTaskUpdateInput = Partial<
     status: TaskStatus;
     togglProjectId: string | null;
     completedOnDate: string | null;
+    plannerDate: string;
+    tzOffsetMinutes: number;
   }
 >;
 
@@ -50,11 +53,15 @@ export type PlannerScheduleBlockInput = {
   startAt: string;
   endAt: string;
   source: "manual";
+  plannerDate?: string;
+  tzOffsetMinutes?: number;
 };
 
 export type PlannerScheduleBlockUpdateInput = {
   startAt?: string;
   endAt?: string;
+  plannerDate?: string;
+  tzOffsetMinutes?: number;
 };
 
 export type PlannerPageProps = {
@@ -70,11 +77,11 @@ export type PlannerPageProps = {
   onDeleteScheduleBlock: (scheduleBlockId: string) => Promise<unknown>;
   onDuplicateTask: (
     taskId: string,
-    body?: { startAt?: string; endAt?: string; plannerDate?: string },
+    body?: { startAt?: string; endAt?: string; plannerDate?: string; tzOffsetMinutes?: number },
   ) => Promise<PlannerDuplicateResult>;
   onDuplicateScheduleBlock: (
     scheduleBlockId: string,
-    body: { startAt: string; endAt: string },
+    body: { startAt: string; endAt: string; plannerDate?: string; tzOffsetMinutes?: number },
   ) => Promise<PlannerDuplicateResult>;
   onDismissCalendarEvent: (calendarEventId: string) => Promise<unknown>;
   onUpdateCalendarEvent: (calendarEventId: string, values: PlannerCalendarEventUpdateInput) => Promise<unknown>;

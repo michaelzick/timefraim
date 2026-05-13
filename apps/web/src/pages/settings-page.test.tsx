@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import { SettingsPage } from "@/pages/settings-page";
+import { ApiRequestError } from "@/lib/api-client";
 import { buildAuthSession, buildTogglSettings } from "@/test/fixtures";
 
 vi.mock("sonner", () => ({
@@ -62,6 +63,7 @@ describe("SettingsPage", () => {
           ],
           syncCalendarIds: ["primary"],
           syncPlannerBlocksToCalendar: true,
+          plannerSyncTarget: "calendar_event",
           plannerCalendarId: "planner",
         }}
         isLoadingGoogleCalendars={false}
@@ -74,18 +76,73 @@ describe("SettingsPage", () => {
       />,
     );
 
-    const checkbox = screen.getByRole("checkbox", { name: /add scheduled tasks to google calendar/i });
-    expect(checkbox).toBeChecked();
+    const googleTasksOption = screen.getByRole("radio", { name: /create google tasks/i });
+    expect(screen.getByRole("radio", { name: /create google calendar events/i })).toBeChecked();
 
-    await user.click(checkbox);
+    await user.click(googleTasksOption);
     await user.click(screen.getByRole("button", { name: /save google calendar settings/i }));
 
     await waitFor(() => {
       expect(onSaveGoogleCalendars).toHaveBeenCalledWith({
         syncCalendarIds: ["primary"],
         syncPlannerBlocksToCalendar: false,
+        plannerSyncTarget: "task",
       });
     });
+  });
+
+  it("shows the Google Tasks dependency error when saving calendar settings fails", async () => {
+    const user = userEvent.setup();
+    const toastErrorSpy = vi.mocked(toast.error);
+    toastErrorSpy.mockClear();
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const onSaveGoogleCalendars = vi.fn().mockRejectedValue(
+      new ApiRequestError(
+        503,
+        "dependency_unavailable",
+        "req-1",
+        "Google Tasks API is not enabled for this Google Cloud project. Enable tasks.googleapis.com, then save this setting again.",
+      ),
+    );
+
+    render(
+      <SettingsPage
+        authSession={buildAuthSession()}
+        togglSettings={buildTogglSettings()}
+        onDiscoverToggl={vi.fn()}
+        onDeleteToggl={vi.fn().mockResolvedValue(buildTogglSettings({ connected: false }))}
+        onSaveToggl={vi.fn().mockResolvedValue(buildTogglSettings())}
+        isDiscovering={false}
+        isSaving={false}
+        googleCalendarSettings={{
+          availableCalendars: [
+            { id: "primary", name: "Personal", primary: true, backgroundColor: "#123456" },
+          ],
+          syncCalendarIds: ["primary"],
+          syncPlannerBlocksToCalendar: true,
+          plannerSyncTarget: "calendar_event",
+          plannerCalendarId: "planner",
+        }}
+        isLoadingGoogleCalendars={false}
+        isSavingGoogleCalendars={false}
+        onSaveGoogleCalendars={onSaveGoogleCalendars}
+        taskEndNotificationsEnabled={false}
+        taskEndNotificationsSupported
+        taskEndNotificationsMessage={null}
+        onTaskEndNotificationsChange={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("radio", { name: /create google tasks/i }));
+    await user.click(screen.getByRole("button", { name: /save google calendar settings/i }));
+
+    await waitFor(() => {
+      expect(toastErrorSpy).toHaveBeenCalledWith(
+        "Google Tasks API is not enabled for this Google Cloud project. Enable tasks.googleapis.com, then save this setting again.",
+        { duration: 8000 },
+      );
+    });
+    expect(consoleSpy).toHaveBeenCalled();
   });
 
   it("submits Toggl settings and clears the API token field", async () => {

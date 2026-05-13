@@ -1,7 +1,12 @@
-import type { GoogleCalendarSettings, GoogleCalendarSettingsUpdate } from "@timefraim/shared";
+import type {
+  GoogleCalendarSettings,
+  GoogleCalendarSettingsUpdate,
+  GooglePlannerSyncTarget,
+} from "@timefraim/shared";
 import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { showActionError } from "@/features/planner/planner-page-utils";
 
 type SettingsGoogleCalendarsCardProps = {
   settings: GoogleCalendarSettings | null;
@@ -17,12 +22,18 @@ export function SettingsGoogleCalendarsCard({
   onSave,
 }: SettingsGoogleCalendarsCardProps) {
   const [localSelection, setLocalSelection] = useState<string[] | null>(null);
-  const [localPlannerSync, setLocalPlannerSync] = useState<boolean | null>(null);
+  const [localPlannerSyncTarget, setLocalPlannerSyncTarget] =
+    useState<GooglePlannerSyncTarget | null>(null);
 
   const effectiveSelection = localSelection ?? settings?.syncCalendarIds ?? [];
-  const effectivePlannerSync = localPlannerSync ?? settings?.syncPlannerBlocksToCalendar ?? true;
+  const savedPlannerSyncTarget =
+    settings?.plannerSyncTarget
+    ?? (settings?.syncPlannerBlocksToCalendar === false ? "none" : "calendar_event");
+  const effectivePlannerSyncTarget =
+    localPlannerSyncTarget ?? savedPlannerSyncTarget;
   const isSelectionDirty = localSelection !== null && JSON.stringify(localSelection) !== JSON.stringify(settings?.syncCalendarIds ?? []);
-  const isPlannerSyncDirty = localPlannerSync !== null && localPlannerSync !== (settings?.syncPlannerBlocksToCalendar ?? true);
+  const isPlannerSyncDirty = localPlannerSyncTarget !== null
+    && localPlannerSyncTarget !== savedPlannerSyncTarget;
   const isDirty = isSelectionDirty || isPlannerSyncDirty;
 
   function handleToggle(calendarId: string, checked: boolean) {
@@ -35,12 +46,17 @@ export function SettingsGoogleCalendarsCard({
 
   async function handleSave() {
     if (!settings || effectiveSelection.length === 0) return;
-    await onSave({
-      syncCalendarIds: effectiveSelection,
-      syncPlannerBlocksToCalendar: effectivePlannerSync,
-    });
-    setLocalSelection(null);
-    setLocalPlannerSync(null);
+    try {
+      await onSave({
+        syncCalendarIds: effectiveSelection,
+        syncPlannerBlocksToCalendar: effectivePlannerSyncTarget === "calendar_event",
+        plannerSyncTarget: effectivePlannerSyncTarget,
+      });
+      setLocalSelection(null);
+      setLocalPlannerSyncTarget(null);
+    } catch (error) {
+      showActionError("Failed to save Google calendar settings. Please try again.", error);
+    }
   }
 
   if (isLoading) {
@@ -62,20 +78,43 @@ export function SettingsGoogleCalendarsCard({
 
   return (
     <div className="space-y-3">
-      <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--panel-border)] bg-[var(--panel-subtle)] px-4 py-3 text-sm text-[var(--heading)] hover:bg-[var(--panel-hover)]">
-        <input
-          type="checkbox"
-          checked={effectivePlannerSync}
-          onChange={(event) => setLocalPlannerSync(event.target.checked)}
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--panel-border-strong)] bg-transparent accent-[var(--accent)]"
-        />
-        <span className="space-y-1">
-          <span className="block font-medium text-[var(--heading)]">Add scheduled tasks to Google Calendar</span>
-          <span className="block text-[var(--muted-strong)]">
-            Timeline blocks are added to the planner calendar when this is enabled.
-          </span>
-        </span>
-      </label>
+      <div className="space-y-2">
+        <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Timeline sync</p>
+        {[
+          {
+            value: "calendar_event",
+            title: "Create Google Calendar events",
+            description: "Timeline blocks are mirrored to the planner calendar.",
+          },
+          {
+            value: "task",
+            title: "Create Google Tasks",
+            description: "Timeline blocks are mirrored to your default Google Tasks list.",
+          },
+          {
+            value: "none",
+            title: "Keep timeline blocks local",
+            description: "Scheduling changes stay inside TimeFraim.",
+          },
+        ].map((option) => (
+          <label
+            key={option.value}
+            className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--panel-border)] bg-[var(--panel-subtle)] px-4 py-3 text-sm text-[var(--heading)] hover:bg-[var(--panel-hover)]"
+          >
+            <input
+              type="radio"
+              name="planner-sync-target"
+              checked={effectivePlannerSyncTarget === option.value}
+              onChange={() => setLocalPlannerSyncTarget(option.value as GooglePlannerSyncTarget)}
+              className="mt-0.5 h-4 w-4 shrink-0 border-[var(--panel-border-strong)] bg-transparent accent-[var(--accent)]"
+            />
+            <span className="space-y-1">
+              <span className="block font-medium text-[var(--heading)]">{option.title}</span>
+              <span className="block text-[var(--muted-strong)]">{option.description}</span>
+            </span>
+          </label>
+        ))}
+      </div>
       {settings.availableCalendars.length > 0 ? (
         <>
           <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">Source calendars</p>

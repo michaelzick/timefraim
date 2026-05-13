@@ -2,6 +2,10 @@ import type { ScheduleBlockDuplicatePayload, TaskDuplicatePayload } from "@timef
 import { detectScheduleConflicts } from "./planner-domain.js";
 import { conflict, notFound } from "./planner-errors.js";
 import { endOfDay, startOfDay } from "../utils/date.js";
+import {
+  queueScheduleBlockSync,
+  resolveScheduleBlockSyncState,
+} from "./planner-google-schedule-sync.js";
 import { isUniqueViolation, type DraftHandlerContext } from "./planner-service-types.js";
 
 export type DuplicateOutcome = {
@@ -56,7 +60,7 @@ export async function duplicateTaskInContext(context: DraftHandlerContext): Prom
           startAt: payload.startAt,
           endAt: payload.endAt,
           source: "manual",
-          state: context.syncPlannerBlocksToCalendar ? "sync_pending" : "confirmed",
+          state: resolveScheduleBlockSyncState(context),
         },
         context.client,
       );
@@ -65,9 +69,10 @@ export async function duplicateTaskInContext(context: DraftHandlerContext): Prom
         { scheduledBlockId: block.id, status: "scheduled" },
         context.client,
       );
-      if (context.syncPlannerBlocksToCalendar) {
-        context.sideEffects.push({ type: "google.upsert", taskId: newTask.id, scheduleBlockId: block.id });
-      }
+      queueScheduleBlockSync(context, newTask.id, block.id, {
+        plannerDate: payload.plannerDate,
+        tzOffsetMinutes: payload.tzOffsetMinutes,
+      });
       createdScheduleBlockId = block.id;
     } catch (error) {
       if (isUniqueViolation(error)) {
@@ -75,12 +80,6 @@ export async function duplicateTaskInContext(context: DraftHandlerContext): Prom
       }
       throw error;
     }
-  } else if (context.googleConnected) {
-    context.sideEffects.push({
-      type: "google.task.create",
-      taskId: newTask.id,
-      plannerDate: payload.plannerDate ?? null,
-    });
   }
 
   await context.repository.createAuditLog(
@@ -132,17 +131,18 @@ export async function duplicateScheduleBlockInContext(
 
   const block = await context.repository.createScheduleBlock(
     {
-      taskId: sourceBlock.taskId,
-      startAt: payload.startAt,
-      endAt: payload.endAt,
-      source: "manual",
-      state: context.syncPlannerBlocksToCalendar ? "sync_pending" : "confirmed",
-    },
-    context.client,
+    taskId: sourceBlock.taskId,
+    startAt: payload.startAt,
+    endAt: payload.endAt,
+    source: "manual",
+    state: resolveScheduleBlockSyncState(context),
+  },
+  context.client,
   );
-  if (context.syncPlannerBlocksToCalendar) {
-    context.sideEffects.push({ type: "google.upsert", taskId: sourceBlock.taskId, scheduleBlockId: block.id });
-  }
+  queueScheduleBlockSync(context, sourceBlock.taskId, block.id, {
+    plannerDate: payload.plannerDate,
+    tzOffsetMinutes: payload.tzOffsetMinutes,
+  });
 
   await context.repository.createAuditLog(
     {

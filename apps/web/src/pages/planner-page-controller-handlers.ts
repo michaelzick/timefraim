@@ -18,17 +18,19 @@ export function createPlannerPageHandlers(args: {
     startAt: string;
     endAt: string;
     source: "manual";
+    plannerDate?: string;
+    tzOffsetMinutes?: number;
   }) => Promise<unknown>;
   onDeleteScheduleBlock: (scheduleBlockId: string) => Promise<unknown>;
   onDeleteTask: (taskId: string) => Promise<unknown>;
   onDismissCalendarEvent: (calendarEventId: string) => Promise<unknown>;
   onDuplicateTask: (
     taskId: string,
-    body?: { startAt?: string; endAt?: string; plannerDate?: string },
+    body?: { startAt?: string; endAt?: string; plannerDate?: string; tzOffsetMinutes?: number },
   ) => Promise<PlannerDuplicateResult>;
   onDuplicateScheduleBlock: (
     scheduleBlockId: string,
-    body: { startAt: string; endAt: string },
+    body: { startAt: string; endAt: string; plannerDate?: string; tzOffsetMinutes?: number },
   ) => Promise<PlannerDuplicateResult>;
   onUpdateCalendarEvent: (
     calendarEventId: string,
@@ -71,6 +73,7 @@ export function createPlannerPageHandlers(args: {
   }
 
   const handleDragEnd = createPlannerDragEndHandler({
+    date: args.date,
     isAltPressedRef: args.isAltPressedRef,
     onCreateScheduleBlock: args.onCreateScheduleBlock,
     onDeleteScheduleBlock: args.onDeleteScheduleBlock,

@@ -146,6 +146,7 @@ export class PlannerRepositoryTaskStore {
     if (typeof patch.source !== "undefined") assign("source", patch.source);
     if (typeof patch.state !== "undefined") assign("state", patch.state);
     if (typeof patch.googleEventId !== "undefined") assign("google_event_id", patch.googleEventId);
+    if (typeof patch.googleTaskId !== "undefined") assign("google_task_id", patch.googleTaskId);
 
     if (fields.length === 0) {
       const current = await this.getScheduleBlock(scheduleBlockId, db);

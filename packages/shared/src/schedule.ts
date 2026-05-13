@@ -10,6 +10,9 @@ export const scheduleBlockStateSchema = z.enum([
   "cancelled",
 ]);
 
+const plannerDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+const tzOffsetMinutesSchema = z.number().int().min(-14 * 60).max(14 * 60);
+
 export const scheduleBlockSchema = z.object({
   id: z.string().uuid(),
   taskId: z.string().uuid(),
@@ -18,6 +21,7 @@ export const scheduleBlockSchema = z.object({
   source: scheduleBlockSourceSchema,
   state: scheduleBlockStateSchema,
   googleEventId: z.string().nullable().optional(),
+  googleTaskId: z.string().nullable().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -27,6 +31,8 @@ export const scheduleBlockCreateSchema = z.object({
   startAt: z.string().datetime(),
   endAt: z.string().datetime(),
   source: scheduleBlockSourceSchema.default("manual"),
+  plannerDate: z.string().regex(plannerDateRegex).optional(),
+  tzOffsetMinutes: tzOffsetMinutesSchema.optional(),
 });
 
 export const scheduleBlockUpdateSchema = z.object({
@@ -34,6 +40,8 @@ export const scheduleBlockUpdateSchema = z.object({
   startAt: z.string().datetime().optional(),
   endAt: z.string().datetime().optional(),
   source: scheduleBlockSourceSchema.optional(),
+  plannerDate: z.string().regex(plannerDateRegex).optional(),
+  tzOffsetMinutes: tzOffsetMinutesSchema.optional(),
 });
 
 export const scheduleBlockDeleteSchema = z.object({
@@ -44,6 +52,8 @@ export const scheduleBlockDuplicatePayloadSchema = z.object({
   sourceBlockId: z.string().uuid(),
   startAt: z.string().datetime(),
   endAt: z.string().datetime(),
+  plannerDate: z.string().regex(plannerDateRegex).optional(),
+  tzOffsetMinutes: tzOffsetMinutesSchema.optional(),
 });
 
 export const calendarEventViewSchema = z.object({
