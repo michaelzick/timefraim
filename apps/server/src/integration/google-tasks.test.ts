@@ -7,12 +7,14 @@ const {
   tasksDelete,
   tasksFactory,
   tasksInsert,
+  tasklistsGet,
   tasksPatch,
 } = vi.hoisted(() => ({
   oauthSetCredentials: vi.fn(),
   tasksDelete: vi.fn(),
   tasksFactory: vi.fn(),
   tasksInsert: vi.fn(),
+  tasklistsGet: vi.fn(),
   tasksPatch: vi.fn(),
 }));
 
@@ -34,7 +36,12 @@ vi.mock("googleapis", () => ({
   },
 }));
 
-import { deleteGoogleTask, upsertGoogleScheduledTask } from "./google-tasks.js";
+import {
+  assertGoogleTasksAccess,
+  deleteGoogleTask,
+  getGoogleTasksAccessErrorMessage,
+  upsertGoogleScheduledTask,
+} from "./google-tasks.js";
 
 const connection: GoogleConnection = {
   accessToken: "google-token",
@@ -81,7 +88,24 @@ describe("google-tasks integration", () => {
         insert: tasksInsert,
         patch: tasksPatch,
       },
+      tasklists: {
+        get: tasklistsGet,
+      },
     });
+  });
+
+  it("checks access to the default task list", async () => {
+    await assertGoogleTasksAccess(connection);
+
+    expect(tasklistsGet).toHaveBeenCalledWith({ tasklist: "@default" });
+  });
+
+  it("maps disabled API errors to a setup-focused message", () => {
+    expect(
+      getGoogleTasksAccessErrorMessage(
+        new Error("Google Tasks API has not been used before or it is disabled."),
+      ),
+    ).toContain("Enable tasks.googleapis.com");
   });
 
   it("creates scheduled timeline blocks in the default Google Tasks list", async () => {

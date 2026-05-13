@@ -16,6 +16,29 @@ function createGoogleTasksClient(connection: GoogleConnection | null) {
   return auth ? google.tasks({ version: "v1", auth }) : null;
 }
 
+export async function assertGoogleTasksAccess(connection: GoogleConnection | null): Promise<void> {
+  const tasks = createGoogleTasksClient(connection);
+  if (!tasks) {
+    return;
+  }
+
+  await tasks.tasklists.get({
+    tasklist: "@default",
+  });
+}
+
+export function getGoogleTasksAccessErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : "Unable to access Google Tasks";
+  const lowerMessage = message.toLowerCase();
+  if (lowerMessage.includes("has not been used") || lowerMessage.includes("disabled")) {
+    return "Google Tasks API is not enabled for this Google Cloud project. Enable tasks.googleapis.com, then save this setting again.";
+  }
+  if (lowerMessage.includes("insufficient authentication scopes")) {
+    return "Google Tasks access is missing from the current Google session. Sign out, sign in again, and approve Google Tasks access.";
+  }
+  return `Unable to access Google Tasks: ${message}`;
+}
+
 export async function upsertGoogleScheduledTask(params: {
   connection: GoogleConnection | null;
   task: Task;

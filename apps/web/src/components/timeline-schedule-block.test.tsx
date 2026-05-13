@@ -87,6 +87,16 @@ describe("TimelineScheduleBlock", () => {
     expect(screen.getByText(/^Running /)).toBeInTheDocument();
   });
 
+  it("surfaces failed Google sync state", () => {
+    renderBlock({
+      block: { ...baseBlock, state: "failed" },
+      runState: "idle",
+      runningStartedAt: null,
+    });
+
+    expect(screen.getByRole("status", { name: /google sync failed/i })).toHaveTextContent("Sync failed");
+  });
+
   it.each(["light", "dark"] as const)("uses the white selected border and planner foregrounds in %s mode", (theme) => {
     document.documentElement.className = theme;
 

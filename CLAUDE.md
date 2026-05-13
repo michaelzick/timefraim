@@ -108,7 +108,7 @@ Recent migrations (see filenames for dates): task priority, per-user Toggl conne
 ## 6. External integrations
 
 - **Google Calendar** — OAuth 2.0 (`googleapis`). Lists calendars, fetches events per date range, optionally creates/updates/deletes events for schedule blocks (uses `extendedProperties` for linkage), resolves colors. Primary + "Free Time Tasks" planner calendar via `GOOGLE_CALENDAR_ID` / `GOOGLE_PLANNER_CALENDAR_ID`.
-- **Google Tasks** — OAuth 2.0 (`googleapis`). Timeline sync can target the default Google Tasks list instead of Calendar events; scheduled block add/update/delete mirrors create/update/delete a single Google Task, mutually exclusive with `google_event_id`.
+- **Google Tasks** — OAuth 2.0 (`googleapis`). Timeline sync can target the default Google Tasks list instead of Calendar events; scheduled block add/update/delete mirrors create/update/delete a single Google Task, mutually exclusive with `google_event_id`. The OAuth Google Cloud project must have `tasks.googleapis.com` enabled before the Tasks target can be saved or used.
 - **Toggl Track** — Personal API token, encrypted at rest in `integration_tokens`. Discover workspaces/projects, start/stop time entries, per-task and per-event project overrides.
 - **MCP** — `POST /mcp` with `Authorization: Bearer <token>`. `MCP_BEARER_TOKEN` grants full-access tools; `MCP_READ_ONLY_TOKEN` grants read-only. Tools include `list_tasks`, `list_calendar_view`, `get_day_plan`, `propose_task_create`, `propose_schedule_block_*`, `confirm_draft`, `start_task_timer`, `stop_active_timer`.
 

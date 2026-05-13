@@ -157,6 +157,20 @@ export function TimelineScheduleBlock({
               <Check className="h-4 w-4" />
             </span>
           ) : null}
+          {block.state === "sync_pending" ? (
+            <Badge className="border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]">
+              Syncing
+            </Badge>
+          ) : null}
+          {block.state === "failed" ? (
+            <Badge
+              aria-label="Google sync failed"
+              role="status"
+              className="border-red-400/50 bg-red-500/15 text-red-700 dark:text-red-200"
+            >
+              Sync failed
+            </Badge>
+          ) : null}
           <Badge className={getTaskPriorityBadgeClass(priority)}>{formatTaskPriority(priority)}</Badge>
           {task && onDuplicateTask ? (
             <TaskPillKebab

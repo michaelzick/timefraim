@@ -7,6 +7,7 @@ import {
 import { env } from "../config/env.js";
 import { pool } from "../db/pool.js";
 import { listGoogleCalendars, type GoogleConnection } from "../integration/google-calendar.js";
+import { assertGoogleTasksAccess, getGoogleTasksAccessErrorMessage } from "../integration/google-tasks.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
 import type { IntegrationTokenRow } from "../repositories/planner-repository-types.js";
 import { dependencyUnavailable } from "./planner-errors.js";
@@ -159,6 +160,10 @@ export async function saveGoogleCalendarSettings(
   const availableCalendars = getSelectableGoogleCalendars(allCalendars, plannerCalendarId);
   const validatedSyncCalendarIds = validateSyncCalendarIds(input.syncCalendarIds, availableCalendars);
 
+  if (input.plannerSyncTarget === "task") {
+    await assertGoogleTasksReady(connection);
+  }
+
   await repository.upsertIntegrationToken(
     "google",
     {
@@ -174,6 +179,14 @@ export async function saveGoogleCalendarSettings(
     },
     pool,
   );
+}
+
+async function assertGoogleTasksReady(connection: GoogleConnection) {
+  try {
+    await assertGoogleTasksAccess(connection);
+  } catch (error) {
+    throw dependencyUnavailable(getGoogleTasksAccessErrorMessage(error));
+  }
 }
 
 async function listGoogleCalendarsOrUnavailable(connection: GoogleConnection | null) {

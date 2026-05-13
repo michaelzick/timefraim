@@ -1,11 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { listGoogleCalendars } = vi.hoisted(() => ({
+const { assertGoogleTasksAccess, listGoogleCalendars } = vi.hoisted(() => ({
+  assertGoogleTasksAccess: vi.fn(),
   listGoogleCalendars: vi.fn(),
 }));
 
 vi.mock("../integration/google-calendar.js", () => ({
   listGoogleCalendars,
+}));
+vi.mock("../integration/google-tasks.js", () => ({
+  assertGoogleTasksAccess,
+  getGoogleTasksAccessErrorMessage: () =>
+    "Google Tasks API is not enabled for this Google Cloud project. Enable tasks.googleapis.com, then save this setting again.",
 }));
 
 import {
@@ -29,6 +35,7 @@ function createRepository(row: {
 describe("planner-service-google-integrations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    assertGoogleTasksAccess.mockResolvedValue(undefined);
   });
 
   it("filters stale saved sync calendars out of the returned settings", async () => {
@@ -153,6 +160,9 @@ describe("planner-service-google-integrations", () => {
       syncPlannerBlocksToCalendar: false,
     });
 
+    expect(assertGoogleTasksAccess).toHaveBeenCalledWith(
+      expect.objectContaining({ accessToken: "google-token" }),
+    );
     expect(repository.upsertIntegrationToken).toHaveBeenCalledWith(
       "google",
       expect.objectContaining({
@@ -163,6 +173,36 @@ describe("planner-service-google-integrations", () => {
       }),
       expect.anything(),
     );
+  });
+
+  it("rejects the Google Tasks target when Tasks API access is unavailable", async () => {
+    const repository = createRepository({
+      access_token: "google-token",
+      refresh_token: "refresh-token",
+      expires_at: "2026-04-16T12:00:00.000Z",
+      metadata: {
+        calendarId: "primary",
+        plannerCalendarId: "planner",
+        email: "allowed@example.com",
+      },
+    });
+
+    listGoogleCalendars.mockResolvedValue([
+      { id: "planner", name: "Planner", primary: false, backgroundColor: null },
+      { id: "team", name: "Team", primary: false, backgroundColor: "#654321" },
+    ]);
+    assertGoogleTasksAccess.mockRejectedValueOnce(
+      new Error("Google Tasks API has not been used in project 123 before or it is disabled."),
+    );
+
+    await expect(
+      saveGoogleCalendarSettings(repository as never, {
+        syncCalendarIds: ["team"],
+        plannerSyncTarget: "task",
+        syncPlannerBlocksToCalendar: false,
+      }),
+    ).rejects.toThrow("Google Tasks API is not enabled for this Google Cloud project");
+    expect(repository.upsertIntegrationToken).not.toHaveBeenCalled();
   });
 
   it("preserves planner block sync preference when refreshing the Google session", async () => {

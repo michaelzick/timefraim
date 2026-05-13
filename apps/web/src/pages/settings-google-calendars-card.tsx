@@ -6,6 +6,7 @@ import type {
 import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { showActionError } from "@/features/planner/planner-page-utils";
 
 type SettingsGoogleCalendarsCardProps = {
   settings: GoogleCalendarSettings | null;
@@ -45,13 +46,17 @@ export function SettingsGoogleCalendarsCard({
 
   async function handleSave() {
     if (!settings || effectiveSelection.length === 0) return;
-    await onSave({
-      syncCalendarIds: effectiveSelection,
-      syncPlannerBlocksToCalendar: effectivePlannerSyncTarget === "calendar_event",
-      plannerSyncTarget: effectivePlannerSyncTarget,
-    });
-    setLocalSelection(null);
-    setLocalPlannerSyncTarget(null);
+    try {
+      await onSave({
+        syncCalendarIds: effectiveSelection,
+        syncPlannerBlocksToCalendar: effectivePlannerSyncTarget === "calendar_event",
+        plannerSyncTarget: effectivePlannerSyncTarget,
+      });
+      setLocalSelection(null);
+      setLocalPlannerSyncTarget(null);
+    } catch (error) {
+      showActionError("Failed to save Google calendar settings. Please try again.", error);
+    }
   }
 
   if (isLoading) {
