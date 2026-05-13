@@ -148,3 +148,6 @@ supabase/.branches/
 
 # OS files
 .DS_Store
+
+# VS Code files
+.vscode/*
