@@ -6,6 +6,7 @@ const {
   oauthSetCredentials,
   tasksDelete,
   tasksFactory,
+  tasksGet,
   tasksInsert,
   tasksList,
   tasklistsGet,
@@ -14,6 +15,7 @@ const {
   oauthSetCredentials: vi.fn(),
   tasksDelete: vi.fn(),
   tasksFactory: vi.fn(),
+  tasksGet: vi.fn(),
   tasksInsert: vi.fn(),
   tasksList: vi.fn(),
   tasklistsGet: vi.fn(),
@@ -44,7 +46,7 @@ import {
   getGoogleTasksAccessErrorMessage,
   upsertGoogleScheduledTask,
 } from "./google-tasks.js";
-import { listGoogleScheduledTasks } from "./google-tasks-sync.js";
+import { getGoogleScheduledTasksByIds, listGoogleScheduledTasks } from "./google-tasks-sync.js";
 
 const connection: GoogleConnection = {
   accessToken: "google-token",
@@ -88,6 +90,7 @@ describe("google-tasks integration", () => {
     tasksFactory.mockReturnValue({
       tasks: {
         delete: tasksDelete,
+        get: tasksGet,
         insert: tasksInsert,
         list: tasksList,
         patch: tasksPatch,
@@ -180,6 +183,66 @@ describe("google-tasks integration", () => {
       updatedMin: "2026-04-06T09:00:00.000Z",
     });
     expect(tasksList).toHaveBeenNthCalledWith(2, expect.objectContaining({ pageToken: "page-2" }));
+    expect(records).toEqual([
+      {
+        id: "google-task-123",
+        title: "Plan launch week",
+        status: "completed",
+        due: "2026-04-06T00:00:00.000Z",
+        updated: "2026-04-06T19:00:00.000Z",
+        completed: "2026-04-06T18:55:00.000Z",
+        deleted: false,
+        hidden: true,
+      },
+      {
+        id: "google-task-456",
+        title: "Send recap",
+        status: "needsAction",
+        due: "2026-04-06T00:00:00.000Z",
+        updated: "2026-04-06T20:00:00.000Z",
+        completed: null,
+        deleted: false,
+        hidden: false,
+      },
+    ]);
+  });
+
+  it("fetches exact mirrored scheduled task ids", async () => {
+    tasksGet
+      .mockResolvedValueOnce({
+        data: {
+          id: "google-task-123",
+          title: "Plan launch week",
+          status: "completed",
+          due: "2026-04-06T00:00:00.000Z",
+          updated: "2026-04-06T19:00:00.000Z",
+          completed: "2026-04-06T18:55:00.000Z",
+          hidden: true,
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          id: "google-task-456",
+          title: "Send recap",
+          status: "needsAction",
+          due: "2026-04-06T00:00:00.000Z",
+          updated: "2026-04-06T20:00:00.000Z",
+        },
+      });
+
+    const records = await getGoogleScheduledTasksByIds({
+      connection,
+      taskIds: ["google-task-123", "google-task-123", "google-task-456"],
+    });
+
+    expect(tasksGet).toHaveBeenNthCalledWith(1, {
+      tasklist: "@default",
+      task: "google-task-123",
+    });
+    expect(tasksGet).toHaveBeenNthCalledWith(2, {
+      tasklist: "@default",
+      task: "google-task-456",
+    });
     expect(records).toEqual([
       {
         id: "google-task-123",

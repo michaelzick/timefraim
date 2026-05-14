@@ -30,7 +30,6 @@ export async function syncPlannerGoogleCalendar(
     };
   }
 
-  const previousRun = await repository.getCalendarSyncRun(scope.runInput, pool);
   const records = await syncGoogleCalendarWindow(
     connection,
     { timeMin: scope.range.startAt, timeMax: scope.range.endAt },
@@ -70,8 +69,7 @@ export async function syncPlannerGoogleCalendar(
   await syncGoogleTaskCompletionStatuses({
     repository,
     connection,
-    plannerDate: date,
-    updatedMin: previousRun?.syncedAt,
+    range: scope.range,
   });
 
   const events = await repository.listCalendarEventsForRange(scope.range, pool);

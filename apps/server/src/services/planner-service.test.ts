@@ -5,7 +5,7 @@ const {
   deleteGoogleTask,
   fakeDb,
   deleteGoogleScheduleBlock,
-  listGoogleScheduledTasks,
+  getGoogleScheduledTasksByIds,
   startTogglTimer,
   stopTogglTimer,
   syncGoogleCalendarWindow,
@@ -15,7 +15,7 @@ const {
   deleteGoogleTask: vi.fn(),
   fakeDb: { query: vi.fn() },
   deleteGoogleScheduleBlock: vi.fn(),
-  listGoogleScheduledTasks: vi.fn(),
+  getGoogleScheduledTasksByIds: vi.fn(),
   syncGoogleCalendarWindow: vi.fn(),
   upsertGoogleScheduledTask: vi.fn(),
   upsertGoogleScheduleBlock: vi.fn(),
@@ -40,7 +40,7 @@ vi.mock("../integration/google-tasks.js", () => ({
 }));
 
 vi.mock("../integration/google-tasks-sync.js", () => ({
-  listGoogleScheduledTasks,
+  getGoogleScheduledTasksByIds,
 }));
 
 vi.mock("../integration/toggl-track.js", () => ({
@@ -112,7 +112,7 @@ function createRepositoryMock() {
     getIntegrationToken: vi.fn(),
     getScheduleBlock: vi.fn(),
     getScheduleBlockByTaskId: vi.fn(),
-    listScheduleBlocksByGoogleTaskIds: vi.fn(),
+    listScheduleBlocksWithGoogleTaskIdsForRange: vi.fn().mockResolvedValue([]),
     getTask: vi.fn(),
     listCalendarEventsForRange: vi.fn(),
     listDrafts: vi.fn(),
@@ -145,7 +145,7 @@ function createRepositoryMock() {
 describe("planner-service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    listGoogleScheduledTasks.mockResolvedValue([]);
+    getGoogleScheduledTasksByIds.mockResolvedValue([]);
     upsertGoogleScheduledTask.mockResolvedValue("google-task-123");
     upsertGoogleScheduleBlock.mockResolvedValue(null);
     startTogglTimer.mockResolvedValue({ togglEntryId: null });
@@ -1205,10 +1205,10 @@ describe("planner-service", () => {
       metadata: { calendarId: "primary", email: "allowed@example.com" },
     });
     repository.listCalendarEventsForRange.mockResolvedValue([]);
-    repository.listScheduleBlocksByGoogleTaskIds.mockResolvedValue([mirroredBlock]);
+    repository.listScheduleBlocksWithGoogleTaskIdsForRange.mockResolvedValue([mirroredBlock]);
     repository.getTask.mockResolvedValue(baseTask);
     syncGoogleCalendarWindow.mockResolvedValueOnce([]);
-    listGoogleScheduledTasks.mockResolvedValueOnce([
+    getGoogleScheduledTasksByIds.mockResolvedValueOnce([
       {
         id: "google-task-123",
         title: baseTask.title,
@@ -1225,6 +1225,9 @@ describe("planner-service", () => {
 
     await service.syncGoogleCalendar("2026-04-06", 0);
 
+    expect(getGoogleScheduledTasksByIds).toHaveBeenCalledWith(
+      expect.objectContaining({ taskIds: ["google-task-123"] }),
+    );
     expect(repository.updateTask).toHaveBeenCalledWith(
       baseTask.id,
       { status: "done", completedOnDate: "2026-04-06" },
@@ -1245,10 +1248,10 @@ describe("planner-service", () => {
       metadata: { calendarId: "primary", email: "allowed@example.com" },
     });
     repository.listCalendarEventsForRange.mockResolvedValue([]);
-    repository.listScheduleBlocksByGoogleTaskIds.mockResolvedValue([mirroredBlock]);
+    repository.listScheduleBlocksWithGoogleTaskIdsForRange.mockResolvedValue([mirroredBlock]);
     repository.getTask.mockResolvedValue(doneTask);
     syncGoogleCalendarWindow.mockResolvedValueOnce([]);
-    listGoogleScheduledTasks.mockResolvedValueOnce([
+    getGoogleScheduledTasksByIds.mockResolvedValueOnce([
       {
         id: "google-task-123",
         title: baseTask.title,
@@ -1265,6 +1268,9 @@ describe("planner-service", () => {
 
     await service.syncGoogleCalendar("2026-04-06", 0);
 
+    expect(getGoogleScheduledTasksByIds).toHaveBeenCalledWith(
+      expect.objectContaining({ taskIds: ["google-task-123"] }),
+    );
     expect(repository.updateTask).toHaveBeenCalledWith(
       baseTask.id,
       { status: "scheduled", completedOnDate: null },
@@ -1290,10 +1296,10 @@ describe("planner-service", () => {
       metadata: { calendarId: "primary", email: "allowed@example.com" },
     });
     repository.listCalendarEventsForRange.mockResolvedValue([]);
-    repository.listScheduleBlocksByGoogleTaskIds.mockResolvedValue([mirroredBlock]);
+    repository.listScheduleBlocksWithGoogleTaskIdsForRange.mockResolvedValue([mirroredBlock]);
     repository.getTask.mockResolvedValue(localDoneTask);
     syncGoogleCalendarWindow.mockResolvedValueOnce([]);
-    listGoogleScheduledTasks.mockResolvedValueOnce([
+    getGoogleScheduledTasksByIds.mockResolvedValueOnce([
       {
         id: "google-task-123",
         title: baseTask.title,
@@ -1310,6 +1316,9 @@ describe("planner-service", () => {
 
     await service.syncGoogleCalendar("2026-04-06", 0);
 
+    expect(getGoogleScheduledTasksByIds).toHaveBeenCalledWith(
+      expect.objectContaining({ taskIds: ["google-task-123"] }),
+    );
     expect(repository.updateTask).not.toHaveBeenCalled();
     expect(upsertGoogleScheduledTask).toHaveBeenCalledWith(
       expect.objectContaining({ task: localDoneTask, block: mirroredBlock }),
@@ -1327,9 +1336,9 @@ describe("planner-service", () => {
       metadata: { calendarId: "primary", email: "allowed@example.com" },
     });
     repository.listCalendarEventsForRange.mockResolvedValue([]);
-    repository.listScheduleBlocksByGoogleTaskIds.mockResolvedValue([]);
+    repository.listScheduleBlocksWithGoogleTaskIdsForRange.mockResolvedValue([]);
     syncGoogleCalendarWindow.mockResolvedValueOnce([]);
-    listGoogleScheduledTasks.mockResolvedValueOnce([
+    getGoogleScheduledTasksByIds.mockResolvedValueOnce([
       {
         id: "unrelated-google-task",
         title: "External task",
@@ -1346,6 +1355,7 @@ describe("planner-service", () => {
 
     await service.syncGoogleCalendar("2026-04-06", 0);
 
+    expect(getGoogleScheduledTasksByIds).not.toHaveBeenCalled();
     expect(repository.updateTask).not.toHaveBeenCalled();
     expect(upsertGoogleScheduledTask).not.toHaveBeenCalled();
   });

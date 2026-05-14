@@ -75,3 +75,42 @@ export async function listGoogleScheduledTasks(params: {
 
   return records;
 }
+
+function isMissingGoogleTask(error: unknown) {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+  const code = (error as { code?: unknown; status?: unknown }).code
+    ?? (error as { code?: unknown; status?: unknown }).status;
+  return code === 404 || code === 410;
+}
+
+export async function getGoogleScheduledTasksByIds(params: {
+  connection: GoogleConnection | null;
+  taskIds: string[];
+}): Promise<GoogleScheduledTaskRecord[]> {
+  const tasks = createGoogleTasksClient(params.connection);
+  if (!tasks || params.taskIds.length === 0) {
+    return [];
+  }
+
+  const records: GoogleScheduledTaskRecord[] = [];
+  for (const taskId of [...new Set(params.taskIds)]) {
+    try {
+      const response = await tasks.tasks.get({
+        tasklist: "@default",
+        task: taskId,
+      });
+      const record = mapGoogleScheduledTask(response.data);
+      if (record) {
+        records.push(record);
+      }
+    } catch (error) {
+      if (!isMissingGoogleTask(error)) {
+        throw error;
+      }
+    }
+  }
+
+  return records;
+}

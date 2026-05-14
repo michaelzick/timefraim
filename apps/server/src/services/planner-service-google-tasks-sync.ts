@@ -2,7 +2,7 @@ import type { TaskStatus } from "@timefraim/shared";
 import { pool } from "../db/pool.js";
 import type { GoogleConnection } from "../integration/google-calendar.js";
 import { upsertGoogleScheduledTask } from "../integration/google-tasks.js";
-import { listGoogleScheduledTasks, type GoogleScheduledTaskRecord } from "../integration/google-tasks-sync.js";
+import { getGoogleScheduledTasksByIds, type GoogleScheduledTaskRecord } from "../integration/google-tasks-sync.js";
 import type { PlannerRepository } from "../repositories/planner-repository.js";
 
 function isAfter(value: string | null, reference: string) {
@@ -23,24 +23,19 @@ function statusForGoogleTask(record: GoogleScheduledTaskRecord, isScheduled: boo
 export async function syncGoogleTaskCompletionStatuses(args: {
   repository: PlannerRepository;
   connection: GoogleConnection | null;
-  plannerDate: string;
-  updatedMin?: string | null;
+  range: { startAt: string; endAt: string };
 }) {
-  const records = await listGoogleScheduledTasks({
-    connection: args.connection,
-    dueMin: `${args.plannerDate}T00:00:00.000Z`,
-    dueMax: `${args.plannerDate}T23:59:59.999Z`,
-    updatedMin: args.updatedMin,
-  });
+  const blocks = await args.repository.listScheduleBlocksWithGoogleTaskIdsForRange(args.range, pool);
+  const googleTaskIds = blocks.flatMap((block) => block.googleTaskId ? [block.googleTaskId] : []);
+  if (googleTaskIds.length === 0) {
+    return;
+  }
+  const records = await getGoogleScheduledTasksByIds({ connection: args.connection, taskIds: googleTaskIds });
   const activeRecords = records.filter((record) => !record.deleted);
   if (activeRecords.length === 0) {
     return;
   }
 
-  const blocks = await args.repository.listScheduleBlocksByGoogleTaskIds(
-    activeRecords.map((record) => record.id),
-    pool,
-  );
   const blockByGoogleTaskId = new Map(
     blocks.flatMap((block) => block.googleTaskId ? [[block.googleTaskId, block]] : []),
   );
