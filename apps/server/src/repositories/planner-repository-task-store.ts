@@ -123,6 +123,20 @@ export class PlannerRepositoryTaskStore {
     return result.rows[0] ? mapScheduleBlock(result.rows[0]) : null;
   }
 
+  async listScheduleBlocksByGoogleTaskIds(googleTaskIds: string[], db: Queryable) {
+    if (googleTaskIds.length === 0) {
+      return [];
+    }
+
+    const result = await db.query(
+      `select *
+       from public.schedule_blocks
+       where google_task_id = any($1::text[])`,
+      [googleTaskIds],
+    );
+    return result.rows.map(mapScheduleBlock);
+  }
+
   async createScheduleBlock(input: CreateScheduleBlockInput, db: Queryable) {
     const result = await db.query(
       `insert into public.schedule_blocks (task_id, start_at, end_at, source, state)

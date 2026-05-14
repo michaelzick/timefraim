@@ -5,6 +5,7 @@ const {
   deleteGoogleTask,
   fakeDb,
   deleteGoogleScheduleBlock,
+  listGoogleScheduledTasks,
   startTogglTimer,
   stopTogglTimer,
   syncGoogleCalendarWindow,
@@ -14,6 +15,7 @@ const {
   deleteGoogleTask: vi.fn(),
   fakeDb: { query: vi.fn() },
   deleteGoogleScheduleBlock: vi.fn(),
+  listGoogleScheduledTasks: vi.fn(),
   syncGoogleCalendarWindow: vi.fn(),
   upsertGoogleScheduledTask: vi.fn(),
   upsertGoogleScheduleBlock: vi.fn(),
@@ -35,6 +37,10 @@ vi.mock("../integration/google-calendar.js", () => ({
 vi.mock("../integration/google-tasks.js", () => ({
   deleteGoogleTask,
   upsertGoogleScheduledTask,
+}));
+
+vi.mock("../integration/google-tasks-sync.js", () => ({
+  listGoogleScheduledTasks,
 }));
 
 vi.mock("../integration/toggl-track.js", () => ({
@@ -106,6 +112,7 @@ function createRepositoryMock() {
     getIntegrationToken: vi.fn(),
     getScheduleBlock: vi.fn(),
     getScheduleBlockByTaskId: vi.fn(),
+    listScheduleBlocksByGoogleTaskIds: vi.fn(),
     getTask: vi.fn(),
     listCalendarEventsForRange: vi.fn(),
     listDrafts: vi.fn(),
@@ -138,6 +145,7 @@ function createRepositoryMock() {
 describe("planner-service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    listGoogleScheduledTasks.mockResolvedValue([]);
     upsertGoogleScheduledTask.mockResolvedValue("google-task-123");
     upsertGoogleScheduleBlock.mockResolvedValue(null);
     startTogglTimer.mockResolvedValue({ togglEntryId: null });
@@ -853,6 +861,71 @@ describe("planner-service", () => {
     expect(repository.upsertCalendarEvent).not.toHaveBeenCalled();
   });
 
+  it("patches Google Task completion when a mirrored task is marked done", async () => {
+    const repository = createRepositoryMock();
+    const mirroredBlock = { ...baseBlock, googleEventId: null, googleTaskId: "google-task-123" };
+    const completedTask = { ...baseTask, status: "done" as const, completedOnDate: "2026-04-06" };
+
+    repository.getIntegrationToken.mockResolvedValue({
+      provider: "google",
+      access_token: "google-token",
+      refresh_token: null,
+      expires_at: null,
+      metadata: { calendarId: "primary", email: "allowed@example.com" },
+    });
+    repository.getDraft.mockResolvedValue(createDraft("task.update", { taskId: baseTask.id, status: "done" }));
+    repository.getTask.mockResolvedValueOnce(baseTask).mockResolvedValueOnce(completedTask);
+    repository.updateTask.mockResolvedValue(completedTask);
+    repository.getScheduleBlockByTaskId.mockResolvedValue(mirroredBlock);
+    repository.getScheduleBlock.mockResolvedValue(mirroredBlock);
+    repository.updateDraftStatus.mockResolvedValue({
+      ...createDraft("task.update", { taskId: baseTask.id, status: "done" }),
+      status: "applied",
+      appliedAt: "2026-04-06T09:10:00.000Z",
+    });
+
+    const service = new PlannerService(repository as never);
+
+    await service.confirmDraft("draft-1", "user");
+
+    expect(upsertGoogleScheduledTask).toHaveBeenCalledWith(
+      expect.objectContaining({ task: completedTask, block: mirroredBlock }),
+    );
+  });
+
+  it("patches Google Task completion when a mirrored task is reopened", async () => {
+    const repository = createRepositoryMock();
+    const mirroredBlock = { ...baseBlock, googleEventId: null, googleTaskId: "google-task-123" };
+    const doneTask = { ...baseTask, status: "done" as const, completedOnDate: "2026-04-06" };
+    const reopenedTask = { ...baseTask, status: "scheduled" as const, completedOnDate: null };
+
+    repository.getIntegrationToken.mockResolvedValue({
+      provider: "google",
+      access_token: "google-token",
+      refresh_token: null,
+      expires_at: null,
+      metadata: { calendarId: "primary", email: "allowed@example.com" },
+    });
+    repository.getDraft.mockResolvedValue(createDraft("task.update", { taskId: baseTask.id, status: "scheduled" }));
+    repository.getTask.mockResolvedValueOnce(doneTask).mockResolvedValueOnce(reopenedTask);
+    repository.updateTask.mockResolvedValue(reopenedTask);
+    repository.getScheduleBlockByTaskId.mockResolvedValue(mirroredBlock);
+    repository.getScheduleBlock.mockResolvedValue(mirroredBlock);
+    repository.updateDraftStatus.mockResolvedValue({
+      ...createDraft("task.update", { taskId: baseTask.id, status: "scheduled" }),
+      status: "applied",
+      appliedAt: "2026-04-06T09:10:00.000Z",
+    });
+
+    const service = new PlannerService(repository as never);
+
+    await service.confirmDraft("draft-1", "user");
+
+    expect(upsertGoogleScheduledTask).toHaveBeenCalledWith(
+      expect.objectContaining({ task: reopenedTask, block: mirroredBlock }),
+    );
+  });
+
   it("switches an existing Google event mirror to a Google Task on timeline update", async () => {
     const repository = createRepositoryMock();
     const movedBlock = {
@@ -1118,5 +1191,162 @@ describe("planner-service", () => {
       syncedAt: "2026-04-06T09:00:00.000Z",
       hiddenEventCount: 0,
     });
+  });
+
+  it("applies newer completed Google Task mirrors during manual sync", async () => {
+    const repository = createRepositoryMock();
+    const mirroredBlock = { ...baseBlock, googleEventId: null, googleTaskId: "google-task-123" };
+
+    repository.getIntegrationToken.mockResolvedValue({
+      provider: "google",
+      access_token: "google-token",
+      refresh_token: null,
+      expires_at: null,
+      metadata: { calendarId: "primary", email: "allowed@example.com" },
+    });
+    repository.listCalendarEventsForRange.mockResolvedValue([]);
+    repository.listScheduleBlocksByGoogleTaskIds.mockResolvedValue([mirroredBlock]);
+    repository.getTask.mockResolvedValue(baseTask);
+    syncGoogleCalendarWindow.mockResolvedValueOnce([]);
+    listGoogleScheduledTasks.mockResolvedValueOnce([
+      {
+        id: "google-task-123",
+        title: baseTask.title,
+        status: "completed",
+        due: "2026-04-06T00:00:00.000Z",
+        updated: "2026-04-06T20:00:00.000Z",
+        completed: "2026-04-06T19:59:00.000Z",
+        deleted: false,
+        hidden: false,
+      },
+    ]);
+
+    const service = new PlannerService(repository as never);
+
+    await service.syncGoogleCalendar("2026-04-06", 0);
+
+    expect(repository.updateTask).toHaveBeenCalledWith(
+      baseTask.id,
+      { status: "done", completedOnDate: "2026-04-06" },
+      fakeDb,
+    );
+  });
+
+  it("applies newer incomplete Google Task mirrors during manual sync", async () => {
+    const repository = createRepositoryMock();
+    const mirroredBlock = { ...baseBlock, googleEventId: null, googleTaskId: "google-task-123" };
+    const doneTask = { ...baseTask, status: "done" as const, completedOnDate: "2026-04-06" };
+
+    repository.getIntegrationToken.mockResolvedValue({
+      provider: "google",
+      access_token: "google-token",
+      refresh_token: null,
+      expires_at: null,
+      metadata: { calendarId: "primary", email: "allowed@example.com" },
+    });
+    repository.listCalendarEventsForRange.mockResolvedValue([]);
+    repository.listScheduleBlocksByGoogleTaskIds.mockResolvedValue([mirroredBlock]);
+    repository.getTask.mockResolvedValue(doneTask);
+    syncGoogleCalendarWindow.mockResolvedValueOnce([]);
+    listGoogleScheduledTasks.mockResolvedValueOnce([
+      {
+        id: "google-task-123",
+        title: baseTask.title,
+        status: "needsAction",
+        due: "2026-04-06T00:00:00.000Z",
+        updated: "2026-04-06T20:00:00.000Z",
+        completed: null,
+        deleted: false,
+        hidden: false,
+      },
+    ]);
+
+    const service = new PlannerService(repository as never);
+
+    await service.syncGoogleCalendar("2026-04-06", 0);
+
+    expect(repository.updateTask).toHaveBeenCalledWith(
+      baseTask.id,
+      { status: "scheduled", completedOnDate: null },
+      fakeDb,
+    );
+  });
+
+  it("pushes local status back to Google when the local mirror is newer", async () => {
+    const repository = createRepositoryMock();
+    const mirroredBlock = { ...baseBlock, googleEventId: null, googleTaskId: "google-task-123" };
+    const localDoneTask = {
+      ...baseTask,
+      status: "done" as const,
+      completedOnDate: "2026-04-06",
+      updatedAt: "2026-04-06T21:00:00.000Z",
+    };
+
+    repository.getIntegrationToken.mockResolvedValue({
+      provider: "google",
+      access_token: "google-token",
+      refresh_token: null,
+      expires_at: null,
+      metadata: { calendarId: "primary", email: "allowed@example.com" },
+    });
+    repository.listCalendarEventsForRange.mockResolvedValue([]);
+    repository.listScheduleBlocksByGoogleTaskIds.mockResolvedValue([mirroredBlock]);
+    repository.getTask.mockResolvedValue(localDoneTask);
+    syncGoogleCalendarWindow.mockResolvedValueOnce([]);
+    listGoogleScheduledTasks.mockResolvedValueOnce([
+      {
+        id: "google-task-123",
+        title: baseTask.title,
+        status: "needsAction",
+        due: "2026-04-06T00:00:00.000Z",
+        updated: "2026-04-06T20:00:00.000Z",
+        completed: null,
+        deleted: false,
+        hidden: false,
+      },
+    ]);
+
+    const service = new PlannerService(repository as never);
+
+    await service.syncGoogleCalendar("2026-04-06", 0);
+
+    expect(repository.updateTask).not.toHaveBeenCalled();
+    expect(upsertGoogleScheduledTask).toHaveBeenCalledWith(
+      expect.objectContaining({ task: localDoneTask, block: mirroredBlock }),
+    );
+  });
+
+  it("ignores unrelated Google Tasks during manual sync", async () => {
+    const repository = createRepositoryMock();
+
+    repository.getIntegrationToken.mockResolvedValue({
+      provider: "google",
+      access_token: "google-token",
+      refresh_token: null,
+      expires_at: null,
+      metadata: { calendarId: "primary", email: "allowed@example.com" },
+    });
+    repository.listCalendarEventsForRange.mockResolvedValue([]);
+    repository.listScheduleBlocksByGoogleTaskIds.mockResolvedValue([]);
+    syncGoogleCalendarWindow.mockResolvedValueOnce([]);
+    listGoogleScheduledTasks.mockResolvedValueOnce([
+      {
+        id: "unrelated-google-task",
+        title: "External task",
+        status: "completed",
+        due: "2026-04-06T00:00:00.000Z",
+        updated: "2026-04-06T20:00:00.000Z",
+        completed: "2026-04-06T20:00:00.000Z",
+        deleted: false,
+        hidden: false,
+      },
+    ]);
+
+    const service = new PlannerService(repository as never);
+
+    await service.syncGoogleCalendar("2026-04-06", 0);
+
+    expect(repository.updateTask).not.toHaveBeenCalled();
+    expect(upsertGoogleScheduledTask).not.toHaveBeenCalled();
   });
 });

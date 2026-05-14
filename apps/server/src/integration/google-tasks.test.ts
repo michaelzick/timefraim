@@ -7,6 +7,7 @@ const {
   tasksDelete,
   tasksFactory,
   tasksInsert,
+  tasksList,
   tasklistsGet,
   tasksPatch,
 } = vi.hoisted(() => ({
@@ -14,6 +15,7 @@ const {
   tasksDelete: vi.fn(),
   tasksFactory: vi.fn(),
   tasksInsert: vi.fn(),
+  tasksList: vi.fn(),
   tasklistsGet: vi.fn(),
   tasksPatch: vi.fn(),
 }));
@@ -42,6 +44,7 @@ import {
   getGoogleTasksAccessErrorMessage,
   upsertGoogleScheduledTask,
 } from "./google-tasks.js";
+import { listGoogleScheduledTasks } from "./google-tasks-sync.js";
 
 const connection: GoogleConnection = {
   accessToken: "google-token",
@@ -86,6 +89,7 @@ describe("google-tasks integration", () => {
       tasks: {
         delete: tasksDelete,
         insert: tasksInsert,
+        list: tasksList,
         patch: tasksPatch,
       },
       tasklists: {
@@ -123,6 +127,81 @@ describe("google-tasks integration", () => {
       },
     });
     expect(googleTaskId).toBe("google-task-123");
+  });
+
+  it("lists scheduled tasks with completed and hidden entries across pages", async () => {
+    tasksList
+      .mockResolvedValueOnce({
+        data: {
+          nextPageToken: "page-2",
+          items: [
+            {
+              id: "google-task-123",
+              title: "Plan launch week",
+              status: "completed",
+              due: "2026-04-06T00:00:00.000Z",
+              updated: "2026-04-06T19:00:00.000Z",
+              completed: "2026-04-06T18:55:00.000Z",
+              hidden: true,
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              id: "google-task-456",
+              title: "Send recap",
+              status: "needsAction",
+              due: "2026-04-06T00:00:00.000Z",
+              updated: "2026-04-06T20:00:00.000Z",
+            },
+          ],
+        },
+      });
+
+    const records = await listGoogleScheduledTasks({
+      connection,
+      dueMin: "2026-04-06T00:00:00.000Z",
+      dueMax: "2026-04-06T23:59:59.999Z",
+      updatedMin: "2026-04-06T09:00:00.000Z",
+    });
+
+    expect(tasksList).toHaveBeenNthCalledWith(1, {
+      tasklist: "@default",
+      dueMin: "2026-04-06T00:00:00.000Z",
+      dueMax: "2026-04-06T23:59:59.999Z",
+      maxResults: 100,
+      pageToken: undefined,
+      showCompleted: true,
+      showDeleted: false,
+      showHidden: true,
+      updatedMin: "2026-04-06T09:00:00.000Z",
+    });
+    expect(tasksList).toHaveBeenNthCalledWith(2, expect.objectContaining({ pageToken: "page-2" }));
+    expect(records).toEqual([
+      {
+        id: "google-task-123",
+        title: "Plan launch week",
+        status: "completed",
+        due: "2026-04-06T00:00:00.000Z",
+        updated: "2026-04-06T19:00:00.000Z",
+        completed: "2026-04-06T18:55:00.000Z",
+        deleted: false,
+        hidden: true,
+      },
+      {
+        id: "google-task-456",
+        title: "Send recap",
+        status: "needsAction",
+        due: "2026-04-06T00:00:00.000Z",
+        updated: "2026-04-06T20:00:00.000Z",
+        completed: null,
+        deleted: false,
+        hidden: false,
+      },
+    ]);
   });
 
   it("uses the local planner date and writes the time range into notes", async () => {

@@ -5,6 +5,35 @@ import { updateScheduleBlockWithValidation } from "./planner-schedule-changes.js
 import type { TaskPatch } from "../repositories/planner-repository-types.js";
 import { todayIsoDate } from "../utils/date.js";
 
+async function queueGoogleTaskStatusSync(context: DraftHandlerContext, taskId: string, payload: TaskUpdate) {
+  if (!context.googleConnected || typeof payload.status === "undefined") {
+    return;
+  }
+
+  const block = await context.repository.getScheduleBlockByTaskId(taskId, context.client);
+  if (!block?.googleTaskId) {
+    return;
+  }
+
+  const alreadyQueued = context.sideEffects.some((effect) =>
+    effect.type === "google.upsert"
+    && effect.scheduleBlockId === block.id
+    && effect.target === "task",
+  );
+  if (alreadyQueued) {
+    return;
+  }
+
+  context.sideEffects.push({
+    type: "google.upsert",
+    target: "task",
+    taskId,
+    scheduleBlockId: block.id,
+    plannerDate: payload.plannerDate,
+    tzOffsetMinutes: payload.tzOffsetMinutes,
+  });
+}
+
 function resolveCompletedOnDate(args: {
   payloadStatus: TaskUpdate["status"] | undefined;
   payloadCompletedOnDate: string | null | undefined;
@@ -115,6 +144,7 @@ export async function applyTaskUpdateDraft(context: DraftHandlerContext) {
     },
     context.client,
   );
+  await queueGoogleTaskStatusSync(context, task.id, payload);
   return context.markApplied();
 }
 
