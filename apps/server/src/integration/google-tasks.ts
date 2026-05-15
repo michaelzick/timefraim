@@ -75,7 +75,7 @@ function buildGoogleTaskNotes(params: {
     .join("\n\n");
 }
 
-function createGoogleTasksClient(connection: GoogleConnection | null) {
+export function createGoogleTasksClient(connection: GoogleConnection | null) {
   if (!connection) {
     return null;
   }

@@ -14,8 +14,10 @@ import type {
   TogglIntegrationSettings,
 } from "@timefraim/shared";
 import { useEffect, useEffectEvent, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useLocation } from "react-router-dom";
 import { api } from "@/lib/api";
 import { env } from "@/lib/env";
+import { useAutoGoogleTaskSync } from "@/hooks/use-auto-google-task-sync";
 import { useGoogleSessionSync } from "@/hooks/use-google-session-sync";
 import { usePlannerMutations } from "@/hooks/use-planner-mutations";
 import { supabase } from "@/lib/supabase";
@@ -42,6 +44,7 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
   const [date, setDate] = useState(getTodayDate());
   const token = session?.access_token ?? "";
   const queryClient = useQueryClient();
+  const location = useLocation();
 
   const invalidatePlannerData = useEffectEvent(async () => {
     await Promise.all([
@@ -105,6 +108,12 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
     date,
     token,
     onSuccess: invalidatePlannerData,
+  });
+  useAutoGoogleTaskSync({
+    date,
+    enabled: location.pathname === "/" && Boolean(dayPlanQuery.data?.integrationStatus.googleConnected),
+    manualSyncPending: plannerMutations.isSyncing,
+    token,
   });
 
   const loading = useMemo(

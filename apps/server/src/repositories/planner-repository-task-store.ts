@@ -123,6 +123,18 @@ export class PlannerRepositoryTaskStore {
     return result.rows[0] ? mapScheduleBlock(result.rows[0]) : null;
   }
 
+  async listScheduleBlocksWithGoogleTaskIdsForRange(range: { startAt: string; endAt: string }, db: Queryable) {
+    const result = await db.query(
+      `select *
+       from public.schedule_blocks
+       where start_at < $2 and end_at > $1
+         and google_task_id is not null
+       order by start_at asc`,
+      [range.startAt, range.endAt],
+    );
+    return result.rows.map(mapScheduleBlock);
+  }
+
   async createScheduleBlock(input: CreateScheduleBlockInput, db: Queryable) {
     const result = await db.query(
       `insert into public.schedule_blocks (task_id, start_at, end_at, source, state)
