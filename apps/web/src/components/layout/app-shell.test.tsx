@@ -1,9 +1,19 @@
+import type { PropsWithChildren } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { AppShell } from "@/components/layout/app-shell";
 import { buildAuthSession, buildDayPlan, buildTogglSettings, noopDuplicate } from "@/test/fixtures";
 import { ThemeProvider } from "@/theme/theme-provider";
+
+function Providers({ children }: PropsWithChildren) {
+  return (
+    <QueryClientProvider client={new QueryClient()}>
+      <ThemeProvider>{children}</ThemeProvider>
+    </QueryClientProvider>
+  );
+}
 
 vi.mock("@/pages/planner-page", () => ({
   PlannerPage: () => <div>planner route</div>,
@@ -29,7 +39,7 @@ const noopTogglSettings = () => Promise.resolve(buildTogglSettings());
 describe("AppShell", () => {
   it("renders the signed-in shell and lazy route content", async () => {
     render(
-      <ThemeProvider>
+      <Providers>
         <MemoryRouter initialEntries={["/settings"]}>
           <AppShell
             authSession={buildAuthSession()}
@@ -74,7 +84,7 @@ describe("AppShell", () => {
             }}
           />
         </MemoryRouter>
-      </ThemeProvider>,
+      </Providers>,
     );
 
     expect(screen.queryByText(/synced with allowed@example.com/i)).not.toBeInTheDocument();

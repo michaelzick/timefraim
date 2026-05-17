@@ -7,6 +7,8 @@ import {
   timerSessionSchema,
   togglProjectOptionSchema,
   togglWorkspaceOptionSchema,
+  userPreferencesSchema,
+  type UserPreferences,
 } from "@timefraim/shared";
 import type { QueryResultRow } from "pg";
 import { asIso } from "../utils/date.js";
@@ -145,6 +147,14 @@ export function mapAuditLog(row: QueryResultRow) {
     displaySummary: row.diff_summary,
     payload: row.payload,
     createdAt: asIso(row.created_at),
+  });
+}
+
+export function mapUserPreferences(row: QueryResultRow): UserPreferences {
+  return userPreferencesSchema.parse({
+    theme: row.theme,
+    taskStartNotificationsEnabled: row.task_start_notifications_enabled,
+    taskEndNotificationsEnabled: row.task_end_notifications_enabled,
   });
 }
 

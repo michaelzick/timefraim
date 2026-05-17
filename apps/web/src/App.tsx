@@ -14,6 +14,7 @@ import { useTaskNotificationPreferences } from "@/hooks/use-task-notification-pr
 import { useSupabaseSession } from "@/hooks/use-supabase-session";
 import { supabase } from "@/lib/supabase";
 import { ThemeProvider } from "@/theme/theme-provider";
+import { ThemeSync } from "@/theme/theme-sync";
 import { useTheme } from "@/theme/use-theme";
 
 const queryClient = new QueryClient();
@@ -151,6 +152,7 @@ function AppFrame() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <ThemeSync />
         <AppContent />
         <Toaster
           theme={resolvedTheme}

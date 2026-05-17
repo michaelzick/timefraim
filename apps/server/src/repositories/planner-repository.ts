@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { Queryable } from "../db/pool.js";
 import { mapAuditLog } from "./planner-repository-mappers.js";
-import { PlannerRepositoryTimerStore } from "./planner-repository-timer-store.js";
+import { PlannerRepositoryPreferencesStore } from "./planner-repository-preferences-store.js";
 import type { CreateAuditLogInput } from "./planner-repository-types.js";
 
 export type { CalendarEventRecord, IntegrationTokenRow } from "./planner-repository-types.js";
 
-export class PlannerRepository extends PlannerRepositoryTimerStore {
+export class PlannerRepository extends PlannerRepositoryPreferencesStore {
   async listRecentAuditLogs(db: Queryable) {
     const result = await db.query(
       `select *

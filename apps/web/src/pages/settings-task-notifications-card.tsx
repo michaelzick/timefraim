@@ -80,7 +80,8 @@ export function SettingsTaskNotificationsCard({
         />
       </div>
       <p className="mt-3 text-xs text-[var(--muted)]">
-        {message ?? "These settings stay in this browser only."}
+        {message
+          ?? "These settings sync with your account. Each browser still needs notification permission granted."}
       </p>
     </Card>
   );
