@@ -32,14 +32,16 @@ type AppShellProps = {
   isSavingToggl: boolean;
   isLoadingGoogleCalendars: boolean;
   isSavingGoogleCalendars: boolean;
+  taskStartNotificationsEnabled: boolean;
   taskEndNotificationsEnabled: boolean;
-  taskEndNotificationsSupported: boolean;
-  taskEndNotificationsMessage: string | null;
+  taskNotificationsSupported: boolean;
+  taskNotificationsMessage: string | null;
   onDateChange: (nextDate: string) => void;
   onDiscoverToggl: (values: TogglDiscoverInput) => Promise<TogglDiscoverResult>;
   onDeleteToggl: () => Promise<TogglIntegrationSettings>;
   onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
   onSaveGoogleCalendars: (values: GoogleCalendarSettingsUpdate) => Promise<unknown>;
+  onTaskStartNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
   onTaskEndNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
   onSignOut: () => void;
   plannerPageProps: Omit<PlannerPageProps, "date" | "dayPlan" | "linkedGoogleEmail" | "onDateChange">;
@@ -63,14 +65,16 @@ export function AppShell({
   isSavingToggl,
   isLoadingGoogleCalendars,
   isSavingGoogleCalendars,
+  taskStartNotificationsEnabled,
   taskEndNotificationsEnabled,
-  taskEndNotificationsSupported,
-  taskEndNotificationsMessage,
+  taskNotificationsSupported,
+  taskNotificationsMessage,
   onDateChange,
   onDiscoverToggl,
   onDeleteToggl,
   onSaveToggl,
   onSaveGoogleCalendars,
+  onTaskStartNotificationsChange,
   onTaskEndNotificationsChange,
   onSignOut,
   plannerPageProps,
@@ -109,9 +113,11 @@ export function AppShell({
                   onDiscoverToggl={onDiscoverToggl}
                   onDeleteToggl={onDeleteToggl}
                   onSaveGoogleCalendars={onSaveGoogleCalendars}
+                  taskStartNotificationsEnabled={taskStartNotificationsEnabled}
                   taskEndNotificationsEnabled={taskEndNotificationsEnabled}
-                  taskEndNotificationsSupported={taskEndNotificationsSupported}
-                  taskEndNotificationsMessage={taskEndNotificationsMessage}
+                  taskNotificationsSupported={taskNotificationsSupported}
+                  taskNotificationsMessage={taskNotificationsMessage}
+                  onTaskStartNotificationsChange={onTaskStartNotificationsChange}
                   onTaskEndNotificationsChange={onTaskEndNotificationsChange}
                   isSaving={isSavingToggl}
                 />

@@ -11,7 +11,7 @@ import { Bot, LockKeyhole, Orbit } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { env } from "@/lib/env";
 import { SettingsGoogleCalendarsCard } from "@/pages/settings-google-calendars-card";
-import { SettingsTaskEndNotificationsCard } from "@/pages/settings-task-end-notifications-card";
+import { SettingsTaskNotificationsCard } from "@/pages/settings-task-notifications-card";
 import { SettingsTogglCard } from "@/pages/settings-toggl-card";
 
 export function SettingsPage({
@@ -20,13 +20,15 @@ export function SettingsPage({
   googleCalendarSettings,
   isLoadingGoogleCalendars,
   isSavingGoogleCalendars,
+  taskStartNotificationsEnabled,
   taskEndNotificationsEnabled,
-  taskEndNotificationsSupported,
-  taskEndNotificationsMessage,
+  taskNotificationsSupported,
+  taskNotificationsMessage,
   onDiscoverToggl,
   onDeleteToggl,
   onSaveToggl,
   onSaveGoogleCalendars,
+  onTaskStartNotificationsChange,
   onTaskEndNotificationsChange,
   isDiscovering,
   isSaving,
@@ -36,13 +38,15 @@ export function SettingsPage({
   googleCalendarSettings: GoogleCalendarSettings | null;
   isLoadingGoogleCalendars: boolean;
   isSavingGoogleCalendars: boolean;
+  taskStartNotificationsEnabled: boolean;
   taskEndNotificationsEnabled: boolean;
-  taskEndNotificationsSupported: boolean;
-  taskEndNotificationsMessage: string | null;
+  taskNotificationsSupported: boolean;
+  taskNotificationsMessage: string | null;
   onDiscoverToggl: (values: TogglDiscoverInput) => Promise<TogglDiscoverResult>;
   onDeleteToggl: () => Promise<TogglIntegrationSettings>;
   onSaveToggl: (values: TogglConnect) => Promise<TogglIntegrationSettings>;
   onSaveGoogleCalendars: (values: GoogleCalendarSettingsUpdate) => Promise<unknown>;
+  onTaskStartNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
   onTaskEndNotificationsChange: (nextEnabled: boolean) => Promise<void> | void;
   isDiscovering: boolean;
   isSaving: boolean;
@@ -102,11 +106,13 @@ export function SettingsPage({
       </div>
 
       <div className="space-y-6">
-        <SettingsTaskEndNotificationsCard
-          enabled={taskEndNotificationsEnabled}
-          supported={taskEndNotificationsSupported}
-          message={taskEndNotificationsMessage}
-          onChange={onTaskEndNotificationsChange}
+        <SettingsTaskNotificationsCard
+          startEnabled={taskStartNotificationsEnabled}
+          endEnabled={taskEndNotificationsEnabled}
+          supported={taskNotificationsSupported}
+          message={taskNotificationsMessage}
+          onStartChange={onTaskStartNotificationsChange}
+          onEndChange={onTaskEndNotificationsChange}
         />
 
         <Card>

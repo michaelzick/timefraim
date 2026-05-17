@@ -34,9 +34,11 @@ describe("SettingsPage", () => {
         isLoadingGoogleCalendars={false}
         isSavingGoogleCalendars={false}
         onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+        taskStartNotificationsEnabled={false}
         taskEndNotificationsEnabled={false}
-        taskEndNotificationsSupported
-        taskEndNotificationsMessage={null}
+        taskNotificationsSupported
+        taskNotificationsMessage={null}
+        onTaskStartNotificationsChange={vi.fn()}
         onTaskEndNotificationsChange={vi.fn()}
       />,
     );
@@ -69,9 +71,11 @@ describe("SettingsPage", () => {
         isLoadingGoogleCalendars={false}
         isSavingGoogleCalendars={false}
         onSaveGoogleCalendars={onSaveGoogleCalendars}
+        taskStartNotificationsEnabled={false}
         taskEndNotificationsEnabled={false}
-        taskEndNotificationsSupported
-        taskEndNotificationsMessage={null}
+        taskNotificationsSupported
+        taskNotificationsMessage={null}
+        onTaskStartNotificationsChange={vi.fn()}
         onTaskEndNotificationsChange={vi.fn()}
       />,
     );
@@ -126,9 +130,11 @@ describe("SettingsPage", () => {
         isLoadingGoogleCalendars={false}
         isSavingGoogleCalendars={false}
         onSaveGoogleCalendars={onSaveGoogleCalendars}
+        taskStartNotificationsEnabled={false}
         taskEndNotificationsEnabled={false}
-        taskEndNotificationsSupported
-        taskEndNotificationsMessage={null}
+        taskNotificationsSupported
+        taskNotificationsMessage={null}
+        onTaskStartNotificationsChange={vi.fn()}
         onTaskEndNotificationsChange={vi.fn()}
       />,
     );
@@ -172,9 +178,11 @@ describe("SettingsPage", () => {
         isLoadingGoogleCalendars={false}
         isSavingGoogleCalendars={false}
         onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+        taskStartNotificationsEnabled={false}
         taskEndNotificationsEnabled={false}
-        taskEndNotificationsSupported
-        taskEndNotificationsMessage={null}
+        taskNotificationsSupported
+        taskNotificationsMessage={null}
+        onTaskStartNotificationsChange={vi.fn()}
         onTaskEndNotificationsChange={vi.fn()}
       />,
     );
@@ -235,9 +243,11 @@ describe("SettingsPage", () => {
         isLoadingGoogleCalendars={false}
         isSavingGoogleCalendars={false}
         onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+        taskStartNotificationsEnabled={false}
         taskEndNotificationsEnabled={false}
-        taskEndNotificationsSupported
-        taskEndNotificationsMessage={null}
+        taskNotificationsSupported
+        taskNotificationsMessage={null}
+        onTaskStartNotificationsChange={vi.fn()}
         onTaskEndNotificationsChange={vi.fn()}
       />,
     );
@@ -280,14 +290,16 @@ describe("SettingsPage", () => {
         isLoadingGoogleCalendars={false}
         isSavingGoogleCalendars={false}
         onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+        taskStartNotificationsEnabled={false}
         taskEndNotificationsEnabled
-        taskEndNotificationsSupported
-        taskEndNotificationsMessage={null}
+        taskNotificationsSupported
+        taskNotificationsMessage={null}
+        onTaskStartNotificationsChange={vi.fn()}
         onTaskEndNotificationsChange={onTaskEndNotificationsChange}
       />,
     );
 
-    const checkbox = screen.getByRole("checkbox", { name: /show browser pop-ups when a task ends/i });
+    const checkbox = screen.getByRole("checkbox", { name: /show a browser pop-up when a task ends/i });
     expect(checkbox).toBeChecked();
 
     await user.click(checkbox);

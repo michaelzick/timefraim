@@ -9,8 +9,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
 import { useAppShellData } from "@/hooks/use-app-shell-data";
-import { useScheduleBlockEndNotification } from "@/hooks/use-schedule-block-end-notification";
-import { useTaskEndNotificationPreference } from "@/hooks/use-task-end-notification-preference";
+import { useScheduleBlockNotifications } from "@/hooks/use-schedule-block-notifications";
+import { useTaskNotificationPreferences } from "@/hooks/use-task-notification-preferences";
 import { useSupabaseSession } from "@/hooks/use-supabase-session";
 import { supabase } from "@/lib/supabase";
 import { ThemeProvider } from "@/theme/theme-provider";
@@ -34,7 +34,7 @@ function AppContent() {
     togglSettingsQuery,
   } =
     useAppShellData(session);
-  const taskEndNotifications = useTaskEndNotificationPreference();
+  const taskNotifications = useTaskNotificationPreferences();
 
   const dayPlanTasks = dayPlanQuery.data?.tasks;
   const dayPlanScheduleBlocks = dayPlanQuery.data?.scheduleBlocks;
@@ -45,8 +45,9 @@ function AppContent() {
     }
     return map;
   }, [dayPlanTasks]);
-  useScheduleBlockEndNotification({
-    enabled: taskEndNotifications.enabled,
+  useScheduleBlockNotifications({
+    startEnabled: taskNotifications.startEnabled,
+    endEnabled: taskNotifications.endEnabled,
     scheduleBlocks: dayPlanScheduleBlocks ?? [],
     tasksById,
   });
@@ -109,15 +110,17 @@ function AppContent() {
       isSavingToggl={plannerMutations.isSavingToggl}
       isLoadingGoogleCalendars={googleCalendarSettingsQuery.isLoading}
       isSavingGoogleCalendars={saveGoogleCalendarsMutation.isPending}
-      taskEndNotificationsEnabled={taskEndNotifications.enabled}
-      taskEndNotificationsSupported={taskEndNotifications.supported}
-      taskEndNotificationsMessage={taskEndNotifications.message}
+      taskStartNotificationsEnabled={taskNotifications.startEnabled}
+      taskEndNotificationsEnabled={taskNotifications.endEnabled}
+      taskNotificationsSupported={taskNotifications.supported}
+      taskNotificationsMessage={taskNotifications.message}
       onDateChange={setDate}
       onDiscoverToggl={plannerMutations.actions.discoverToggl}
       onDeleteToggl={plannerMutations.actions.deleteToggl}
       onSaveToggl={plannerMutations.actions.saveToggl}
       onSaveGoogleCalendars={(values) => saveGoogleCalendarsMutation.mutateAsync(values)}
-      onTaskEndNotificationsChange={taskEndNotifications.setEnabledFromUserAction}
+      onTaskStartNotificationsChange={taskNotifications.setStartEnabledFromUserAction}
+      onTaskEndNotificationsChange={taskNotifications.setEndEnabledFromUserAction}
       onSignOut={handleSignOut}
       plannerPageProps={{
         isMutating: plannerMutations.isMutating,
