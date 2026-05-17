@@ -1,10 +1,25 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  TASK_END_NOTIFICATIONS_STORAGE_KEY,
-  TASK_START_NOTIFICATIONS_STORAGE_KEY,
-  useTaskNotificationPreferences,
-} from "@/hooks/use-task-notification-preferences";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useTaskNotificationPreferences } from "@/hooks/use-task-notification-preferences";
+
+type Preferences = {
+  theme: "light" | "dark" | "system";
+  taskStartNotificationsEnabled: boolean;
+  taskEndNotificationsEnabled: boolean;
+};
+
+const hoisted = vi.hoisted(() => ({
+  mutate: vi.fn(),
+  preferences: null as Preferences | null,
+}));
+
+vi.mock("@/hooks/use-user-preferences", () => ({
+  useUserPreferences: () => ({
+    preferences: hoisted.preferences,
+    query: {},
+    mutation: { mutate: hoisted.mutate },
+  }),
+}));
 
 function stubNotification(args: {
   permission: NotificationPermission;
@@ -20,15 +35,26 @@ function stubNotification(args: {
 }
 
 describe("useTaskNotificationPreferences", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    window.localStorage.clear();
+  beforeEach(() => {
+    hoisted.mutate.mockClear();
+    hoisted.preferences = {
+      theme: "system",
+      taskStartNotificationsEnabled: false,
+      taskEndNotificationsEnabled: false,
+    };
   });
 
-  it("loads the saved start and end preferences from localStorage", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("reflects the saved start and end preferences from the database", () => {
     stubNotification({ permission: "granted" });
-    window.localStorage.setItem(TASK_START_NOTIFICATIONS_STORAGE_KEY, "true");
-    window.localStorage.setItem(TASK_END_NOTIFICATIONS_STORAGE_KEY, "true");
+    hoisted.preferences = {
+      theme: "system",
+      taskStartNotificationsEnabled: true,
+      taskEndNotificationsEnabled: true,
+    };
 
     const { result } = renderHook(() => useTaskNotificationPreferences());
 
@@ -37,7 +63,7 @@ describe("useTaskNotificationPreferences", () => {
     expect(result.current.message).toBeNull();
   });
 
-  it("requests permission when enabling start pop-ups without touching the end preference", async () => {
+  it("requests permission and persists when enabling start pop-ups", async () => {
     const { requestPermission } = stubNotification({
       permission: "default",
       requestPermissionResult: "granted",
@@ -49,16 +75,10 @@ describe("useTaskNotificationPreferences", () => {
     });
 
     expect(requestPermission).toHaveBeenCalledTimes(1);
-    await waitFor(() => {
-      expect(result.current.startEnabled).toBe(true);
-    });
-    expect(result.current.endEnabled).toBe(false);
-    expect(window.localStorage.getItem(TASK_START_NOTIFICATIONS_STORAGE_KEY)).toBe("true");
-    expect(window.localStorage.getItem(TASK_END_NOTIFICATIONS_STORAGE_KEY)).toBeNull();
-    expect(result.current.message).toBeNull();
+    expect(hoisted.mutate).toHaveBeenCalledWith({ taskStartNotificationsEnabled: true });
   });
 
-  it("enables end pop-ups independently of start pop-ups", async () => {
+  it("persists the end preference independently of start", async () => {
     stubNotification({ permission: "granted" });
     const { result } = renderHook(() => useTaskNotificationPreferences());
 
@@ -66,14 +86,10 @@ describe("useTaskNotificationPreferences", () => {
       await result.current.setEndEnabledFromUserAction(true);
     });
 
-    await waitFor(() => {
-      expect(result.current.endEnabled).toBe(true);
-    });
-    expect(result.current.startEnabled).toBe(false);
-    expect(window.localStorage.getItem(TASK_END_NOTIFICATIONS_STORAGE_KEY)).toBe("true");
+    expect(hoisted.mutate).toHaveBeenCalledWith({ taskEndNotificationsEnabled: true });
   });
 
-  it("keeps pop-ups disabled and shows a message when permission is denied", async () => {
+  it("keeps the preference off and shows a message when permission is denied", async () => {
     stubNotification({
       permission: "default",
       requestPermissionResult: "denied",
@@ -84,26 +100,21 @@ describe("useTaskNotificationPreferences", () => {
       await result.current.setStartEnabledFromUserAction(true);
     });
 
+    expect(hoisted.mutate).toHaveBeenCalledWith({ taskStartNotificationsEnabled: false });
     await waitFor(() => {
-      expect(result.current.startEnabled).toBe(false);
+      expect(result.current.message).toMatch(/blocked/i);
     });
-    expect(window.localStorage.getItem(TASK_START_NOTIFICATIONS_STORAGE_KEY)).toBe("false");
-    expect(result.current.message).toMatch(/blocked/i);
   });
 
   it("disables a preference without requesting permission", async () => {
     const { requestPermission } = stubNotification({ permission: "granted" });
-    window.localStorage.setItem(TASK_END_NOTIFICATIONS_STORAGE_KEY, "true");
     const { result } = renderHook(() => useTaskNotificationPreferences());
 
     await act(async () => {
       await result.current.setEndEnabledFromUserAction(false);
     });
 
-    await waitFor(() => {
-      expect(result.current.endEnabled).toBe(false);
-    });
     expect(requestPermission).not.toHaveBeenCalled();
-    expect(window.localStorage.getItem(TASK_END_NOTIFICATIONS_STORAGE_KEY)).toBe("false");
+    expect(hoisted.mutate).toHaveBeenCalledWith({ taskEndNotificationsEnabled: false });
   });
 });

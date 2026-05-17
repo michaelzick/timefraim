@@ -1,4 +1,4 @@
-import { formatDraftSummary, type ActorRole, type DraftKind, type GoogleCalendarSettingsUpdate, type ScheduleBlockDuplicatePayload, type TaskDuplicatePayload } from "@timefraim/shared";
+import { formatDraftSummary, type ActorRole, type DraftKind, type GoogleCalendarSettingsUpdate, type ScheduleBlockDuplicatePayload, type TaskDuplicatePayload, type UserPreferencesUpdate } from "@timefraim/shared";
 import { env } from "../config/env.js";
 import { pool, withTransaction } from "../db/pool.js";
 import { PlannerRepository } from "../repositories/planner-repository.js";
@@ -23,6 +23,7 @@ import {
   saveGoogleSession,
   saveTogglConnection,
 } from "./planner-service-integrations.js";
+import { getUserPreferences, saveUserPreferences } from "./planner-service-preferences.js";
 import { runPlannerSideEffects } from "./planner-side-effects.js";
 import type { SideEffect } from "./planner-service-types.js";
 export class PlannerService {
@@ -67,6 +68,12 @@ export class PlannerService {
   async saveGoogleCalendarSettings(input: GoogleCalendarSettingsUpdate) {
     await saveGoogleCalendarSettings(this.repository, input);
     return getGoogleCalendarSettings(this.repository);
+  }
+  async getUserPreferences(userId: string) {
+    return getUserPreferences(this.repository, userId);
+  }
+  async saveUserPreferences(userId: string, update: UserPreferencesUpdate) {
+    return saveUserPreferences(this.repository, userId, update);
   }
   async getDayPlan(userId: string | null = null, date = todayIsoDate(), tzOffsetMinutes = 0) {
     return getPlannerDayPlan({

@@ -1,4 +1,5 @@
 import { Laptop, Moon, Sun } from "lucide-react";
+import type { ThemeMode } from "@timefraim/shared";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -6,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useTheme } from "@/theme/use-theme";
 
 function ThemeIcon({ theme }: { theme: "light" | "dark" | "system" }) {
@@ -22,6 +24,12 @@ function ThemeIcon({ theme }: { theme: "light" | "dark" | "system" }) {
 
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
+  const { mutation } = useUserPreferences();
+
+  const selectTheme = (mode: ThemeMode) => {
+    setTheme(mode);
+    mutation.mutate({ theme: mode });
+  };
 
   return (
     <DropdownMenu>
@@ -32,15 +40,15 @@ export function ThemeSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => setTheme("light")}>
+        <DropdownMenuItem onSelect={() => selectTheme("light")}>
           <Sun className="h-4 w-4" />
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setTheme("dark")}>
+        <DropdownMenuItem onSelect={() => selectTheme("dark")}>
           <Moon className="h-4 w-4" />
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setTheme("system")}>
+        <DropdownMenuItem onSelect={() => selectTheme("system")}>
           <Laptop className="h-4 w-4" />
           System
         </DropdownMenuItem>

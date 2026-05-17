@@ -66,9 +66,9 @@ timefraim/
 
 - **Entry:** `src/index.ts` — registers HTTP routes, mounts `POST /mcp`, constructs `PlannerService`.
 - **Config:** `src/config/env.ts` (Zod-validated env).
-- **HTTP routes:** `src/http/` — `routes.ts` + modular `register-*-routes.ts` (planner, integration, auth, timer, draft). `auth.ts` verifies Supabase JWT. `route-helpers.ts` holds shared middleware.
-- **Repositories (data access):** `src/repositories/` — `planner-repository.ts` composes per-domain stores (`planner-repository-task-store.ts`, `-schedule-store.ts`, `-calendar-store.ts`, `-timer-store.ts`, `-integration-store.ts`, `-draft-store.ts`). Row → domain mapping in `planner-repository-mappers.ts`; row types in `planner-repository-types.ts`.
-- **Services (business logic):** `src/services/` — `planner-service.ts` orchestrates; `planner-service-google-integrations.ts`, `planner-service-toggl-integrations.ts` handle external calls; `planner-domain.ts` applies drafts; `planner-*-changes.ts` compute diffs; `planner-service-apply.ts` confirms drafts; `planner-side-effects.ts` handles audit logs + external syncs.
+- **HTTP routes:** `src/http/` — `routes.ts` + modular `register-*-routes.ts` (planner, integration, preferences, auth, timer, draft). `auth.ts` verifies Supabase JWT. `route-helpers.ts` holds shared middleware.
+- **Repositories (data access):** `src/repositories/` — `planner-repository.ts` composes per-domain stores (`planner-repository-task-store.ts`, `-schedule-store.ts`, `-calendar-store.ts`, `-timer-store.ts`, `-integration-store.ts`, `-preferences-store.ts`, `-draft-store.ts`). Row → domain mapping in `planner-repository-mappers.ts`; row types in `planner-repository-types.ts`.
+- **Services (business logic):** `src/services/` — `planner-service.ts` orchestrates; `planner-service-google-integrations.ts`, `planner-service-toggl-integrations.ts` handle external calls; `planner-service-preferences.ts` reads/writes user preferences; `planner-domain.ts` applies drafts; `planner-*-changes.ts` compute diffs; `planner-service-apply.ts` confirms drafts; `planner-side-effects.ts` handles audit logs + external syncs.
 - **Integrations:** `src/integration/` — `google-calendar.ts` (+ `-helpers.ts`), `google-auth.ts`, `google-tasks.ts`, `toggl-track.ts` (+ `-catalog.ts`, `-client.ts`), `integration-crypto.ts` (AES for stored tokens).
 - **MCP:** `src/mcp/create-mcp-server.ts` defines two tool profiles (read-only, full-access) selected by bearer token.
 - **DB pool:** `src/db/pool.ts` exposes `pg.Pool` + `withTransaction` helper.
@@ -82,6 +82,7 @@ Zod schemas and inferred types, barrel-exported from `src/index.ts`. Consumed as
 - `schedule.ts` — `ScheduleBlock`, `ScheduleBlockCreate/Update`, Google event/task mirror IDs, `CalendarEvent`, `CalendarEventView`.
 - `drafts.ts` — `SyncDraft`, `DraftKind`, `DraftStatus`, `ActorRole`, `formatDraftSummary()`.
 - `integration.ts` — Google/Toggl schemas, Google planner sync target, `AuthUser`, `AuthSession`.
+- `preferences.ts` — `UserPreferences`, `UserPreferencesUpdate`, `ThemeMode` (theme + task-notification toggles).
 - `day-plan.ts` — `DayPlan` (aggregated snapshot returned by `GET /api/day-plan`).
 - `api.ts` — `PlannerMutationResult`, `CalendarSyncResult`.
 - `date.ts` — date parsing helpers.
@@ -99,11 +100,12 @@ Migrations live in `supabase/migrations/` (timestamp-prefixed, applied in order)
 | `sync_drafts` | Pending/applied change proposals: kind, payload, actor_role, expires_at. |
 | `calendar_sync_runs` | Per-day Google Calendar sync markers keyed by date, timezone, and source calendar set. |
 | `timer_sessions` | Active/finished Toggl timers: task_id, toggl_entry_id, duration_seconds. |
+| `user_preferences` | Per-user app settings: theme + task start/end notification toggles. |
 | `audit_logs` | Append-only change log. |
 
 Conventions: UUID PKs (`gen_random_uuid()`), `timestamptz` for every date, `updated_at` trigger on mutable tables, FK `on delete cascade`, indexes on time ranges and common filters.
 
-Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event, per-day calendar sync runs, schedule block Google Task mirror IDs.
+Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event, per-day calendar sync runs, schedule block Google Task mirror IDs, per-user preferences (theme + notifications).
 
 ## 6. External integrations
 
