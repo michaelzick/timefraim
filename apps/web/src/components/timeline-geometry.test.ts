@@ -3,33 +3,33 @@ import { getTimelinePlacement, getTimelineResizePreview, SLOT_HEIGHT } from "./t
 
 describe("timeline geometry", () => {
   it("clamps events that begin before the visible window", () => {
-    expect(getTimelinePlacement("2026-04-06", "2026-04-06T04:30:00", "2026-04-06T05:30:00")).toEqual({
+    expect(getTimelinePlacement("2026-04-06", "2026-04-06T03:00:00", "2026-04-06T05:00:00")).toEqual({
       top: 0,
-      height: 2 * SLOT_HEIGHT,
+      height: 4 * SLOT_HEIGHT,
     });
   });
 
   it("clamps events that extend past midnight", () => {
     expect(getTimelinePlacement("2026-04-06", "2026-04-06T23:00:00", "2026-04-07T01:00:00")).toEqual({
-      top: 72 * SLOT_HEIGHT,
+      top: 76 * SLOT_HEIGHT,
       height: 4 * SLOT_HEIGHT,
     });
   });
 
   it("skips events that fall completely outside the visible window", () => {
-    expect(getTimelinePlacement("2026-04-06", "2026-04-06T01:00:00", "2026-04-06T04:45:00")).toBeNull();
+    expect(getTimelinePlacement("2026-04-06", "2026-04-06T01:00:00", "2026-04-06T03:45:00")).toBeNull();
   });
 
   it("returns placement for normal in-range events", () => {
     expect(getTimelinePlacement("2026-04-06", "2026-04-06T09:00:00", "2026-04-06T10:30:00")).toEqual({
-      top: 16 * SLOT_HEIGHT,
+      top: 20 * SLOT_HEIGHT,
       height: 6 * SLOT_HEIGHT,
     });
   });
 
   it("supports quarter-hour placement increments", () => {
     expect(getTimelinePlacement("2026-04-06", "2026-04-06T09:15:00", "2026-04-06T09:30:00")).toEqual({
-      top: 17 * SLOT_HEIGHT,
+      top: 21 * SLOT_HEIGHT,
       height: SLOT_HEIGHT,
     });
   });

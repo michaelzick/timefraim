@@ -1,4 +1,4 @@
-export const START_HOUR = 5;
+export const START_HOUR = 4;
 export const END_HOUR_EXCLUSIVE = 24;
 export const SLOT_HEIGHT = 28;
 export const TIMELINE_INCREMENT_MINUTES = 15;
