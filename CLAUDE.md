@@ -49,7 +49,7 @@ timefraim/
 
 ## 4. Applications
 
-### 4.1 apps/web (frontend, port 5173)
+### 4.1 apps/web (frontend, port 6173)
 
 - **Entry:** `src/main.tsx` → `src/App.tsx` (theme provider + auth guard + QueryClientProvider + BrowserRouter + toaster).
 - **Pages:** `src/pages/planner-page.tsx`, `src/pages/settings-page.tsx`.
@@ -125,7 +125,7 @@ pnpm sandbox:start       # start the Docker sandbox (Supabase + app container)
 pnpm sandbox:stop        # stop the Docker sandbox
 pnpm sandbox:status      # show sandbox container status
 pnpm dev           # web + server in parallel
-pnpm dev:web       # web only (5173)
+pnpm dev:web       # web only (6173)
 pnpm dev:server    # server only (4000)
 pnpm lint          # ESLint across shared/server/web
 pnpm typecheck     # tsc --noEmit across all packages
@@ -150,7 +150,7 @@ pnpm sandbox:start
 timefraim sandbox start
 ```
 
-`pnpm sandbox:start` runs `supabase start` and then launches the web/API app inside a `node:24-bookworm` Docker container named `timefraim-app-sandbox`. Source is bind-mounted at `/workspace`; dependency folders and the pnpm store use named Docker volumes. The app is exposed on `127.0.0.1:5173` and `127.0.0.1:4000`, while the app container reaches Supabase via `host.docker.internal`.
+`pnpm sandbox:start` runs `supabase start` and then launches the web/API app inside a `node:24-bookworm` Docker container named `timefraim-app-sandbox`. Source is bind-mounted at `/workspace`; dependency folders and the pnpm store use named Docker volumes. The app is exposed on `127.0.0.1:6173` and `127.0.0.1:4000`, while the app container reaches Supabase via `host.docker.internal`.
 
 No change is done until `pnpm lint` and `pnpm typecheck` pass locally. Before opening a PR, run `pnpm check` — it is the same gate CI uses.
 
