@@ -14,6 +14,7 @@ import {
   KANBAN_COLUMNS,
   moveTaskOnKanban,
 } from "@/features/kanban/kanban-utils";
+import { formatTaskPriority } from "@/features/planner/task-presentation";
 import type { PlannerPageProps } from "@/features/planner/types";
 
 type KanbanPageProps = Pick<
@@ -22,9 +23,10 @@ type KanbanPageProps = Pick<
   | "dayPlan"
   | "isMutating"
   | "onCreateScheduleBlock"
-  | "onDateChange"
   | "onDeleteScheduleBlock"
+  | "onDeleteTask"
   | "onStartTimer"
+  | "onStopTimer"
   | "onUpdateTask"
 >;
 
@@ -33,9 +35,10 @@ export function KanbanPage({
   dayPlan,
   isMutating,
   onCreateScheduleBlock,
-  onDateChange,
   onDeleteScheduleBlock,
+  onDeleteTask,
   onStartTimer,
+  onStopTimer,
   onUpdateTask,
 }: KanbanPageProps) {
   const [search, setSearch] = useState("");
@@ -43,7 +46,7 @@ export function KanbanPage({
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const visibleTasks = useMemo(() => filterKanbanTasks(dayPlan.tasks, search), [dayPlan.tasks, search]);
   const groupedTasks = useMemo(() => groupTasksByKanbanStatus(visibleTasks), [visibleTasks]);
-  const scheduledTodayCount = dayPlan.scheduleBlocks.length;
+  const scheduledCount = groupedTasks.scheduled.length;
   const doneCount = groupedTasks.done.length;
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -92,16 +95,55 @@ export function KanbanPage({
     );
   };
 
+  const handleStopTimer = () => {
+    void onStopTimer().catch((error) =>
+      showKanbanActionError("Failed to stop the timer. Please try again.", error),
+    );
+  };
+
+  const handleRemoveTask = (task: Task) => {
+    void moveTaskOnKanban({
+      calendarEvents: dayPlan.calendarEvents,
+      date,
+      onCreateScheduleBlock,
+      onDeleteScheduleBlock,
+      onUpdateTask,
+      scheduleBlocks: dayPlan.scheduleBlocks,
+      targetStatus: "inbox",
+      task,
+    })
+      .then(() => toast.success("Moved to Inbox", { duration: 3000 }))
+      .catch((error) => showKanbanActionError("Failed to remove the task. Please try again.", error));
+  };
+
+  const handleDeleteTask = (task: Task) => {
+    if (!window.confirm(`Delete "${task.title}"?`)) {
+      return;
+    }
+
+    void onDeleteTask(task.id)
+      .then(() => toast.success("Deleted", { duration: 3000 }))
+      .catch((error) => showKanbanActionError("Failed to delete the task. Please try again.", error));
+  };
+
+  const handlePriorityChange = (task: Task, priority: Task["priority"]) => {
+    if (task.priority === priority) {
+      return;
+    }
+
+    void onUpdateTask(task.id, { priority })
+      .then(() => toast.success(`Priority changed to ${formatTaskPriority(priority)}`, { duration: 3000 }))
+      .catch((error) => showKanbanActionError("Failed to change priority. Please try again.", error));
+  };
+
   return (
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveTask(null)}>
       <div className="space-y-6" aria-busy={isMutating}>
         <KanbanToolbar
-          date={date}
           doneCount={doneCount}
           search={search}
-          scheduledTodayCount={scheduledTodayCount}
+          scheduledCount={scheduledCount}
           taskCount={visibleTasks.length}
-          onDateChange={onDateChange}
           onSearchChange={setSearch}
         />
         <div className="grid gap-4 xl:grid-cols-5">
@@ -109,12 +151,17 @@ export function KanbanPage({
             <KanbanColumn
               key={column.status}
               activeTimerTaskId={dayPlan.activeTimer?.taskId ?? null}
+              activeTimerStartedAt={dayPlan.activeTimer?.startedAt ?? null}
               column={column}
               date={date}
               scheduleBlocks={dayPlan.scheduleBlocks}
               tasks={groupedTasks[column.status]}
+              onDeleteTask={handleDeleteTask}
               onPlanTask={handlePlanTask}
+              onPriorityChange={handlePriorityChange}
+              onRemoveTask={handleRemoveTask}
               onStartTimer={handleStartTimer}
+              onStopTimer={handleStopTimer}
             />
           ))}
         </div>

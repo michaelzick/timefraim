@@ -26,6 +26,8 @@ export const taskSchema = z.object({
   status: taskStatusSchema,
   priority: taskPrioritySchema,
   scheduledBlockId: z.string().uuid().nullable().optional(),
+  scheduledStartAt: z.string().datetime().nullable().optional(),
+  scheduledEndAt: z.string().datetime().nullable().optional(),
   togglProjectId: z.string().nullable().optional(),
   completedOnDate: z.string().regex(plannerDateRegex).nullable().default(null),
   createdAt: z.string().datetime(),

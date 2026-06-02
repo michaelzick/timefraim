@@ -13,10 +13,11 @@ import type {
 export class PlannerRepositoryTaskStore {
   async listTasks(db: Queryable) {
     const result = await db.query(
-      `select *
-       from public.tasks
+      `select t.*, sb.start_at as scheduled_start_at, sb.end_at as scheduled_end_at
+       from public.tasks t
+       left join public.schedule_blocks sb on sb.id = t.scheduled_block_id
        order by
-         case status
+         case t.status
            when 'in_progress' then 0
            when 'scheduled' then 1
            when 'planned' then 2
@@ -24,20 +25,27 @@ export class PlannerRepositoryTaskStore {
            when 'done' then 4
            else 5
          end,
-         case priority
+         case t.priority
            when 'urgent' then 0
            when 'high' then 1
            when 'medium' then 2
            when 'low' then 3
            else 4
          end,
-         updated_at desc`,
+         t.updated_at desc`,
     );
     return result.rows.map(mapTask);
   }
 
   async getTask(taskId: string, db: Queryable) {
-    const result = await db.query(`select * from public.tasks where id = $1 limit 1`, [taskId]);
+    const result = await db.query(
+      `select t.*, sb.start_at as scheduled_start_at, sb.end_at as scheduled_end_at
+       from public.tasks t
+       left join public.schedule_blocks sb on sb.id = t.scheduled_block_id
+       where t.id = $1
+       limit 1`,
+      [taskId],
+    );
     return result.rows[0] ? mapTask(result.rows[0]) : null;
   }
 

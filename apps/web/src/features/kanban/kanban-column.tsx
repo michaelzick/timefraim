@@ -3,28 +3,38 @@ import type { ScheduleBlock, Task } from "@timefraim/shared";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { KanbanCard } from "@/features/kanban/kanban-card";
-import { getTaskScheduleLabel } from "@/features/kanban/kanban-utils";
+import { getTaskScheduleLabel } from "@/features/kanban/kanban-schedule-label";
 import type { KanbanColumnDefinition } from "@/features/kanban/kanban-types";
 import { cn } from "@/lib/utils";
 
 type KanbanColumnProps = {
   activeTimerTaskId: string | null;
+  activeTimerStartedAt: string | null;
   column: KanbanColumnDefinition;
   date: string;
   scheduleBlocks: ScheduleBlock[];
   tasks: Task[];
+  onDeleteTask: (task: Task) => void;
   onPlanTask: (task: Task) => void;
+  onPriorityChange: (task: Task, priority: Task["priority"]) => void;
+  onRemoveTask: (task: Task) => void;
   onStartTimer: (taskId: string) => void;
+  onStopTimer: () => void;
 };
 
 export function KanbanColumn({
   activeTimerTaskId,
+  activeTimerStartedAt,
   column,
   date,
   scheduleBlocks,
   tasks,
+  onDeleteTask,
   onPlanTask,
+  onPriorityChange,
+  onRemoveTask,
   onStartTimer,
+  onStopTimer,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `kanban-column-${column.status}`,
@@ -52,11 +62,17 @@ export function KanbanColumn({
             <KanbanCard
               key={task.id}
               activeTimerTaskId={activeTimerTaskId}
+              activeTimerStartedAt={activeTimerStartedAt}
               date={date}
+              kanbanStatus={column.status}
               scheduleLabel={getTaskScheduleLabel(task, scheduleBlocks)}
               task={task}
+              onDeleteTask={onDeleteTask}
               onPlanTask={onPlanTask}
+              onPriorityChange={onPriorityChange}
+              onRemoveTask={onRemoveTask}
               onStartTimer={onStartTimer}
+              onStopTimer={onStopTimer}
             />
           ))}
           {tasks.length === 0 ? (

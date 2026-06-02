@@ -1,4 +1,4 @@
-import type { CalendarEventView, ScheduleBlock, Task, TaskStatus } from "@timefraim/shared";
+import type { CalendarEventView, ScheduleBlock, Task, TaskPriority, TaskStatus } from "@timefraim/shared";
 
 export const KANBAN_STATUSES = [
   "inbox",
@@ -17,6 +17,7 @@ export type KanbanColumnDefinition = {
 };
 
 export type KanbanTaskUpdateInput = {
+  priority?: TaskPriority;
   status?: TaskStatus;
   completedOnDate?: string | null;
   plannerDate?: string;
