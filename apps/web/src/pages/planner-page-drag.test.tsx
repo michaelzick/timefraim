@@ -1,7 +1,8 @@
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps, ReactElement, ReactNode } from "react";
 import type { Task } from "@timefraim/shared";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { PlannerPage } from "@/pages/planner-page";
 import { buildDayPlan, buildDuplicateResult, buildTask, buildTogglSettings, noopDuplicate } from "@/test/fixtures";
@@ -114,6 +115,12 @@ vi.mock("@/components/timeline-board", () => ({
 
 const noopAsync = () => Promise.resolve(undefined);
 
+function renderPlannerPage(element: ReactElement) {
+  return render(element, {
+    wrapper: ({ children }) => <MemoryRouter>{children}</MemoryRouter>,
+  });
+}
+
 function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerPage>> = {}) {
   return {
     date: "2026-04-06",
@@ -149,7 +156,7 @@ describe("PlannerPage drag behavior", () => {
     const user = userEvent.setup();
     const onCreateScheduleBlock = vi.fn().mockResolvedValue(undefined);
 
-    render(<PlannerPage {...buildPlannerPageProps({ onCreateScheduleBlock })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ onCreateScheduleBlock })} />);
 
     await user.click(screen.getByRole("button", { name: /trigger queue drag/i }));
 
@@ -192,7 +199,7 @@ describe("PlannerPage drag behavior", () => {
       ],
     });
 
-    render(<PlannerPage {...buildPlannerPageProps({ dayPlan, onUpdateScheduleBlock, onUpdateTask })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ dayPlan, onUpdateScheduleBlock, onUpdateTask })} />);
 
     await user.click(screen.getByRole("button", { name: /trigger scheduled drag/i }));
 
@@ -223,7 +230,7 @@ describe("PlannerPage drag behavior", () => {
       }),
     );
 
-    render(
+    renderPlannerPage(
       <PlannerPage
         {...buildPlannerPageProps({ onDuplicateTask, onDuplicateScheduleBlock })}
       />,
@@ -257,7 +264,7 @@ describe("PlannerPage drag behavior", () => {
       scheduledBlockId: "block-1",
     });
 
-    render(
+    renderPlannerPage(
       <PlannerPage
         {...buildPlannerPageProps({
           dayPlan: buildDayPlan({ tasks: [task] }),

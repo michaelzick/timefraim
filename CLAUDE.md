@@ -12,6 +12,7 @@ Sibling files [AGENTS.md](AGENTS.md) (Codex) and [GEMINI.md](GEMINI.md) (Gemini 
 
 Primary flows:
 - Planner: three-column layout (task queue / timeline / detail panel) with drag-and-drop scheduling.
+- Board: Jira-style kanban scheduler where task cards move through status columns and can schedule/open work on the day planner timeline.
 - Settings: connect Google Calendar (multi-calendar, colors, timeline sync as Calendar events or Google Tasks) and Toggl (workspace + per-task project overrides).
 - Draft-first mutations: AI-proposed changes land as `sync_drafts` rows; the user confirms before they apply.
 
@@ -52,9 +53,9 @@ timefraim/
 ### 4.1 apps/web (frontend, port 6173)
 
 - **Entry:** `src/main.tsx` → `src/App.tsx` (theme provider + auth guard + QueryClientProvider + BrowserRouter + toaster).
-- **Pages:** `src/pages/planner-page.tsx`, `src/pages/settings-page.tsx`.
+- **Pages:** `src/pages/planner-page.tsx`, `src/pages/kanban-page.tsx`, `src/pages/settings-page.tsx`.
 - **Settings integrations:** `src/pages/settings-google-calendars-card.tsx`, `src/pages/settings-toggl-card.tsx`.
-- **Feature code:** `src/features/planner/` — task cards, calendar cards, timeline board, column layout.
+- **Feature code:** `src/features/planner/` — task cards, calendar cards, timeline board, column layout; `src/features/kanban/` — status board columns/cards, planner links, and timeline scheduling helpers.
 - **Reusable UI:** `src/components/ui/` (shadcn-style primitives), `src/components/layout/app-shell.tsx`.
 - **Theme:** `src/theme/` — local light/dark/system preference, document class management, and resolved theme hook.
 - **Hooks:** `src/hooks/` — `use-planner-mutations.ts` (optimistic updates), `use-app-shell-data.ts`, `use-supabase-session.ts`, `use-planner-page-controller.ts`.
@@ -185,6 +186,7 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 | [apps/web/src/App.tsx](apps/web/src/App.tsx) | Root layout, auth guard, query client, router |
 | [apps/web/src/theme/theme-provider.tsx](apps/web/src/theme/theme-provider.tsx) | Client theme preference, resolved mode tracking, and `<html>` class sync |
 | [apps/web/src/pages/planner-page.tsx](apps/web/src/pages/planner-page.tsx) | Main scheduling UI |
+| [apps/web/src/pages/kanban-page.tsx](apps/web/src/pages/kanban-page.tsx) | Kanban scheduler UI with board-to-planner task links |
 | [apps/web/src/pages/settings-page.tsx](apps/web/src/pages/settings-page.tsx) | Integration configuration UI |
 | [apps/web/src/hooks/use-planner-mutations.ts](apps/web/src/hooks/use-planner-mutations.ts) | Task/schedule/timer mutations |
 | [apps/web/src/lib/api-planner.ts](apps/web/src/lib/api-planner.ts) | Planner HTTP client |

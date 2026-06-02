@@ -1,4 +1,4 @@
-import { CalendarDays, LogOut, Settings2 } from "lucide-react";
+import { CalendarDays, Kanban, LogOut, Settings2 } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/layout/theme-switcher";
@@ -26,6 +26,15 @@ export function AppHeader({ onSignOut }: AppHeaderProps) {
           >
             <CalendarDays className="h-4 w-4" />
             Planner
+          </NavLink>
+          <NavLink
+            to="/board"
+            className={({ isActive }) =>
+              `inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${isActive ? "bg-[var(--accent)] text-[var(--accent-foreground)] shadow-[0_12px_30px_rgba(255,111,59,0.35)] hover:brightness-105" : "text-[var(--muted)] hover:bg-[var(--panel-hover)] hover:text-[var(--heading)]"}`
+            }
+          >
+            <Kanban className="h-4 w-4" />
+            Board
           </NavLink>
           <NavLink
             to="/settings"

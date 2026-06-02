@@ -61,4 +61,16 @@ describe("AppHeader", () => {
 
     expect(screen.getByRole("link", { name: /settings/i })).toHaveClass("text-[var(--accent-foreground)]");
   });
+
+  it("keeps the active board nav pill on the accent foreground token", () => {
+    render(
+      <Providers>
+        <MemoryRouter initialEntries={["/board"]}>
+          <AppHeader onSignOut={vi.fn()} />
+        </MemoryRouter>
+      </Providers>,
+    );
+
+    expect(screen.getByRole("link", { name: /board/i })).toHaveClass("text-[var(--accent-foreground)]");
+  });
 });

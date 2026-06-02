@@ -7,6 +7,7 @@ import { type CalendarEventFormValues, type CreateTaskValues, type PlannerPagePr
 import { useAltKey } from "@/hooks/use-alt-key";
 import { createPlannerMutationHandlers } from "@/pages/planner-page-actions";
 import { createPlannerPageHandlers } from "@/pages/planner-page-controller-handlers";
+import { usePlannerTaskDeepLink } from "@/pages/use-planner-task-deep-link";
 
 export function usePlannerPageController({
   date,
@@ -100,6 +101,7 @@ export function usePlannerPageController({
 
   const selectedTimelineTaskId = plannerSelection.type === "timeline-task" ? plannerSelection.taskId : null;
   const selectedTimelineCalendarEventId = getSelectedCalendarEventId(plannerSelection);
+  usePlannerTaskDeepLink({ dayPlan, detailPanelRef, plannerSelection, setPlannerSelection, setSelectedTaskState });
 
   useEffect(() => {
     if (plannerSelection.type === "calendar-event" || plannerSelection.type === "none") {
