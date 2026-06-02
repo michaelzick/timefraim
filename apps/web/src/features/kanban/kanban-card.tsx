@@ -5,6 +5,12 @@ import { CalendarPlus, ChevronDown, ExternalLink, GripVertical, Inbox, Play, Squ
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { KanbanStatus } from "@/features/kanban/kanban-types";
 import {
   PRIORITY_OPTIONS,
@@ -71,24 +77,39 @@ export function KanbanCard({
       )}
     >
       <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="relative inline-flex">
-          <select
-            aria-label={`Priority for ${task.title}`}
-            className={cn(
-              "h-7 appearance-none rounded-full border py-1 pl-2.5 pr-7 text-[11px] font-medium outline-none transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]",
-              getTaskPriorityBadgeClass(task.priority),
-            )}
-            value={task.priority}
-            onChange={(event) => onPriorityChange(task, event.currentTarget.value as Task["priority"])}
-          >
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label={`Priority for ${task.title}`}
+              className={cn(
+                "inline-grid h-6 min-w-[86px] grid-cols-[1fr_0.75rem] items-center gap-1 rounded-full border py-0 pl-3 pr-2 text-center font-semibold outline-none transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]",
+                getTaskPriorityBadgeClass(task.priority),
+              )}
+            >
+              <span className="min-w-0 text-center text-xs leading-none">{formatTaskPriority(task.priority)}</span>
+              <ChevronDown className="pointer-events-none h-3 w-3 text-[var(--planner-surface-meta)]" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[88px] rounded-xl p-1 text-xs">
             {PRIORITY_OPTIONS.map((priority) => (
-              <option key={priority} value={priority} className="bg-[var(--panel)]">
-                {formatTaskPriority(priority)}
-              </option>
+              <DropdownMenuItem
+                key={priority}
+                className="h-7 justify-center rounded-lg px-2 py-0 text-center leading-none"
+                onSelect={() => onPriorityChange(task, priority)}
+              >
+                <span
+                  className={cn(
+                    "inline-flex h-5 min-w-[64px] items-center justify-center rounded-full border px-2 font-semibold",
+                    getTaskPriorityBadgeClass(priority),
+                  )}
+                >
+                  <span className="text-xs leading-none">{formatTaskPriority(priority)}</span>
+                </span>
+              </DropdownMenuItem>
             ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--planner-surface-meta)]" />
-        </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <button
           type="button"
           className="cursor-grab rounded-full p-1 text-[var(--planner-surface-meta)] transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]"

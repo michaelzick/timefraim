@@ -125,11 +125,11 @@ describe("KanbanPage", () => {
 
     renderKanbanPage({ dayPlan: buildDayPlan({ tasks: [task] }), onUpdateTask });
 
-    const prioritySelect = screen.getByRole("combobox", { name: `Priority for ${task.title}` });
-    const optionValues = Array.from((prioritySelect as HTMLSelectElement).options).map((option) => option.value);
-    expect(optionValues).toEqual(["low", "medium", "high", "urgent"]);
+    await user.click(screen.getByRole("button", { name: `Priority for ${task.title}` }));
 
-    await user.selectOptions(prioritySelect, "medium");
+    expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual(["Low", "Medium", "High", "Urgent"]);
+
+    await user.click(screen.getByRole("menuitem", { name: "Medium" }));
 
     await waitFor(() => {
       expect(onUpdateTask).toHaveBeenCalledTimes(1);
