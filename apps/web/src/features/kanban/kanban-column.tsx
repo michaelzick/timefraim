@@ -16,7 +16,7 @@ type KanbanColumnProps = {
   tasks: Task[];
   onDeleteTask: (task: Task) => void;
   onPlanTask: (task: Task) => void;
-  onPriorityChange: (task: Task) => void;
+  onPriorityChange: (task: Task, priority: Task["priority"]) => void;
   onRemoveTask: (task: Task) => void;
   onStartTimer: (taskId: string) => void;
   onStopTimer: () => void;

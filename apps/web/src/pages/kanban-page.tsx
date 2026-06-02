@@ -1,6 +1,6 @@
 import { DndContext, DragOverlay, pointerWithin, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import type { Task, TaskPriority } from "@timefraim/shared";
+import type { Task } from "@timefraim/shared";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { KanbanCardPreview } from "@/features/kanban/kanban-card";
@@ -14,6 +14,7 @@ import {
   KANBAN_COLUMNS,
   moveTaskOnKanban,
 } from "@/features/kanban/kanban-utils";
+import { formatTaskPriority } from "@/features/planner/task-presentation";
 import type { PlannerPageProps } from "@/features/planner/types";
 
 type KanbanPageProps = Pick<
@@ -125,10 +126,13 @@ export function KanbanPage({
       .catch((error) => showKanbanActionError("Failed to delete the task. Please try again.", error));
   };
 
-  const handlePriorityChange = (task: Task) => {
-    const priority = getNextPriority(task.priority);
+  const handlePriorityChange = (task: Task, priority: Task["priority"]) => {
+    if (task.priority === priority) {
+      return;
+    }
+
     void onUpdateTask(task.id, { priority })
-      .then(() => toast.success(`Priority changed to ${priority}`, { duration: 3000 }))
+      .then(() => toast.success(`Priority changed to ${formatTaskPriority(priority)}`, { duration: 3000 }))
       .catch((error) => showKanbanActionError("Failed to change priority. Please try again.", error));
   };
 
@@ -186,11 +190,4 @@ function readKanbanStatus(data: unknown): KanbanStatus | null {
 
 function getColumnTitle(status: KanbanStatus) {
   return KANBAN_COLUMNS.find((column) => column.status === status)?.title ?? "Board";
-}
-
-const PRIORITY_CYCLE: TaskPriority[] = ["low", "medium", "high", "urgent"];
-
-function getNextPriority(priority: TaskPriority) {
-  const index = PRIORITY_CYCLE.indexOf(priority);
-  return PRIORITY_CYCLE[(index + 1) % PRIORITY_CYCLE.length];
 }

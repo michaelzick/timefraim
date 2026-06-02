@@ -118,17 +118,22 @@ describe("KanbanPage", () => {
     confirmSpy.mockRestore();
   });
 
-  it("cycles task priority from high to urgent", async () => {
+  it("lets task priority be selected directly", async () => {
     const user = userEvent.setup();
     const onUpdateTask = vi.fn().mockResolvedValue(undefined);
-    const task = { ...buildDayPlan().tasks[0], priority: "high" as const };
+    const task = { ...buildDayPlan().tasks[0], priority: "urgent" as const };
 
     renderKanbanPage({ dayPlan: buildDayPlan({ tasks: [task] }), onUpdateTask });
 
-    await user.click(screen.getByRole("button", { name: /change priority/i }));
+    const prioritySelect = screen.getByRole("combobox", { name: `Priority for ${task.title}` });
+    const optionValues = Array.from((prioritySelect as HTMLSelectElement).options).map((option) => option.value);
+    expect(optionValues).toEqual(["low", "medium", "high", "urgent"]);
+
+    await user.selectOptions(prioritySelect, "medium");
 
     await waitFor(() => {
-      expect(onUpdateTask).toHaveBeenCalledWith(task.id, { priority: "urgent" });
+      expect(onUpdateTask).toHaveBeenCalledTimes(1);
+      expect(onUpdateTask).toHaveBeenCalledWith(task.id, { priority: "medium" });
     });
   });
 

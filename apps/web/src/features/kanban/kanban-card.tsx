@@ -1,12 +1,13 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@timefraim/shared";
-import { CalendarPlus, ExternalLink, GripVertical, Inbox, Play, RotateCcw, Square, Trash2 } from "lucide-react";
+import { CalendarPlus, ChevronDown, ExternalLink, GripVertical, Inbox, Play, Square, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { KanbanStatus } from "@/features/kanban/kanban-types";
 import {
+  PRIORITY_OPTIONS,
   formatTaskPriority,
   getTaskPriorityBadgeClass,
   getTaskPriorityCardClass,
@@ -25,7 +26,7 @@ type KanbanCardProps = {
   task: Task;
   onDeleteTask: (task: Task) => void;
   onPlanTask: (task: Task) => void;
-  onPriorityChange: (task: Task) => void;
+  onPriorityChange: (task: Task, priority: Task["priority"]) => void;
   onRemoveTask: (task: Task) => void;
   onStartTimer: (taskId: string) => void;
   onStopTimer: () => void;
@@ -70,18 +71,24 @@ export function KanbanCard({
       )}
     >
       <div className="mb-3 flex items-start justify-between gap-3">
-        <button
-          type="button"
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]",
-            getTaskPriorityBadgeClass(task.priority),
-          )}
-          aria-label={`Change priority for ${task.title}; currently ${formatTaskPriority(task.priority)}`}
-          onClick={() => onPriorityChange(task)}
-        >
-          <RotateCcw className="h-3 w-3" />
-          {formatTaskPriority(task.priority)}
-        </button>
+        <div className="relative inline-flex">
+          <select
+            aria-label={`Priority for ${task.title}`}
+            className={cn(
+              "h-7 appearance-none rounded-full border py-1 pl-2.5 pr-7 text-[11px] font-medium outline-none transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]",
+              getTaskPriorityBadgeClass(task.priority),
+            )}
+            value={task.priority}
+            onChange={(event) => onPriorityChange(task, event.currentTarget.value as Task["priority"])}
+          >
+            {PRIORITY_OPTIONS.map((priority) => (
+              <option key={priority} value={priority} className="bg-[var(--panel)]">
+                {formatTaskPriority(priority)}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--planner-surface-meta)]" />
+        </div>
         <button
           type="button"
           className="cursor-grab rounded-full p-1 text-[var(--planner-surface-meta)] transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]"
