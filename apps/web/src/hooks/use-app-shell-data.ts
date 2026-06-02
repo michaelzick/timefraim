@@ -45,6 +45,7 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
   const token = session?.access_token ?? "";
   const queryClient = useQueryClient();
   const location = useLocation();
+  const routeDate = readDateParam(location.search);
 
   const invalidatePlannerData = useEffectEvent(async () => {
     await Promise.all([
@@ -66,6 +67,12 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
   useEffect(() => {
     void ensureAllowedEmail();
   }, [ensureAllowedEmail, session?.user.email]);
+
+  useEffect(() => {
+    if (routeDate && routeDate !== date) {
+      setDate(routeDate);
+    }
+  }, [date, routeDate]);
 
   useGoogleSessionSync({ session, token, onSynced: invalidatePlannerData });
 
@@ -136,4 +143,9 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
     setDate,
     togglSettingsQuery,
   };
+}
+
+function readDateParam(search: string) {
+  const value = new URLSearchParams(search).get("date");
+  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
 }

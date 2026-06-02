@@ -18,6 +18,10 @@ const PlannerPage = lazy(async () => ({
   default: (await import("@/pages/planner-page")).PlannerPage,
 }));
 
+const KanbanPage = lazy(async () => ({
+  default: (await import("@/pages/kanban-page")).KanbanPage,
+}));
+
 const SettingsPage = lazy(async () => ({
   default: (await import("@/pages/settings-page")).SettingsPage,
 }));
@@ -96,6 +100,21 @@ export function AppShell({
                   dayPlan={dayPlan}
                   linkedGoogleEmail={linkedGoogleEmail}
                   onDateChange={onDateChange}
+                />
+              }
+            />
+            <Route
+              path="/board"
+              element={
+                <KanbanPage
+                  date={date}
+                  dayPlan={dayPlan}
+                  isMutating={plannerPageProps.isMutating}
+                  onCreateScheduleBlock={plannerPageProps.onCreateScheduleBlock}
+                  onDateChange={onDateChange}
+                  onDeleteScheduleBlock={plannerPageProps.onDeleteScheduleBlock}
+                  onStartTimer={plannerPageProps.onStartTimer}
+                  onUpdateTask={plannerPageProps.onUpdateTask}
                 />
               }
             />

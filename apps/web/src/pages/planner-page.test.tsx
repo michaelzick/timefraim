@@ -1,6 +1,7 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactElement } from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import { PlannerPage } from "@/pages/planner-page";
@@ -49,6 +50,12 @@ vi.mock("@/components/timeline-board", () => ({
 
 const noopAsync = () => Promise.resolve(undefined);
 
+function renderPlannerPage(element: ReactElement, initialEntries = ["/"]) {
+  return render(element, {
+    wrapper: ({ children }) => <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>,
+  });
+}
+
 function buildPlannerPageProps(overrides: Partial<ComponentProps<typeof PlannerPage>> = {}) {
   return {
     date: "2026-04-06",
@@ -81,7 +88,7 @@ describe("PlannerPage", () => {
     const user = userEvent.setup();
     const onCreateTask = vi.fn().mockResolvedValue(undefined);
 
-    render(<PlannerPage {...buildPlannerPageProps({ onCreateTask })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ onCreateTask })} />);
 
     const addTaskButton = screen.getByRole("button", { name: /add task/i });
 
@@ -118,7 +125,7 @@ describe("PlannerPage", () => {
     const user = userEvent.setup();
     const onCreateTask = vi.fn().mockResolvedValue(undefined);
 
-    render(<PlannerPage {...buildPlannerPageProps({ onCreateTask })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ onCreateTask })} />);
 
     const titleInput = screen.getByLabelText("Task title");
     const addTaskButton = screen.getByRole("button", { name: /add task/i });
@@ -133,7 +140,7 @@ describe("PlannerPage", () => {
   });
 
   it("shows the refreshed task inbox copy without the retired chrome", () => {
-    render(<PlannerPage {...buildPlannerPageProps()} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps()} />);
 
     expect(screen.getByPlaceholderText("Add a task")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Why this matters")).toBeInTheDocument();
@@ -146,7 +153,7 @@ describe("PlannerPage", () => {
   it("collapses and expands the task inbox without hiding the queue below it", async () => {
     const user = userEvent.setup();
 
-    render(<PlannerPage {...buildPlannerPageProps()} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps()} />);
 
     const toggle = screen.getByRole("button", { name: /task inbox/i });
     expect(toggle).toHaveAttribute("aria-expanded", "true");
@@ -169,7 +176,7 @@ describe("PlannerPage", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const onCreateTask = vi.fn().mockRejectedValue(new Error("Create failed"));
 
-    render(<PlannerPage {...buildPlannerPageProps({ onCreateTask })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ onCreateTask })} />);
 
     await user.type(screen.getByLabelText("Task title"), "Deep work");
     await user.type(screen.getByLabelText("Task notes"), "Protect a quiet block.");
@@ -193,7 +200,7 @@ describe("PlannerPage", () => {
     const onUpdateTask = vi.fn().mockResolvedValue(undefined);
     const onStartTimer = vi.fn().mockResolvedValue(undefined);
 
-    render(<PlannerPage {...buildPlannerPageProps({ dayPlan, onUpdateTask, onStartTimer })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ dayPlan, onUpdateTask, onStartTimer })} />);
 
     await user.clear(screen.getByLabelText("Detail title"));
     await user.type(screen.getByLabelText("Detail title"), "Refined task");
@@ -213,12 +220,26 @@ describe("PlannerPage", () => {
     expect(onStartTimer).toHaveBeenCalledWith(dayPlan.tasks[0].id);
   });
 
+  it("selects a task from the board planner deep link", async () => {
+    const dayPlan = buildDayPlan();
+    const targetTask = dayPlan.tasks[1];
+
+    renderPlannerPage(
+      <PlannerPage {...buildPlannerPageProps({ dayPlan })} />,
+      [`/?date=2026-04-06&task=${targetTask.id}`],
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Detail title")).toHaveValue(targetTask.title);
+    });
+  });
+
   it("deletes the selected task after confirmation", async () => {
     const user = userEvent.setup();
     const onDeleteTask = vi.fn().mockResolvedValue(undefined);
     vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    render(<PlannerPage {...buildPlannerPageProps({ onDeleteTask })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ onDeleteTask })} />);
 
     await user.click(screen.getByRole("button", { name: /delete task/i }));
 
@@ -233,7 +254,7 @@ describe("PlannerPage", () => {
     const onDeleteTask = vi.fn().mockResolvedValue(undefined);
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     const props = buildPlannerPageProps({ onDeleteTask });
-    const { rerender } = render(<PlannerPage {...props} dayPlan={dayPlan} />);
+    const { rerender } = renderPlannerPage(<PlannerPage {...props} dayPlan={dayPlan} />);
 
     await user.click(screen.getByRole("button", { name: /more actions for plan launch week/i }));
     await user.click(screen.getByRole("menuitem", { name: /delete/i }));
@@ -277,7 +298,7 @@ describe("PlannerPage", () => {
     const onDeleteTask = vi.fn().mockResolvedValue(undefined);
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const props = buildPlannerPageProps({ onDeleteTask });
-    const { rerender } = render(<PlannerPage {...props} dayPlan={dayPlan} />);
+    const { rerender } = renderPlannerPage(<PlannerPage {...props} dayPlan={dayPlan} />);
 
     await user.click(screen.getByRole("button", { name: /more actions for queue task/i }));
     await user.click(screen.getByRole("menuitem", { name: /delete/i }));
@@ -304,7 +325,7 @@ describe("PlannerPage", () => {
   });
 
   it("removes retired planner chrome copy from the planner page", () => {
-    render(<PlannerPage {...buildPlannerPageProps()} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps()} />);
 
     expect(screen.queryByText("Toggl live")).not.toBeInTheDocument();
     expect(screen.queryByText("Google live")).not.toBeInTheDocument();
@@ -313,7 +334,7 @@ describe("PlannerPage", () => {
   });
 
   it("renders the planner toolbar controls and queue filter", () => {
-    render(<PlannerPage {...buildPlannerPageProps()} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps()} />);
 
     const toolbar = screen.getByRole("region", { name: /planner toolbar/i });
 
@@ -335,7 +356,7 @@ describe("PlannerPage", () => {
       vi.setSystemTime(new Date(2026, 3, 20, 12, 0, 0));
       const onDateChange = vi.fn();
 
-      render(<PlannerPage {...buildPlannerPageProps({ date: "2026-04-06", onDateChange })} />);
+      renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ date: "2026-04-06", onDateChange })} />);
 
       fireEvent.click(screen.getByRole("button", { name: /jump to today/i }));
 
@@ -350,7 +371,7 @@ describe("PlannerPage", () => {
     try {
       vi.setSystemTime(new Date(2026, 3, 20, 12, 0, 0));
 
-      render(<PlannerPage {...buildPlannerPageProps({ date: "2026-04-20" })} />);
+      renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ date: "2026-04-20" })} />);
 
       expect(screen.getByRole("button", { name: /jump to today/i })).toBeDisabled();
     } finally {
@@ -359,14 +380,14 @@ describe("PlannerPage", () => {
   });
 
   it("hides the timer panel when no timer is running", () => {
-    render(<PlannerPage {...buildPlannerPageProps()} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps()} />);
 
     expect(screen.queryByText("No timer running — pick a task to start one.")).not.toBeInTheDocument();
     expect(screen.queryByText("Running")).not.toBeInTheDocument();
   });
 
   it("renders the activity log without tabs in the right rail", () => {
-    render(<PlannerPage {...buildPlannerPageProps()} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps()} />);
 
     expect(screen.getByRole("heading", { name: /Recent changes/ })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Timer" })).not.toBeInTheDocument();
@@ -377,7 +398,7 @@ describe("PlannerPage", () => {
   it("clears the selected task when clicking planner whitespace", async () => {
     const user = userEvent.setup();
 
-    render(<PlannerPage {...buildPlannerPageProps()} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps()} />);
 
     expect(screen.getByLabelText("Detail title")).toHaveValue("Plan launch week");
 
@@ -390,7 +411,7 @@ describe("PlannerPage", () => {
   it("keeps the selected task when clicking inside the detail panel", async () => {
     const user = userEvent.setup();
 
-    render(<PlannerPage {...buildPlannerPageProps()} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps()} />);
 
     await user.click(screen.getByLabelText("Detail title"));
 
@@ -400,7 +421,7 @@ describe("PlannerPage", () => {
   it("selects a queue task without the outside-click handler clearing it", async () => {
     const user = userEvent.setup();
 
-    render(<PlannerPage {...buildPlannerPageProps()} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps()} />);
 
     await user.click(screen.getByText("timeline board"));
     await user.click(screen.getByText("Review roadmap"));
@@ -428,7 +449,7 @@ describe("PlannerPage", () => {
       ],
     });
 
-    render(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
 
     await user.click(screen.getByRole("button", { name: /select calendar event/i }));
     expect(screen.getByRole("heading", { name: "Calendar event" })).toBeInTheDocument();
@@ -455,7 +476,7 @@ describe("PlannerPage", () => {
       source: "manual",
     };
 
-    render(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
 
     expect(screen.getAllByText(`${task.title} (Client X / Bugfix)`).length).toBeGreaterThan(0);
   });
@@ -474,7 +495,7 @@ describe("PlannerPage", () => {
       source: "manual",
     };
 
-    render(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ dayPlan })} />);
 
     const stopButtons = screen.getAllByRole("button", { name: /stop timer/i });
     expect(stopButtons.length).toBeGreaterThanOrEqual(2);
@@ -485,7 +506,7 @@ describe("PlannerPage", () => {
   it("uses 'Without project' as the project dropdown placeholder when Toggl is connected with no default", () => {
     const togglSettings = buildTogglSettings({ defaultProjectId: null, defaultProjectName: null });
 
-    render(<PlannerPage {...buildPlannerPageProps({ togglSettings })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ togglSettings })} />);
 
     const dropdown = screen.getByLabelText("Detail Toggl project");
     const emptyOption = Array.from(
@@ -502,7 +523,7 @@ describe("PlannerPage", () => {
     toastErrorSpy.mockClear();
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
-    render(<PlannerPage {...buildPlannerPageProps({ onUpdateTask })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ onUpdateTask })} />);
 
     await user.click(screen.getByRole("button", { name: /^save$/i }));
 
@@ -540,7 +561,7 @@ describe("PlannerPage", () => {
       ],
     });
 
-    render(<PlannerPage {...buildPlannerPageProps({ dayPlan, onDismissCalendarEvent })} />);
+    renderPlannerPage(<PlannerPage {...buildPlannerPageProps({ dayPlan, onDismissCalendarEvent })} />);
 
     await user.click(screen.getByRole("button", { name: /select calendar event/i }));
     expect(screen.getByRole("heading", { name: "Calendar event" })).toBeInTheDocument();
