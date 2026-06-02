@@ -63,19 +63,6 @@ export function groupTasksByKanbanStatus(tasks: Task[]) {
   return groups;
 }
 
-export function getTaskScheduleLabel(task: Task, scheduleBlocks: ScheduleBlock[]) {
-  const block = task.scheduledBlockId
-    ? scheduleBlocks.find((candidate) => candidate.id === task.scheduledBlockId)
-    : null;
-  if (!task.scheduledBlockId) {
-    return "Unscheduled";
-  }
-  if (!block) {
-    return "Scheduled elsewhere";
-  }
-  return `${formatTime(block.startAt)}-${formatTime(block.endAt)}`;
-}
-
 export function findNextOpenTimelineSlot(args: {
   calendarEvents: CalendarEventView[];
   date: string;
@@ -128,13 +115,6 @@ function compareKanbanTasks(left: Task, right: Task) {
     return priorityDelta;
   }
   return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
-}
-
-function formatTime(isoString: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(isoString));
 }
 
 function hasTimelineConflict(

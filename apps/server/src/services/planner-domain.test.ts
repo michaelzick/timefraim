@@ -98,6 +98,21 @@ describe("planner-domain", () => {
         updatedAt: "2026-04-04T08:00:00.000Z",
       }),
     ).toBe("planned");
+    expect(
+      resolveIdleTaskStatus({
+        id: "b8e05d80-1e2b-4a81-b6b8-3af64f5ec795",
+        title: "Removed timer task",
+        notes: null,
+        estimatedMinutes: 25,
+        status: "inbox",
+        priority: "urgent",
+        scheduledBlockId: null,
+        togglProjectId: null,
+        completedOnDate: null,
+        createdAt: "2026-04-04T08:00:00.000Z",
+        updatedAt: "2026-04-04T08:00:00.000Z",
+      }),
+    ).toBe("inbox");
   });
 
   it("treats dismissed external events as hidden until Google updates them", () => {

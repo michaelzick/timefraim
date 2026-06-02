@@ -111,9 +111,10 @@ export function AppShell({
                   dayPlan={dayPlan}
                   isMutating={plannerPageProps.isMutating}
                   onCreateScheduleBlock={plannerPageProps.onCreateScheduleBlock}
-                  onDateChange={onDateChange}
                   onDeleteScheduleBlock={plannerPageProps.onDeleteScheduleBlock}
+                  onDeleteTask={plannerPageProps.onDeleteTask}
                   onStartTimer={plannerPageProps.onStartTimer}
+                  onStopTimer={plannerPageProps.onStopTimer}
                   onUpdateTask={plannerPageProps.onUpdateTask}
                 />
               }

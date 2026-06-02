@@ -1,36 +1,50 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@timefraim/shared";
-import { CalendarPlus, ExternalLink, GripVertical, Play } from "lucide-react";
+import { CalendarPlus, ExternalLink, GripVertical, Inbox, Play, RotateCcw, Square, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { KanbanStatus } from "@/features/kanban/kanban-types";
 import {
   formatTaskPriority,
   getTaskPriorityBadgeClass,
   getTaskPriorityCardClass,
 } from "@/features/planner/task-presentation";
 import { buildPlannerTaskHref } from "@/features/kanban/kanban-utils";
+import { formatElapsed, useElapsedSeconds } from "@/hooks/use-elapsed-seconds";
 import { cn } from "@/lib/utils";
 
 type KanbanCardProps = {
   activeTimerTaskId: string | null;
+  activeTimerStartedAt: string | null;
   date: string;
   isDragOverlay?: boolean;
+  kanbanStatus: KanbanStatus;
   scheduleLabel: string;
   task: Task;
+  onDeleteTask: (task: Task) => void;
   onPlanTask: (task: Task) => void;
+  onPriorityChange: (task: Task) => void;
+  onRemoveTask: (task: Task) => void;
   onStartTimer: (taskId: string) => void;
+  onStopTimer: () => void;
 };
 
 export function KanbanCard({
   activeTimerTaskId,
+  activeTimerStartedAt,
   date,
   isDragOverlay = false,
+  kanbanStatus,
   scheduleLabel,
   task,
+  onDeleteTask,
   onPlanTask,
+  onPriorityChange,
+  onRemoveTask,
   onStartTimer,
+  onStopTimer,
 }: KanbanCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `kanban-task-${task.id}`,
@@ -38,7 +52,10 @@ export function KanbanCard({
     disabled: isDragOverlay,
   });
   const isRunning = activeTimerTaskId === task.id;
+  const elapsed = useElapsedSeconds(isRunning ? activeTimerStartedAt : null);
   const canPlan = !task.scheduledBlockId && task.status !== "done";
+  const canDelete = kanbanStatus === "inbox";
+  const canRemove = kanbanStatus !== "inbox";
 
   return (
     <article
@@ -53,7 +70,18 @@ export function KanbanCard({
       )}
     >
       <div className="mb-3 flex items-start justify-between gap-3">
-        <Badge className={getTaskPriorityBadgeClass(task.priority)}>{formatTaskPriority(task.priority)}</Badge>
+        <button
+          type="button"
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]",
+            getTaskPriorityBadgeClass(task.priority),
+          )}
+          aria-label={`Change priority for ${task.title}; currently ${formatTaskPriority(task.priority)}`}
+          onClick={() => onPriorityChange(task)}
+        >
+          <RotateCcw className="h-3 w-3" />
+          {formatTaskPriority(task.priority)}
+        </button>
         <button
           type="button"
           className="cursor-grab rounded-full p-1 text-[var(--planner-surface-meta)] transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]"
@@ -72,7 +100,7 @@ export function KanbanCard({
         <div className="flex flex-wrap gap-2 text-xs text-[var(--planner-surface-meta)]">
           <span>{task.estimatedMinutes} min</span>
           <span>{scheduleLabel}</span>
-          {isRunning ? <span>Running</span> : null}
+          {isRunning ? <span className="font-mono tabular-nums text-[var(--accent)]">Running {formatElapsed(elapsed)}</span> : null}
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
@@ -82,10 +110,33 @@ export function KanbanCard({
             Plan
           </Button>
         ) : null}
-        {task.status !== "done" ? (
+        {isRunning ? (
+          <Button type="button" size="sm" variant="secondary" onClick={onStopTimer}>
+            <Square className="h-4 w-4" />
+            Stop
+          </Button>
+        ) : task.status !== "done" ? (
           <Button type="button" size="sm" variant="secondary" onClick={() => onStartTimer(task.id)}>
             <Play className="h-4 w-4" />
             Timer
+          </Button>
+        ) : null}
+        {canRemove ? (
+          <Button type="button" size="sm" variant="ghost" onClick={() => onRemoveTask(task)}>
+            <Inbox className="h-4 w-4" />
+            Remove
+          </Button>
+        ) : null}
+        {canDelete ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="text-red-700 hover:bg-red-500/10 hover:text-red-800 dark:text-red-200"
+            onClick={() => onDeleteTask(task)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
           </Button>
         ) : null}
         <Button asChild size="sm" variant="ghost">

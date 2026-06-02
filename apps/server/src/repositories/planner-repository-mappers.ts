@@ -34,6 +34,8 @@ export function mapTask(row: QueryResultRow) {
     status: row.status,
     priority: row.priority,
     scheduledBlockId: row.scheduled_block_id,
+    scheduledStartAt: asIso(row.scheduled_start_at),
+    scheduledEndAt: asIso(row.scheduled_end_at),
     togglProjectId: row.toggl_project_id,
     completedOnDate: toDateOnly(row.completed_on_date),
     createdAt: asIso(row.created_at),
