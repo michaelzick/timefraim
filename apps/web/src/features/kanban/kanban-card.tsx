@@ -18,16 +18,15 @@ import {
   getTaskPriorityBadgeClass,
   getTaskPriorityCardClass,
 } from "@/features/planner/task-presentation";
-import { buildPlannerTaskHref } from "@/features/kanban/kanban-utils";
 import { formatElapsed, useElapsedSeconds } from "@/hooks/use-elapsed-seconds";
 import { cn } from "@/lib/utils";
 
 type KanbanCardProps = {
   activeTimerTaskId: string | null;
   activeTimerStartedAt: string | null;
-  date: string;
   isDragOverlay?: boolean;
   kanbanStatus: KanbanStatus;
+  plannerHref: string;
   scheduleLabel: string;
   task: Task;
   onDeleteTask: (task: Task) => void;
@@ -41,9 +40,9 @@ type KanbanCardProps = {
 export function KanbanCard({
   activeTimerTaskId,
   activeTimerStartedAt,
-  date,
   isDragOverlay = false,
   kanbanStatus,
+  plannerHref,
   scheduleLabel,
   task,
   onDeleteTask,
@@ -112,7 +111,7 @@ export function KanbanCard({
         </DropdownMenu>
         <button
           type="button"
-          className="cursor-grab rounded-full p-1 text-[var(--planner-surface-meta)] transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]"
+          className="cursor-grab rounded-full p-1 text-[var(--planner-surface-meta)] transition hover:bg-[var(--panel-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]"
           aria-label={`Drag ${task.title}`}
           {...listeners}
           {...attributes}
@@ -121,7 +120,7 @@ export function KanbanCard({
         </button>
       </div>
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold leading-5 text-[var(--planner-surface-title)]">{task.title}</h3>
+        <h4 className="text-sm font-semibold leading-5 text-[var(--planner-surface-title)]">{task.title}</h4>
         {task.notes ? (
           <p className="line-clamp-2 text-xs leading-5 text-[var(--planner-surface-meta)]">{task.notes}</p>
         ) : null}
@@ -159,8 +158,7 @@ export function KanbanCard({
           <Button
             type="button"
             size="sm"
-            variant="ghost"
-            className="text-red-700 hover:bg-red-500/10 hover:text-red-800 dark:text-red-200"
+            variant="destructive"
             onClick={() => onDeleteTask(task)}
           >
             <Trash2 className="h-4 w-4" />
@@ -168,7 +166,7 @@ export function KanbanCard({
           </Button>
         ) : null}
         <Button asChild size="sm" variant="ghost">
-          <Link to={buildPlannerTaskHref(date, task.id)}>
+          <Link to={plannerHref}>
             <ExternalLink className="h-4 w-4" />
             Planner
           </Link>
@@ -187,7 +185,7 @@ export function KanbanCardPreview({ task }: { task: Task }) {
       )}
     >
       <Badge className={getTaskPriorityBadgeClass(task.priority)}>{formatTaskPriority(task.priority)}</Badge>
-      <h3 className="mt-3 text-sm font-semibold leading-5 text-[var(--planner-surface-title)]">{task.title}</h3>
+      <h4 className="mt-3 text-sm font-semibold leading-5 text-[var(--planner-surface-title)]">{task.title}</h4>
       <div className="mt-2 text-xs text-[var(--planner-surface-meta)]">{task.estimatedMinutes} min</div>
     </article>
   );

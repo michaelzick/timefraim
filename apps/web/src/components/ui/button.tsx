@@ -12,6 +12,7 @@ const buttonVariants = cva(
         secondary:
           "border border-[var(--panel-border)] bg-[var(--panel-subtle)] text-[var(--heading)] hover:border-[var(--panel-border-strong)] hover:bg-[var(--panel-hover)]",
         ghost: "text-[var(--muted-strong)] hover:bg-[var(--panel-hover)] hover:text-[var(--heading)]",
+        destructive: "text-[var(--danger)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger-strong)]",
       },
       size: {
         default: "h-10",

@@ -11,7 +11,7 @@
       "name": "web",
       "runtimeExecutable": "/bin/sh",
       "runtimeArgs": ["-c", "PATH=/opt/homebrew/bin:$PATH pnpm --filter @timefraim/web dev"],
-      "port": 5173
+      "port": 6173
     }
   ]
 }

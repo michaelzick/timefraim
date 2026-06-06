@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { KanbanCard } from "@/features/kanban/kanban-card";
 import { getTaskScheduleLabel } from "@/features/kanban/kanban-schedule-label";
 import type { KanbanColumnDefinition } from "@/features/kanban/kanban-types";
+import { buildPlannerTaskHrefForTask } from "@/features/kanban/kanban-utils";
 import { cn } from "@/lib/utils";
 
 type KanbanColumnProps = {
@@ -51,7 +52,7 @@ export function KanbanColumn({
     >
       <header className="mb-3 px-1">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-[var(--heading)]">{column.title}</h2>
+          <h3 className="text-sm font-semibold text-[var(--heading)]">{column.title}</h3>
           <Badge>{tasks.length}</Badge>
         </div>
         <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{column.caption}</p>
@@ -63,8 +64,8 @@ export function KanbanColumn({
               key={task.id}
               activeTimerTaskId={activeTimerTaskId}
               activeTimerStartedAt={activeTimerStartedAt}
-              date={date}
               kanbanStatus={column.status}
+              plannerHref={buildPlannerTaskHrefForTask(task, date, scheduleBlocks)}
               scheduleLabel={getTaskScheduleLabel(task, scheduleBlocks)}
               task={task}
               onDeleteTask={onDeleteTask}

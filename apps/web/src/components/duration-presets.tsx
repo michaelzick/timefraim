@@ -2,8 +2,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const COMMON_DURATION_OPTIONS = [
-  { label: "15", valueMinutes: 15 },
-  { label: "30", valueMinutes: 30 },
+  { label: "15 min", valueMinutes: 15 },
+  { label: "30 min", valueMinutes: 30 },
   { label: "45 min", valueMinutes: 45 },
   { label: "1 hr", valueMinutes: 60 },
   { label: "1.5 hr", valueMinutes: 90 },
