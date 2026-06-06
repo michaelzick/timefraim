@@ -1,7 +1,8 @@
 import type { PropsWithChildren } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { AppShell } from "@/components/layout/app-shell";
 import { buildAuthSession, buildDayPlan, buildTogglSettings, noopDuplicate } from "@/test/fixtures";
@@ -16,7 +17,9 @@ function Providers({ children }: PropsWithChildren) {
 }
 
 vi.mock("@/pages/planner-page", () => ({
-  PlannerPage: () => <div>planner route</div>,
+  PlannerPage: ({ onDateChange }: { onDateChange: (nextDate: string) => void }) => (
+    <button type="button" onClick={() => onDateChange("2026-04-09")}>planner route</button>
+  ),
 }));
 
 vi.mock("@/pages/kanban-page", () => ({
@@ -39,6 +42,11 @@ const noopDiscover = () =>
     availableProjects: [],
   });
 const noopTogglSettings = () => Promise.resolve(buildTogglSettings());
+
+function LocationProbe() {
+  const location = useLocation();
+  return <span data-testid="location">{`${location.pathname}${location.search}`}</span>;
+}
 
 describe("AppShell", () => {
   it("renders the signed-in shell and lazy route content", async () => {
@@ -149,5 +157,65 @@ describe("AppShell", () => {
     );
 
     expect(await screen.findByText("board route")).toBeInTheDocument();
+  });
+
+  it("replaces planner deep-link date params when the planner date changes", async () => {
+    const user = userEvent.setup();
+    const onDateChange = vi.fn();
+
+    render(
+      <Providers>
+        <MemoryRouter initialEntries={["/?date=2026-04-08&task=task-1"]}>
+          <LocationProbe />
+          <AppShell
+            authSession={buildAuthSession()}
+            date="2026-04-08"
+            dayPlan={buildDayPlan()}
+            togglSettings={buildTogglSettings()}
+            isDiscoveringToggl={false}
+            isSavingToggl={false}
+            onDateChange={onDateChange}
+            onDiscoverToggl={noopDiscover}
+            onDeleteToggl={noopTogglSettings}
+            onSaveToggl={noopTogglSettings}
+            onSignOut={vi.fn()}
+            googleCalendarSettings={null}
+            isLoadingGoogleCalendars={false}
+            isSavingGoogleCalendars={false}
+            taskStartNotificationsEnabled={false}
+            taskEndNotificationsEnabled={false}
+            taskNotificationsSupported
+            taskNotificationsMessage={null}
+            onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+            onTaskStartNotificationsChange={vi.fn()}
+            onTaskEndNotificationsChange={vi.fn()}
+            plannerPageProps={{
+              isMutating: false,
+              isSyncing: false,
+              onCreateScheduleBlock: noopAsync,
+              onCreateTask: noopAsync,
+              onDeleteScheduleBlock: noopAsync,
+              onDeleteTask: noopAsync,
+              onDismissCalendarEvent: noopAsync,
+              onUpdateCalendarEvent: noopAsync,
+              onDuplicateTask: noopDuplicate,
+              onDuplicateScheduleBlock: noopDuplicate,
+              onStartTimer: noopAsync,
+              onStartEventTimer: noopAsync,
+              onStopTimer: noopAsync,
+              onSyncCalendar: noopAsync,
+              onUpdateScheduleBlock: noopAsync,
+              onUpdateTask: noopAsync,
+              togglSettings: buildTogglSettings(),
+            }}
+          />
+        </MemoryRouter>
+      </Providers>,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "planner route" }));
+
+    expect(onDateChange).toHaveBeenCalledWith("2026-04-09");
+    expect(screen.getByTestId("location")).toHaveTextContent("/?date=2026-04-09");
   });
 });

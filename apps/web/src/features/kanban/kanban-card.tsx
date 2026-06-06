@@ -18,16 +18,15 @@ import {
   getTaskPriorityBadgeClass,
   getTaskPriorityCardClass,
 } from "@/features/planner/task-presentation";
-import { buildPlannerTaskHref } from "@/features/kanban/kanban-utils";
 import { formatElapsed, useElapsedSeconds } from "@/hooks/use-elapsed-seconds";
 import { cn } from "@/lib/utils";
 
 type KanbanCardProps = {
   activeTimerTaskId: string | null;
   activeTimerStartedAt: string | null;
-  date: string;
   isDragOverlay?: boolean;
   kanbanStatus: KanbanStatus;
+  plannerHref: string;
   scheduleLabel: string;
   task: Task;
   onDeleteTask: (task: Task) => void;
@@ -41,9 +40,9 @@ type KanbanCardProps = {
 export function KanbanCard({
   activeTimerTaskId,
   activeTimerStartedAt,
-  date,
   isDragOverlay = false,
   kanbanStatus,
+  plannerHref,
   scheduleLabel,
   task,
   onDeleteTask,
@@ -168,7 +167,7 @@ export function KanbanCard({
           </Button>
         ) : null}
         <Button asChild size="sm" variant="ghost">
-          <Link to={buildPlannerTaskHref(date, task.id)}>
+          <Link to={plannerHref}>
             <ExternalLink className="h-4 w-4" />
             Planner
           </Link>

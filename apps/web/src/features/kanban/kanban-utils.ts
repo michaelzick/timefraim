@@ -33,6 +33,10 @@ export function buildPlannerTaskHref(date: string, taskId: string) {
   return `/?${params.toString()}`;
 }
 
+export function buildPlannerTaskHrefForTask(task: Task, fallbackDate: string, scheduleBlocks: ScheduleBlock[]) {
+  return buildPlannerTaskHref(resolvePlannerLinkDate(task, fallbackDate, scheduleBlocks), task.id);
+}
+
 export function filterKanbanTasks(tasks: Task[], search: string) {
   const needle = search.trim().toLowerCase();
   if (!needle) {
@@ -115,6 +119,24 @@ function compareKanbanTasks(left: Task, right: Task) {
     return priorityDelta;
   }
   return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+}
+
+function resolvePlannerLinkDate(task: Task, fallbackDate: string, scheduleBlocks: ScheduleBlock[]) {
+  const startAt = task.scheduledStartAt
+    ?? scheduleBlocks.find((block) => block.id === task.scheduledBlockId)?.startAt;
+  return startAt ? formatPlannerDateFromIso(startAt) ?? fallbackDate : fallbackDate;
+}
+
+function formatPlannerDateFromIso(isoString: string) {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
 }
 
 function hasTimelineConflict(

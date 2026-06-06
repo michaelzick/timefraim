@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { buildTask } from "@/test/fixtures";
 import {
   buildPlannerTaskHref,
+  buildPlannerTaskHrefForTask,
   findNextOpenTimelineSlot,
   groupTasksByKanbanStatus,
   moveTaskOnKanban,
@@ -51,6 +52,17 @@ describe("kanban-utils", () => {
   it("builds planner task deep links with the selected board date", () => {
     expect(buildPlannerTaskHref(DATE, "task-1f8f9660-0000-4000-8000-000000000001")).toBe(
       "/?date=2026-04-06&task=task-1f8f9660-0000-4000-8000-000000000001",
+    );
+  });
+
+  it("builds scheduled task planner links with the scheduled date", () => {
+    const task = buildTask({
+      scheduledBlockId: "block-1f8f9660-0000-4000-8000-000000000001",
+      scheduledStartAt: "2026-04-08T16:00:00.000Z",
+    });
+
+    expect(buildPlannerTaskHrefForTask(task, DATE, [])).toBe(
+      "/?date=2026-04-08&task=task-1f8f9660-0000-4000-8000-000000000001",
     );
   });
 

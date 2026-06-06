@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { KanbanPage } from "@/pages/kanban-page";
-import { buildDayPlan } from "@/test/fixtures";
+import { buildDayPlan, buildTogglSettings } from "@/test/fixtures";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -22,12 +22,14 @@ function renderKanbanPage(overrides: Partial<ComponentProps<typeof KanbanPage>> 
         date="2026-04-06"
         dayPlan={buildDayPlan()}
         isMutating={false}
+        onCreateTask={noopAsync}
         onCreateScheduleBlock={noopAsync}
         onDeleteScheduleBlock={noopAsync}
         onDeleteTask={noopAsync}
         onStartTimer={noopAsync}
         onStopTimer={noopAsync}
         onUpdateTask={noopAsync}
+        togglSettings={buildTogglSettings()}
         {...overrides}
       />
     </MemoryRouter>,
@@ -47,6 +49,47 @@ describe("KanbanPage", () => {
       "href",
       `/?date=2026-04-06&task=${dayPlan.tasks[0].id}`,
     );
+  });
+
+  it("uses the scheduled day for scheduled-card planner links", () => {
+    const task = {
+      ...buildDayPlan().tasks[0],
+      scheduledBlockId: "block-1f8f9660-0000-4000-8000-000000000001",
+      scheduledStartAt: "2026-04-08T16:00:00.000Z",
+      scheduledEndAt: "2026-04-08T16:45:00.000Z",
+    };
+
+    renderKanbanPage({ dayPlan: buildDayPlan({ tasks: [task] }) });
+
+    expect(screen.getByRole("link", { name: /planner/i })).toHaveAttribute(
+      "href",
+      `/?date=2026-04-08&task=${task.id}`,
+    );
+  });
+
+  it("creates Inbox tasks from the board toolbar", async () => {
+    const user = userEvent.setup();
+    const onCreateTask = vi.fn().mockResolvedValue(undefined);
+
+    renderKanbanPage({ onCreateTask });
+
+    await user.click(screen.getByRole("button", { name: "New task" }));
+    await user.type(screen.getByLabelText("Board task title"), "  Capture board work  ");
+    await user.type(screen.getByLabelText("Board task notes"), "From the board");
+    await user.selectOptions(screen.getByLabelText("Board task priority"), "high");
+    await user.click(screen.getByRole("button", { name: "Add task" }));
+
+    await waitFor(() => {
+      expect(onCreateTask).toHaveBeenCalledWith({
+        title: "Capture board work",
+        notes: "From the board",
+        estimatedMinutes: 30,
+        priority: "high",
+        status: "inbox",
+        togglProjectId: null,
+      });
+    });
+    expect(screen.queryByLabelText("Board task title")).not.toBeInTheDocument();
   });
 
   it("plans an unscheduled card onto the selected day", async () => {

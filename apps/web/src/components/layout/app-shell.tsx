@@ -9,7 +9,7 @@ import type {
   TogglIntegrationSettings,
 } from "@timefraim/shared";
 import { lazy, Suspense } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
 import { AppHeader } from "@/components/layout/app-header";
 import type { PlannerPageProps } from "@/features/planner/types";
@@ -84,6 +84,20 @@ export function AppShell({
   plannerPageProps,
 }: AppShellProps) {
   const linkedGoogleEmail = authSession.integrationStatus.googleEmail ?? authSession.user.email ?? null;
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handlePlannerDateChange = (nextDate: string) => {
+    onDateChange(nextDate);
+    if (location.pathname !== "/") {
+      return;
+    }
+
+    const params = new URLSearchParams(location.search);
+    params.set("date", nextDate);
+    params.delete("task");
+    void navigate({ pathname: "/", search: `?${params.toString()}` }, { replace: true });
+  };
 
   return (
     <div className="min-h-screen px-5 py-6 md:px-8">
@@ -99,7 +113,7 @@ export function AppShell({
                   date={date}
                   dayPlan={dayPlan}
                   linkedGoogleEmail={linkedGoogleEmail}
-                  onDateChange={onDateChange}
+                  onDateChange={handlePlannerDateChange}
                 />
               }
             />
@@ -110,12 +124,14 @@ export function AppShell({
                   date={date}
                   dayPlan={dayPlan}
                   isMutating={plannerPageProps.isMutating}
+                  onCreateTask={plannerPageProps.onCreateTask}
                   onCreateScheduleBlock={plannerPageProps.onCreateScheduleBlock}
                   onDeleteScheduleBlock={plannerPageProps.onDeleteScheduleBlock}
                   onDeleteTask={plannerPageProps.onDeleteTask}
                   onStartTimer={plannerPageProps.onStartTimer}
                   onStopTimer={plannerPageProps.onStopTimer}
                   onUpdateTask={plannerPageProps.onUpdateTask}
+                  togglSettings={togglSettings}
                 />
               }
             />

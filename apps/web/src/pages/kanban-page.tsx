@@ -5,9 +5,11 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { KanbanCardPreview } from "@/features/kanban/kanban-card";
 import { KanbanColumn } from "@/features/kanban/kanban-column";
+import { KanbanCreateTaskPanel } from "@/features/kanban/kanban-create-task-panel";
+import { buildKanbanCreateTaskInput } from "@/features/kanban/kanban-create-task-utils";
+import { getColumnTitle, readKanbanStatus, readKanbanTask } from "@/features/kanban/kanban-dnd";
 import { showKanbanActionError } from "@/features/kanban/kanban-errors";
 import { KanbanToolbar } from "@/features/kanban/kanban-toolbar";
-import { KANBAN_STATUSES, type KanbanStatus } from "@/features/kanban/kanban-types";
 import {
   filterKanbanTasks,
   groupTasksByKanbanStatus,
@@ -15,34 +17,39 @@ import {
   moveTaskOnKanban,
 } from "@/features/kanban/kanban-utils";
 import { formatTaskPriority } from "@/features/planner/task-presentation";
-import type { PlannerPageProps } from "@/features/planner/types";
+import type { CreateTaskValues, PlannerPageProps } from "@/features/planner/types";
 
 type KanbanPageProps = Pick<
   PlannerPageProps,
   | "date"
   | "dayPlan"
   | "isMutating"
+  | "onCreateTask"
   | "onCreateScheduleBlock"
   | "onDeleteScheduleBlock"
   | "onDeleteTask"
   | "onStartTimer"
   | "onStopTimer"
   | "onUpdateTask"
+  | "togglSettings"
 >;
 
 export function KanbanPage({
   date,
   dayPlan,
   isMutating,
+  onCreateTask,
   onCreateScheduleBlock,
   onDeleteScheduleBlock,
   onDeleteTask,
   onStartTimer,
   onStopTimer,
   onUpdateTask,
+  togglSettings,
 }: KanbanPageProps) {
   const [search, setSearch] = useState("");
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const visibleTasks = useMemo(() => filterKanbanTasks(dayPlan.tasks, search), [dayPlan.tasks, search]);
   const groupedTasks = useMemo(() => groupTasksByKanbanStatus(visibleTasks), [visibleTasks]);
@@ -136,6 +143,16 @@ export function KanbanPage({
       .catch((error) => showKanbanActionError("Failed to change priority. Please try again.", error));
   };
 
+  const handleCreateTask = async (values: CreateTaskValues) => {
+    try {
+      await onCreateTask(buildKanbanCreateTaskInput(values));
+      toast.success("Task added to Inbox", { duration: 3000 });
+    } catch (error) {
+      showKanbanActionError("Failed to create the task. Please try again.", error);
+      throw error;
+    }
+  };
+
   return (
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveTask(null)}>
       <div className="space-y-6" aria-busy={isMutating}>
@@ -144,8 +161,18 @@ export function KanbanPage({
           search={search}
           scheduledCount={scheduledCount}
           taskCount={visibleTasks.length}
+          isCreateTaskOpen={isCreateTaskOpen}
+          onCreateTaskToggle={() => setIsCreateTaskOpen((current) => !current)}
           onSearchChange={setSearch}
         />
+        {isCreateTaskOpen ? (
+          <KanbanCreateTaskPanel
+            isMutating={isMutating}
+            togglSettings={togglSettings}
+            onClose={() => setIsCreateTaskOpen(false)}
+            onSubmit={handleCreateTask}
+          />
+        ) : null}
         <div className="grid gap-4 xl:grid-cols-5">
           {KANBAN_COLUMNS.map((column) => (
             <KanbanColumn
@@ -171,23 +198,4 @@ export function KanbanPage({
       </DragOverlay>
     </DndContext>
   );
-}
-
-function readKanbanTask(data: unknown): Task | null {
-  if (!data || typeof data !== "object" || !("dragType" in data) || data.dragType !== "kanban-task") {
-    return null;
-  }
-  return "task" in data ? (data.task as Task) : null;
-}
-
-function readKanbanStatus(data: unknown): KanbanStatus | null {
-  if (!data || typeof data !== "object" || !("kanbanStatus" in data)) {
-    return null;
-  }
-  const value = data.kanbanStatus;
-  return KANBAN_STATUSES.includes(value as KanbanStatus) ? (value as KanbanStatus) : null;
-}
-
-function getColumnTitle(status: KanbanStatus) {
-  return KANBAN_COLUMNS.find((column) => column.status === status)?.title ?? "Board";
 }
