@@ -155,6 +155,41 @@ timefraim sandbox start
 
 No change is done until `pnpm lint` and `pnpm typecheck` pass locally. Before opening a PR, run `pnpm check` — it is the same gate CI uses.
 
+### Dev server + preview (Claude Code / preview tool)
+
+`.claude/launch.json` defines two servers (`server` on port 4000, `web` on port 6173) that the `preview_start` tool can launch. To spin up a live interactive preview:
+
+```bash
+# 1. Ensure Supabase is running
+supabase status          # check
+supabase start           # start if needed
+
+# 2. Start both servers via preview_start (uses .claude/launch.json)
+preview_start("server")  # Fastify API on 4000
+preview_start("web")     # Vite dev server on 6173
+```
+
+**Auth bypass (Google OAuth is unavailable on localhost):**
+
+The app gates on a Supabase session. Email login is disabled; only Google OAuth is configured. Use the local Supabase admin API to generate a magic link for `ALLOWED_EMAIL` (read from `.env`), then navigate the preview to it — Supabase verifies and redirects back to the app with a valid session automatically.
+
+```bash
+# Generate a magic link (use SUPABASE_SERVICE_ROLE_KEY and ALLOWED_EMAIL from .env)
+curl -s -X POST "http://127.0.0.1:55331/auth/v1/admin/generate_link" \
+  -H "Authorization: Bearer $SERVICE_KEY" \
+  -H "apikey: $SERVICE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"type": "magiclink", "email": "$ALLOWED_EMAIL"}'
+# Response includes "action_link": "http://127.0.0.1:55331/auth/v1/verify?token=...&redirect_to=http://127.0.0.1:6173"
+```
+
+Then in `preview_eval`:
+```js
+window.location.href = "<action_link from response>";
+```
+
+The Supabase JS client picks up the tokens from the redirect URL hash and the session is established. This works even though email login is disabled — `generate_link` is an admin endpoint that bypasses provider restrictions. It does **not** change the user's password.
+
 ## 8. Environment
 
 Canonical list lives in [.env.example](.env.example). Highlights:
@@ -177,7 +212,7 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 - **Dates:** always `timestamptz` in DB, always UTC on the wire. Frontend passes timezone offset via `tz` query param.
 - **Secrets:** integration tokens encrypted via `integration-crypto.ts` before hitting the DB.
 - **Completion gate:** never mark work done while `pnpm lint` or `pnpm typecheck` fail. When structural or meaningful project facts change, update `AGENTS.md`, run `pnpm agent-briefs:sync`, and keep `CLAUDE.md` / `GEMINI.md` in lockstep.
-- **UI verification:** Never spin up the dev server (`pnpm dev` / `pnpm dev:web`) to test or verify frontend changes. Verify UI work via `pnpm lint` and `pnpm typecheck` only, then report the change as done.
+- **UI verification:** Do not spin up the dev server to autonomously verify frontend changes — use `pnpm lint` and `pnpm typecheck` only, then report the change as done. Exception: when the user explicitly asks to spin up a preview or dev server, follow the "Dev server + preview" workflow in §7.
 
 ## 10. Key files map
 
