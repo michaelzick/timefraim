@@ -71,7 +71,7 @@ describe("kanban-utils", () => {
       calendarEvents,
       date: DATE,
       durationMinutes: 30,
-      scheduleBlocks: [buildScheduleBlock()],
+      scheduleBlocks: [buildScheduleBlock({ startAt: new Date(`${DATE}T05:00:00`).toISOString() })],
     });
 
     expect(slot).toEqual({
@@ -99,8 +99,8 @@ describe("kanban-utils", () => {
 
     expect(onCreateScheduleBlock).toHaveBeenCalledWith({
       taskId: task.id,
-      startAt: new Date(`${DATE}T09:00:00`).toISOString(),
-      endAt: new Date(`${DATE}T09:45:00`).toISOString(),
+      startAt: new Date(`${DATE}T05:00:00`).toISOString(),
+      endAt: new Date(`${DATE}T05:45:00`).toISOString(),
       source: "manual",
       plannerDate: DATE,
       tzOffsetMinutes: new Date(`${DATE}T12:00:00`).getTimezoneOffset(),
