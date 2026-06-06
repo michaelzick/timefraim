@@ -36,8 +36,12 @@ export function KanbanToolbar({
     <section className="rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-elevated)] p-5 shadow-[var(--shadow-elevated)] backdrop-blur-xl">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <Badge>Task scheduler</Badge>
-          <h2 className="mt-3 text-3xl font-semibold text-[var(--heading)]">Board</h2>
+          <h2 className="text-3xl font-semibold text-[var(--heading)]">Board</h2>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Badge>{taskCount} tasks</Badge>
+            <Badge>{scheduledCount} scheduled</Badge>
+            <Badge>{doneCount} done</Badge>
+          </div>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Button
@@ -65,11 +69,6 @@ export function KanbanToolbar({
             />
           </div>
         </div>
-      </div>
-      <div className="mt-5 flex flex-wrap gap-2">
-        <Badge>{taskCount} tasks</Badge>
-        <Badge>{scheduledCount} scheduled</Badge>
-        <Badge>{doneCount} done</Badge>
       </div>
     </section>
   );

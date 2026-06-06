@@ -18,7 +18,7 @@ const PRIORITY_RANK: Record<Task["priority"], number> = {
   low: 3,
 };
 
-const PLANNING_START_HOUR = 9;
+const PLANNING_START_HOUR = 5;
 const MINUTE_MS = 60_000;
 
 export function resolveKanbanStatus(task: Task): KanbanStatus {
