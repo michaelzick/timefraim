@@ -52,7 +52,7 @@ export function KanbanColumn({
     >
       <header className="mb-3 px-1">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-[var(--heading)]">{column.title}</h2>
+          <h3 className="text-sm font-semibold text-[var(--heading)]">{column.title}</h3>
           <Badge>{tasks.length}</Badge>
         </div>
         <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{column.caption}</p>

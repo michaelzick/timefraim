@@ -7,9 +7,14 @@ import { Card } from "@/components/ui/card";
 import { DurationInput } from "@/components/duration-input";
 import { DurationPresets } from "@/components/duration-presets";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PlannerSectionHeader } from "@/features/planner/planner-section-header";
 import { PRIORITY_OPTIONS, formatTaskPriority } from "@/features/planner/task-presentation";
+import {
+  getDefaultTogglProjectLabel,
+  getTogglProjectHelperText,
+} from "@/features/planner/toggl-project-options";
 import type { CreateTaskValues } from "@/features/planner/types";
 
 type CreateTaskCardProps = {
@@ -19,18 +24,6 @@ type CreateTaskCardProps = {
   onSubmit: (values: CreateTaskValues) => Promise<unknown>;
 };
 
-function getDefaultProjectLabel(togglSettings: TogglIntegrationSettings) {
-  if (!togglSettings.connected) {
-    return "Connect Toggl in Settings to assign a project";
-  }
-
-  if (togglSettings.defaultProjectName) {
-    return `Use workspace default (${togglSettings.defaultProjectName})`;
-  }
-
-  return "Without project";
-}
-
 export function CreateTaskCard({
   form,
   isMutating,
@@ -39,7 +32,7 @@ export function CreateTaskCard({
 }: CreateTaskCardProps) {
   const [isOpen, setIsOpen] = useState(true);
   const {
-    formState: { isValid },
+    formState: { isValid, errors },
   } = form;
   const isSubmitDisabled = isMutating || !isValid;
 
@@ -57,10 +50,14 @@ export function CreateTaskCard({
             <Input
               aria-label="Task title"
               placeholder="Add a task"
+              aria-invalid={errors.title ? "true" : undefined}
               {...form.register("title", {
                 validate: (value) => value.trim().length > 0 || "Task title is required",
               })}
             />
+            {errors.title ? (
+              <p className="text-xs text-[var(--danger)]">{errors.title.message}</p>
+            ) : null}
             <Textarea
               aria-label="Task notes"
               placeholder="Why this matters"
@@ -83,42 +80,33 @@ export function CreateTaskCard({
                       onChange={field.onChange}
                       ariaLabelPrefix="Task"
                     />
-                    <select
-                      aria-label="Task priority"
-                      className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
-                      {...form.register("priority")}
-                    >
+                    <Select aria-label="Task priority" {...form.register("priority")}>
                       {PRIORITY_OPTIONS.map((priority) => (
                         <option key={priority} value={priority} className="bg-[var(--panel)]">
                           {formatTaskPriority(priority)}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 </div>
               )}
             />
             <div className="space-y-2">
-              <select
+              <Select
                 aria-label="Task Toggl project"
-                className="h-11 w-full rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
                 disabled={!togglSettings.connected}
                 {...form.register("togglProjectId")}
               >
                 <option value="" className="bg-[var(--panel)]">
-                  {getDefaultProjectLabel(togglSettings)}
+                  {getDefaultTogglProjectLabel(togglSettings)}
                 </option>
                 {togglSettings.availableProjects.map((project) => (
                   <option key={project.id} value={project.id} className="bg-[var(--panel)]">
                     {project.name}
                   </option>
                 ))}
-              </select>
-              <p className="text-xs text-[var(--muted)]">
-                {togglSettings.connected
-                  ? `Timers for this task will run in ${togglSettings.workspaceName ?? "your saved Toggl workspace"}.`
-                  : "Connect Toggl from Settings to choose a project per task."}
-              </p>
+              </Select>
+              <p className="text-xs text-[var(--muted)]">{getTogglProjectHelperText(togglSettings)}</p>
             </div>
             <Button type="submit" className="w-full" disabled={isSubmitDisabled}>
               {isMutating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
