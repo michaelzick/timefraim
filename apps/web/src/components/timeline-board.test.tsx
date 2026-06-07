@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { CalendarEventView } from "@timefraim/shared";
 import { describe, expect, it, vi } from "vitest";
@@ -281,6 +281,9 @@ describe("TimelineBoard", () => {
     expect(secondEvent.style.getPropertyValue("--timeline-event-left")).toBe("calc(8px + ((100% - 16px) / 3) * 1)");
     expect(thirdEvent.style.getPropertyValue("--timeline-event-left")).toBe("calc(8px + ((100% - 16px) / 3) * 2)");
     expect(screen.getAllByRole("button", { name: /hide/i })).toHaveLength(3);
+    for (const eventCard of [firstEvent, secondEvent, thirdEvent]) {
+      expect(within(eventCard).getByRole("button", { name: /hide/i })).toHaveClass("absolute", "right-2", "top-2");
+    }
   });
 
   it.each(["light", "dark"] as const)("uses the white selected border for calendar events in %s mode", (theme) => {

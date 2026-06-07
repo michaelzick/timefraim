@@ -59,6 +59,7 @@ export function TimelineBoardCalendarEvent({
 
   const titleColor = "var(--calendar-event-title)";
   const borderColorSource = event.backgroundColor ?? FALLBACK_TIMELINE_EVENT_BORDER;
+  const showSharedLaneBadge = isSharedLane && !isShort && !isVeryShort;
   const cardStyle: TimelineEventStyle = {
     "--timeline-event-left": getLaneLeft(laneIndex, laneCount, 8),
     "--timeline-event-left-sm": getLaneLeft(laneIndex, laneCount, 12),
@@ -95,8 +96,8 @@ export function TimelineBoardCalendarEvent({
           "flex min-w-0",
           isSharedLane
             ? isShort
-              ? "h-full flex-row items-center justify-between gap-1.5"
-              : "flex-col gap-1.5"
+              ? "h-full flex-row items-center gap-1.5 pr-14"
+              : "flex-col gap-1.5 pr-14 sm:pr-16"
             : isShort
               ? "h-full flex-row items-center justify-between gap-2"
               : "flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3",
@@ -119,29 +120,55 @@ export function TimelineBoardCalendarEvent({
             </>
           )}
         </div>
-        <div className={cn("flex min-w-0 items-center gap-2 sm:shrink-0", isSharedLane && "w-full justify-between")}>
-          {!isVeryShort && (
-            <Badge className="min-w-0 flex-1 normal-case tracking-[0.08em] sm:flex-none" style={badgeStyle}>
-              <span className="min-w-0 truncate" style={{ color: titleColor }} title={sourceCalendarName}>
-                {sourceCalendarName}
-              </span>
-            </Badge>
-          )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 shrink-0 px-2"
-            style={{ color: titleColor }}
-            onClick={(clickEvent) => {
-              clickEvent.stopPropagation();
-              onDismissCalendarEvent(event.id, event.title);
-            }}
-          >
-            <X className="h-4 w-4" />
-            {!isVeryShort && "Hide"}
-          </Button>
-        </div>
+        {isSharedLane ? (
+          <>
+            {showSharedLaneBadge && (
+              <Badge className="min-w-0 max-w-full normal-case tracking-[0.08em]" style={badgeStyle}>
+                <span className="min-w-0 truncate" style={{ color: titleColor }} title={sourceCalendarName}>
+                  {sourceCalendarName}
+                </span>
+              </Badge>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-2 h-8 shrink-0 px-2"
+              style={{ color: titleColor }}
+              onClick={(clickEvent) => {
+                clickEvent.stopPropagation();
+                onDismissCalendarEvent(event.id, event.title);
+              }}
+            >
+              <X className="h-4 w-4" />
+              {!isVeryShort && "Hide"}
+            </Button>
+          </>
+        ) : (
+          <div className="flex min-w-0 items-center gap-2 sm:shrink-0">
+            {!isVeryShort && (
+              <Badge className="min-w-0 flex-1 normal-case tracking-[0.08em] sm:flex-none" style={badgeStyle}>
+                <span className="min-w-0 truncate" style={{ color: titleColor }} title={sourceCalendarName}>
+                  {sourceCalendarName}
+                </span>
+              </Badge>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 shrink-0 px-2"
+              style={{ color: titleColor }}
+              onClick={(clickEvent) => {
+                clickEvent.stopPropagation();
+                onDismissCalendarEvent(event.id, event.title);
+              }}
+            >
+              <X className="h-4 w-4" />
+              {!isVeryShort && "Hide"}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
