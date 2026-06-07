@@ -123,8 +123,8 @@ export const plannerApi = {
       method: "POST",
       schema: syncDraftSchema,
     }),
-  syncCalendar: (token: string, date: string, tz: number) =>
-    request<CalendarSyncResult>(withQuery("/api/calendar/sync", { date, tz }), token, {
+  syncCalendar: (token: string, date: string, tz: number, options?: { restoreHidden?: boolean }) =>
+    request<CalendarSyncResult>(withQuery("/api/calendar/sync", { date, restoreHidden: options?.restoreHidden, tz }), token, {
       method: "POST",
       schema: calendarSyncResultSchema,
     }),

@@ -164,6 +164,12 @@ describe("usePlannerMutations", () => {
       await result.current.actions.syncCalendar();
     });
 
+    expect(api.syncCalendar).toHaveBeenCalledWith(
+      "token",
+      "2026-04-06",
+      expect.any(Number),
+      { restoreHidden: true },
+    );
     expect(queryClient.getQueryData<DayPlan>(key)?.calendarEvents).toEqual([restoredEvent]);
     expect(queryClient.getQueryData<DayPlan>(key)?.calendarSync).toEqual({
       status: "fully_synced",

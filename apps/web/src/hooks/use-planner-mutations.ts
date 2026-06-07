@@ -117,7 +117,7 @@ export function usePlannerMutations({ date, token, onSuccess }: UsePlannerMutati
     onSuccess,
   });
   const syncCalendarMutation = useMutation({
-    mutationFn: () => api.syncCalendar(token, date, new Date(`${date}T12:00:00`).getTimezoneOffset()),
+    mutationFn: () => api.syncCalendar(token, date, new Date(`${date}T12:00:00`).getTimezoneOffset(), { restoreHidden: true }),
     onSuccess: async (result: CalendarSyncResult) => {
       queryClient.setQueryData<DayPlan>(dayPlanQueryKey, (current) =>
         current

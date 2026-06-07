@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   apiErrorSchema,
   calendarEventViewSchema,
+  calendarSyncQuerySchema,
   calendarSyncResultSchema,
   googleCalendarSettingsSchema,
   plannerMutationResultSchema,
@@ -54,6 +55,14 @@ describe("shared barrel exports", () => {
         },
       }).date,
     ).toBe("2026-04-06");
+
+    expect(
+      calendarSyncQuerySchema.parse({
+        date: "2026-04-06",
+        restoreHidden: "true",
+        tz: "-420",
+      }).restoreHidden,
+    ).toBe(true);
 
     expect(
       calendarEventViewSchema.parse({

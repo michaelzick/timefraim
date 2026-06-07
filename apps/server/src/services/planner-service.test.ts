@@ -1094,7 +1094,7 @@ describe("planner-service", () => {
     );
   });
 
-  it("clears dismissals for synced Google events on every manual sync", async () => {
+  it("preserves hidden synced events for background syncs and restores them on explicit syncs", async () => {
     const repository = createRepositoryMock();
     repository.getIntegrationToken.mockResolvedValue({
       provider: "google",
@@ -1107,6 +1107,15 @@ describe("planner-service", () => {
       },
     });
     repository.listCalendarEventsForRange.mockResolvedValue([]);
+    repository.getCalendarEventByExternalEventId
+      .mockResolvedValueOnce({
+        externalUpdatedAt: "2026-04-06T07:30:00.000Z",
+        dismissedExternalUpdatedAt: "2026-04-06T07:30:00.000Z",
+      })
+      .mockResolvedValueOnce({
+        externalUpdatedAt: "2026-04-06T07:30:00.000Z",
+        dismissedExternalUpdatedAt: "2026-04-06T07:30:00.000Z",
+      });
 
     syncGoogleCalendarWindow
       .mockResolvedValueOnce([
@@ -1119,6 +1128,10 @@ describe("planner-service", () => {
           rawPayload: {},
           scheduleBlockId: null,
           externalUpdatedAt: "2026-04-06T07:30:00.000Z",
+          backgroundColor: null,
+          foregroundColor: null,
+          sourceCalendarId: "primary",
+          sourceCalendarName: "Primary",
         },
       ])
       .mockResolvedValueOnce([
@@ -1131,19 +1144,23 @@ describe("planner-service", () => {
           rawPayload: {},
           scheduleBlockId: null,
           externalUpdatedAt: "2026-04-06T07:30:00.000Z",
+          backgroundColor: null,
+          foregroundColor: null,
+          sourceCalendarId: "primary",
+          sourceCalendarName: "Primary",
         },
       ]);
 
     const service = new PlannerService(repository as never);
 
     await service.syncGoogleCalendar("2026-04-06", 0);
-    await service.syncGoogleCalendar("2026-04-06", 0);
+    await service.syncGoogleCalendar("2026-04-06", 0, { restoreHidden: true });
 
     expect(repository.upsertCalendarEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
         externalEventId: "evt-1",
-        dismissedExternalUpdatedAt: null,
+        dismissedExternalUpdatedAt: "2026-04-06T07:30:00.000Z",
       }),
       fakeDb,
     );
@@ -1155,6 +1172,7 @@ describe("planner-service", () => {
       }),
       fakeDb,
     );
+    expect(repository.getCalendarEventByExternalEventId).toHaveBeenCalledWith("evt-1", fakeDb);
   });
 
   it("records the selected calendar set when a manual calendar sync succeeds", async () => {

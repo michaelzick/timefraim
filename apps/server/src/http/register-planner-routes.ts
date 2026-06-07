@@ -3,7 +3,7 @@ import { registerPlannerDraftRoutes } from "./register-planner-draft-routes.js";
 import { registerPlannerDuplicateRoutes } from "./register-planner-duplicate-routes.js";
 import { registerPlannerMutationRoutes } from "./register-planner-mutation-routes.js";
 import { registerPlannerTimerRoutes } from "./register-planner-timer-routes.js";
-import { parseDayQuery, withAuthenticatedRoute } from "./route-helpers.js";
+import { parseCalendarSyncQuery, parseDayQuery, withAuthenticatedRoute } from "./route-helpers.js";
 import type { PlannerService } from "../services/planner-service.js";
 
 export function registerPlannerRoutes(app: FastifyInstance, plannerService: PlannerService) {
@@ -18,8 +18,8 @@ export function registerPlannerRoutes(app: FastifyInstance, plannerService: Plan
   app.post(
     "/api/calendar/sync",
     withAuthenticatedRoute(async (request) => {
-      const { date, tz } = parseDayQuery(request.query);
-      return plannerService.syncGoogleCalendar(date, tz);
+      const { date, restoreHidden, tz } = parseCalendarSyncQuery(request.query);
+      return plannerService.syncGoogleCalendar(date, tz, { restoreHidden });
     }),
   );
   registerPlannerMutationRoutes(app, plannerService);

@@ -34,5 +34,12 @@ export const dayQuerySchema = z.object({
   tz: z.coerce.number().int().optional(),
 });
 
+export const calendarSyncQuerySchema = dayQuerySchema.extend({
+  restoreHidden: z.union([
+    z.boolean(),
+    z.enum(["true", "false"]).transform((value) => value === "true"),
+  ]).optional(),
+});
+
 export type AuditLog = z.infer<typeof auditLogSchema>;
 export type DayPlan = z.infer<typeof dayPlanSchema>;
