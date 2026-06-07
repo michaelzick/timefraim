@@ -56,6 +56,7 @@ describe("useAutoGoogleTaskSync", () => {
     );
 
     await waitFor(() => expect(api.syncCalendar).toHaveBeenCalledTimes(1));
+    expect(api.syncCalendar).toHaveBeenNthCalledWith(1, "token", "2026-04-06", expect.any(Number));
 
     void act(() => window.dispatchEvent(new Event("focus")));
     await waitFor(() => expect(api.syncCalendar).toHaveBeenCalledTimes(2));

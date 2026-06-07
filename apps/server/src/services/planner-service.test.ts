@@ -1094,7 +1094,7 @@ describe("planner-service", () => {
     );
   });
 
-  it("preserves dismissed synced Google events until Google updates them", async () => {
+  it("preserves hidden synced events for background syncs and restores them on explicit syncs", async () => {
     const repository = createRepositoryMock();
     repository.getIntegrationToken.mockResolvedValue({
       provider: "google",
@@ -1143,7 +1143,7 @@ describe("planner-service", () => {
           isAppManaged: false,
           rawPayload: {},
           scheduleBlockId: null,
-          externalUpdatedAt: "2026-04-06T08:15:00.000Z",
+          externalUpdatedAt: "2026-04-06T07:30:00.000Z",
           backgroundColor: null,
           foregroundColor: null,
           sourceCalendarId: "primary",
@@ -1154,7 +1154,7 @@ describe("planner-service", () => {
     const service = new PlannerService(repository as never);
 
     await service.syncGoogleCalendar("2026-04-06", 0);
-    await service.syncGoogleCalendar("2026-04-06", 0);
+    await service.syncGoogleCalendar("2026-04-06", 0, { restoreHidden: true });
 
     expect(repository.upsertCalendarEvent).toHaveBeenNthCalledWith(
       1,

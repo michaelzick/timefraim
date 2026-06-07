@@ -84,7 +84,9 @@ export class PlannerService {
       getIntegrationStatus: (effectiveUserId) => this.getIntegrationStatus(effectiveUserId),
     });
   }
-  async syncGoogleCalendar(date = todayIsoDate(), tzOffsetMinutes = 0) { return syncPlannerGoogleCalendar(this.repository, date, tzOffsetMinutes); }
+  async syncGoogleCalendar(date = todayIsoDate(), tzOffsetMinutes = 0, options?: { restoreHidden?: boolean }) {
+    return syncPlannerGoogleCalendar(this.repository, date, tzOffsetMinutes, options);
+  }
   async createDraft(kind: DraftKind, payload: Record<string, unknown>, actorRole: ActorRole, ownerUserId?: string | null) {
     const resolvedOwnerUserId = ownerUserId ?? (actorRole === "assistant" ? await getAllowedPlannerUserId(this.repository) : null);
     return this.repository.createDraft(

@@ -17,6 +17,7 @@ export async function syncPlannerGoogleCalendar(
   repository: PlannerRepository,
   date: string,
   tzOffsetMinutes: number,
+  options: { restoreHidden?: boolean } = {},
 ): Promise<CalendarSyncResult> {
   const row = await repository.getIntegrationToken("google", pool);
   const connection = readGoogleConnection(row);
@@ -55,13 +56,13 @@ export async function syncPlannerGoogleCalendar(
         scheduleBlockId: record.scheduleBlockId,
         rawPayload: record.rawPayload,
         externalUpdatedAt: record.externalUpdatedAt,
-        dismissedExternalUpdatedAt: previousEvent
-          ? resolveDismissedExternalUpdatedAt({
+        dismissedExternalUpdatedAt: options.restoreHidden || !previousEvent
+          ? null
+          : resolveDismissedExternalUpdatedAt({
               previousExternalUpdatedAt: previousEvent.externalUpdatedAt,
               previousDismissedExternalUpdatedAt: previousEvent.dismissedExternalUpdatedAt,
               nextExternalUpdatedAt: record.externalUpdatedAt,
-            })
-          : null,
+            }),
         sourceCalendarId: record.sourceCalendarId,
         sourceCalendarName: record.sourceCalendarName,
       },
