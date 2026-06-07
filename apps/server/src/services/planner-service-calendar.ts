@@ -10,6 +10,7 @@ import {
   buildGoogleCalendarSyncScope,
   recordGoogleCalendarSync,
 } from "./planner-service-calendar-sync.js";
+import { resolveDismissedExternalUpdatedAt } from "./planner-domain.js";
 import { syncGoogleTaskCompletionStatuses } from "./planner-service-google-tasks-sync.js";
 
 export async function syncPlannerGoogleCalendar(
@@ -39,6 +40,9 @@ export async function syncPlannerGoogleCalendar(
   const syncedExternalEventIds: string[] = [];
   for (const record of records) {
     syncedExternalEventIds.push(record.externalEventId);
+    const previousEvent = record.isAppManaged
+      ? null
+      : await repository.getCalendarEventByExternalEventId(record.externalEventId, pool);
     await repository.upsertCalendarEvent(
       {
         externalEventId: record.externalEventId,
@@ -51,7 +55,13 @@ export async function syncPlannerGoogleCalendar(
         scheduleBlockId: record.scheduleBlockId,
         rawPayload: record.rawPayload,
         externalUpdatedAt: record.externalUpdatedAt,
-        dismissedExternalUpdatedAt: null,
+        dismissedExternalUpdatedAt: previousEvent
+          ? resolveDismissedExternalUpdatedAt({
+              previousExternalUpdatedAt: previousEvent.externalUpdatedAt,
+              previousDismissedExternalUpdatedAt: previousEvent.dismissedExternalUpdatedAt,
+              nextExternalUpdatedAt: record.externalUpdatedAt,
+            })
+          : null,
         sourceCalendarId: record.sourceCalendarId,
         sourceCalendarName: record.sourceCalendarName,
       },

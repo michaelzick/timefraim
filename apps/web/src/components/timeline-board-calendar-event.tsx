@@ -8,15 +8,38 @@ import { cn, formatTime } from "@/lib/utils";
 
 const FALLBACK_TIMELINE_EVENT_BORDER = "#6374ad";
 
+type CalendarEventLane = {
+  laneIndex: number;
+  laneCount: number;
+};
+
+type TimelineEventStyle = CSSProperties & {
+  "--timeline-event-left": string;
+  "--timeline-event-left-sm": string;
+  "--timeline-event-width": string;
+  "--timeline-event-width-sm": string;
+};
+
+function getLaneLeft(laneIndex: number, laneCount: number, insetPx: number) {
+  const gutterPx = insetPx * 2;
+  return `calc(${insetPx}px + ((100% - ${gutterPx}px) / ${laneCount}) * ${laneIndex})`;
+}
+
+function getLaneWidth(laneCount: number, insetPx: number) {
+  return `calc((100% - ${insetPx * 2}px) / ${laneCount})`;
+}
+
 export function TimelineBoardCalendarEvent({
   date,
   event,
+  lane,
   isSelected,
   onSelectCalendarEvent,
   onDismissCalendarEvent,
 }: {
   date: string;
   event: CalendarEventView;
+  lane: CalendarEventLane;
   isSelected: boolean;
   onSelectCalendarEvent: (calendarEventId: string) => void;
   onDismissCalendarEvent: (calendarEventId: string, title: string) => void;
@@ -30,10 +53,17 @@ export function TimelineBoardCalendarEvent({
   const isVeryShort =
     new Date(event.endAt).getTime() - new Date(event.startAt).getTime() <
     30 * 60 * 1000;
+  const laneCount = Math.max(1, lane.laneCount);
+  const laneIndex = Math.min(laneCount - 1, Math.max(0, lane.laneIndex));
+  const isSharedLane = laneCount > 1;
 
   const titleColor = "var(--calendar-event-title)";
   const borderColorSource = event.backgroundColor ?? FALLBACK_TIMELINE_EVENT_BORDER;
-  const cardStyle: CSSProperties = {
+  const cardStyle: TimelineEventStyle = {
+    "--timeline-event-left": getLaneLeft(laneIndex, laneCount, 8),
+    "--timeline-event-left-sm": getLaneLeft(laneIndex, laneCount, 12),
+    "--timeline-event-width": getLaneWidth(laneCount, 8),
+    "--timeline-event-width-sm": getLaneWidth(laneCount, 12),
     top: placement.top,
     height: placement.height,
     backgroundColor: "transparent",
@@ -53,7 +83,8 @@ export function TimelineBoardCalendarEvent({
       key={event.id}
       data-planner-selectable="true"
       className={cn(
-        "absolute left-2 right-2 cursor-pointer overflow-hidden rounded-[24px] border px-3 text-sm sm:left-3 sm:right-3 sm:px-4",
+        "absolute left-[var(--timeline-event-left)] w-[var(--timeline-event-width)] cursor-pointer overflow-hidden rounded-[24px] border text-sm sm:left-[var(--timeline-event-left-sm)] sm:w-[var(--timeline-event-width-sm)]",
+        isSharedLane ? "px-2 sm:px-3" : "px-3 sm:px-4",
         isShort ? "py-0" : "py-3 sm:py-4",
       )}
       style={cardStyle}
@@ -62,9 +93,13 @@ export function TimelineBoardCalendarEvent({
       <div
         className={cn(
           "flex min-w-0",
-          isShort
-            ? "h-full flex-row items-center justify-between gap-2"
-            : "flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3",
+          isSharedLane
+            ? isShort
+              ? "h-full flex-row items-center justify-between gap-1.5"
+              : "flex-col gap-1.5"
+            : isShort
+              ? "h-full flex-row items-center justify-between gap-2"
+              : "flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3",
         )}
       >
         <div className="min-w-0 sm:flex-1">
@@ -84,7 +119,7 @@ export function TimelineBoardCalendarEvent({
             </>
           )}
         </div>
-        <div className="flex min-w-0 items-center gap-2 sm:shrink-0">
+        <div className={cn("flex min-w-0 items-center gap-2 sm:shrink-0", isSharedLane && "w-full justify-between")}>
           {!isVeryShort && (
             <Badge className="min-w-0 flex-1 normal-case tracking-[0.08em] sm:flex-none" style={badgeStyle}>
               <span className="min-w-0 truncate" style={{ color: titleColor }} title={sourceCalendarName}>

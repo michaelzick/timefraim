@@ -3,6 +3,7 @@ import type { CalendarEventView, ScheduleBlock, Task, TimerSession } from "@time
 import {
   buildTimelineSlots,
   getTimelineContainerHeight,
+  getTimelinePlacement,
   SLOT_HEIGHT,
 } from "@/components/timeline-geometry";
 import { TimelineBoardCalendarEvent } from "@/components/timeline-board-calendar-event";
@@ -47,6 +48,73 @@ function deriveRunState(block: ScheduleBlock, task: Task | undefined, activeTime
   return "idle";
 }
 
+type CalendarEventLane = {
+  laneIndex: number;
+  laneCount: number;
+};
+
+type PositionedCalendarEvent = {
+  event: CalendarEventView;
+  top: number;
+  bottom: number;
+  order: number;
+};
+
+const DEFAULT_CALENDAR_EVENT_LANE: CalendarEventLane = {
+  laneIndex: 0,
+  laneCount: 1,
+};
+
+function assignCalendarEventLanes(cluster: PositionedCalendarEvent[], lanes: Map<string, CalendarEventLane>) {
+  const laneEnds: number[] = [];
+  const laneIndexes = new Map<string, number>();
+
+  for (const item of cluster) {
+    const reusableLaneIndex = laneEnds.findIndex((bottom) => bottom <= item.top);
+    const laneIndex = reusableLaneIndex === -1 ? laneEnds.length : reusableLaneIndex;
+
+    laneEnds[laneIndex] = item.bottom;
+    laneIndexes.set(item.event.id, laneIndex);
+  }
+
+  const laneCount = Math.max(1, laneEnds.length);
+  for (const item of cluster) {
+    lanes.set(item.event.id, {
+      laneIndex: laneIndexes.get(item.event.id) ?? 0,
+      laneCount,
+    });
+  }
+}
+
+function getCalendarEventLanes(date: string, calendarEvents: CalendarEventView[]) {
+  const positionedEvents: PositionedCalendarEvent[] = calendarEvents.flatMap((event, order) => {
+    const placement = getTimelinePlacement(date, event.startAt, event.endAt);
+    return placement
+      ? [{ event, order, top: placement.top, bottom: placement.top + placement.height }]
+      : [];
+  });
+  const lanes = new Map<string, CalendarEventLane>();
+  let cluster: PositionedCalendarEvent[] = [];
+  let clusterBottom = -Infinity;
+
+  positionedEvents.sort((left, right) => left.top - right.top || left.bottom - right.bottom || left.order - right.order);
+
+  for (const item of positionedEvents) {
+    if (cluster.length === 0 || item.top < clusterBottom) {
+      cluster.push(item);
+      clusterBottom = Math.max(clusterBottom, item.bottom);
+      continue;
+    }
+
+    assignCalendarEventLanes(cluster, lanes);
+    cluster = [item];
+    clusterBottom = item.bottom;
+  }
+
+  assignCalendarEventLanes(cluster, lanes);
+  return lanes;
+}
+
 export function TimelineBoard({
   date,
   tasks,
@@ -84,6 +152,7 @@ export function TimelineBoard({
 }) {
   const containerHeight = getTimelineContainerHeight();
   const slots = buildTimelineSlots(date);
+  const calendarEventLanes = getCalendarEventLanes(date, calendarEvents);
 
   return (
     <div className="relative rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-subtle)] pl-12 pr-3 sm:pl-20 sm:pr-4">
@@ -97,6 +166,7 @@ export function TimelineBoard({
             key={event.id}
             date={date}
             event={event}
+            lane={calendarEventLanes.get(event.id) ?? DEFAULT_CALENDAR_EVENT_LANE}
             isSelected={selectedCalendarEventId === event.id}
             onSelectCalendarEvent={onSelectCalendarEvent}
             onDismissCalendarEvent={onDismissCalendarEvent}

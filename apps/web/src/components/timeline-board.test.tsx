@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { CalendarEventView } from "@timefraim/shared";
 import { describe, expect, it, vi } from "vitest";
 import { TimelineBoard } from "@/components/timeline-board";
 import { buildTask } from "@/test/fixtures";
@@ -22,6 +23,23 @@ function getTimelineItem(title: string) {
   const item = screen.getByText(title).parentElement?.parentElement?.parentElement;
   expect(item).not.toBeNull();
   return item as HTMLElement;
+}
+
+function buildCalendarEvent(overrides: Partial<CalendarEventView> = {}): CalendarEventView {
+  return {
+    id: "calendar-1",
+    externalEventId: "google-1",
+    title: "Team sync",
+    startAt: "2026-04-06T15:00:00.000Z",
+    endAt: "2026-04-06T15:30:00.000Z",
+    isAppManaged: false,
+    backgroundColor: null,
+    foregroundColor: null,
+    sourceCalendarId: null,
+    sourceCalendarName: null,
+    togglProjectId: null,
+    ...overrides,
+  };
 }
 
 describe("TimelineBoard", () => {
@@ -209,6 +227,60 @@ describe("TimelineBoard", () => {
 
     expect(onDismissCalendarEvent).toHaveBeenCalledWith("calendar-1", "Team sync");
     expect(onSelectCalendarEvent).not.toHaveBeenCalled();
+  });
+
+  it("splits simultaneous Google Calendar blockers into equal horizontal lanes", () => {
+    render(
+      <TimelineBoard
+        date="2026-04-06"
+        tasks={[]}
+        scheduleBlocks={[]}
+        calendarEvents={[
+          buildCalendarEvent({
+            id: "calendar-1",
+            externalEventId: "google-1",
+            title: "Clean",
+            startAt: "2026-04-06T20:00:00.000Z",
+            endAt: "2026-04-06T21:00:00.000Z",
+          }),
+          buildCalendarEvent({
+            id: "calendar-2",
+            externalEventId: "google-2",
+            title: "Laundry",
+            startAt: "2026-04-06T20:00:00.000Z",
+            endAt: "2026-04-06T21:00:00.000Z",
+          }),
+          buildCalendarEvent({
+            id: "calendar-3",
+            externalEventId: "google-3",
+            title: "Bird Stuff",
+            startAt: "2026-04-06T20:00:00.000Z",
+            endAt: "2026-04-06T21:00:00.000Z",
+          }),
+        ]}
+        selectedTaskId={null}
+        selectedCalendarEventId={null}
+        activeTimer={null}
+        onDismissCalendarEvent={vi.fn()}
+        onSelectTask={vi.fn()}
+        onSelectCalendarEvent={vi.fn()}
+        onDeleteScheduleBlock={vi.fn()}
+      />,
+    );
+
+    const firstEvent = getTimelineItem("Clean");
+    const secondEvent = getTimelineItem("Laundry");
+    const thirdEvent = getTimelineItem("Bird Stuff");
+
+    expect(firstEvent.style.top).toBe(secondEvent.style.top);
+    expect(secondEvent.style.top).toBe(thirdEvent.style.top);
+    expect(firstEvent.style.getPropertyValue("--timeline-event-width")).toBe("calc((100% - 16px) / 3)");
+    expect(secondEvent.style.getPropertyValue("--timeline-event-width")).toBe("calc((100% - 16px) / 3)");
+    expect(thirdEvent.style.getPropertyValue("--timeline-event-width")).toBe("calc((100% - 16px) / 3)");
+    expect(firstEvent.style.getPropertyValue("--timeline-event-left")).toBe("calc(8px + ((100% - 16px) / 3) * 0)");
+    expect(secondEvent.style.getPropertyValue("--timeline-event-left")).toBe("calc(8px + ((100% - 16px) / 3) * 1)");
+    expect(thirdEvent.style.getPropertyValue("--timeline-event-left")).toBe("calc(8px + ((100% - 16px) / 3) * 2)");
+    expect(screen.getAllByRole("button", { name: /hide/i })).toHaveLength(3);
   });
 
   it.each(["light", "dark"] as const)("uses the white selected border for calendar events in %s mode", (theme) => {
