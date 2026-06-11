@@ -21,6 +21,7 @@
     "sandbox:stop": "node scripts/timefraim.mjs sandbox stop",
     "sandbox:status": "node scripts/timefraim.mjs sandbox status",
     "dev": "corepack pnpm -r --parallel --filter @timefraim/server --filter @timefraim/web dev",
+    "dev:linked": "node scripts/dev-linked.mjs",
     "dev:web": "corepack pnpm --filter @timefraim/web dev",
     "dev:server": "corepack pnpm --filter @timefraim/server dev",
     "lint": "corepack pnpm exec eslint eslint.config.mjs && corepack pnpm --filter @timefraim/shared lint && corepack pnpm --filter @timefraim/server lint && corepack pnpm --filter @timefraim/web lint",
