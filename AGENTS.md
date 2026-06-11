@@ -129,6 +129,7 @@ pnpm sandbox:start       # start the Docker sandbox (Supabase + app container)
 pnpm sandbox:stop        # stop the Docker sandbox
 pnpm sandbox:status      # show sandbox container status
 pnpm dev           # web + server in parallel
+pnpm dev:linked    # web + server in parallel against LINKED_SUPABASE_* values
 pnpm dev:web       # web only (6173)
 pnpm dev:server    # server only (4000)
 pnpm lint          # ESLint across shared/server/web
@@ -155,6 +156,14 @@ supabase db push --db-url "$LINKED_SUPABASE_POSTGRES_URL" --include-all
 ```
 
 Before writing to the linked DB, create timestamped local and linked backups. For a durable local-to-linked data copy, include public app tables plus `auth.users`, `auth.identities`, `storage.buckets`, and `storage.objects`; exclude volatile auth/session tables such as sessions, refresh tokens, one-time tokens, flow state, OAuth state, MFA challenge rows, and auth audit logs. Host `psql` / `pg_dump` may be unavailable, but the local container `supabase_db_timefraim` includes Postgres tooling.
+
+Linked Supabase dev server:
+
+```bash
+pnpm dev:linked
+```
+
+`pnpm dev:linked` does not start the local Supabase stack. It loads `.env`, maps `LINKED_SUPABASE_URL`, `LINKED_SUPABASE_PUBLISHABLE_KEY`, `LINKED_SUPABASE_SERVICE_ROLE_KEY`, and `LINKED_SUPABASE_POSTGRES_URL` onto the standard runtime variables, then starts the normal web/API dev servers. `LINKED_SUPABASE_JWT_SECRET` is optional unless linked auth access tokens are HS256-signed; without it, the launcher uses a placeholder so JWKS-signed tokens can still work and warns that API requests may return `401` after login.
 
 Sandbox CLI:
 
@@ -209,6 +218,7 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 
 - **Frontend (`VITE_*`):** `VITE_APP_ORIGIN`, `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ALLOWED_EMAIL`.
 - **Backend:** `NODE_ENV`, `PORT`, `HOST`, `APP_ORIGIN` (comma-separated CORS origins), `API_BASE_URL`, `DATABASE_URL`, `SUPABASE_URL`/`ANON_KEY`/`SERVICE_ROLE_KEY`/`JWT_SECRET`, `INTEGRATION_ENCRYPTION_KEY`, `ALLOWED_EMAIL`, `MCP_BEARER_TOKEN`, `MCP_READ_ONLY_TOKEN`, `GOOGLE_CLIENT_ID`/`SECRET`, `GOOGLE_CALENDAR_ID`, `GOOGLE_PLANNER_CALENDAR_ID`, `TUNNEL_PUBLIC_BASE_URL`.
+- **Linked dev (`pnpm dev:linked`):** `LINKED_SUPABASE_URL`, `LINKED_SUPABASE_PUBLISHABLE_KEY`, `LINKED_SUPABASE_SERVICE_ROLE_KEY`, `LINKED_SUPABASE_POSTGRES_URL`, optional `LINKED_SUPABASE_JWT_SECRET`.
 
 `ALLOWED_EMAIL` gates login (single-user app). `INTEGRATION_ENCRYPTION_KEY` must be a long random secret — regenerating it invalidates stored Toggl tokens.
 
