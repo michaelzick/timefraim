@@ -103,10 +103,13 @@ Migrations live in `supabase/migrations/` (timestamp-prefixed, applied in order)
 | `timer_sessions` | Active/finished Toggl timers: task_id, toggl_entry_id, duration_seconds. |
 | `user_preferences` | Per-user app settings: theme + task start/end notification toggles. |
 | `audit_logs` | Append-only change log. |
+| `app_access_users` | Lowercased email allowlist used by public-table RLS policies. |
 
 Conventions: UUID PKs (`gen_random_uuid()`), `timestamptz` for every date, `updated_at` trigger on mutable tables, FK `on delete cascade`, indexes on time ranges and common filters.
 
-Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event, per-day calendar sync runs, schedule block Google Task mirror IDs, per-user preferences (theme + notifications).
+Public app tables have RLS enabled for hosted Supabase use. Browser data access still goes through the Fastify API; the Supabase client is used for auth. RLS protects the hosted PostgREST surface by allowing full app-table access only to authenticated JWTs whose email is present in `public.app_access_users`; anon receives no app-table policies. The backend's direct Postgres connection is still trusted to enforce API-layer authorization.
+
+Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event, per-day calendar sync runs, schedule block Google Task mirror IDs, per-user preferences (theme + notifications), single-user RLS allowlist.
 
 ## 6. External integrations
 
@@ -142,6 +145,16 @@ supabase start           # boot local Postgres on 55331-55337
 supabase migration up    # apply pending migrations
 supabase db reset        # drop, recreate, run migrations + seed
 ```
+
+Linked Supabase DB bootstrap/data migration:
+
+```bash
+# Use LINKED_SUPABASE_POSTGRES_URL from .env; do not print secrets in logs.
+supabase db push --db-url "$LINKED_SUPABASE_POSTGRES_URL" --include-all --dry-run
+supabase db push --db-url "$LINKED_SUPABASE_POSTGRES_URL" --include-all
+```
+
+Before writing to the linked DB, create timestamped local and linked backups. For a durable local-to-linked data copy, include public app tables plus `auth.users`, `auth.identities`, `storage.buckets`, and `storage.objects`; exclude volatile auth/session tables such as sessions, refresh tokens, one-time tokens, flow state, OAuth state, MFA challenge rows, and auth audit logs. Host `psql` / `pg_dump` may be unavailable, but the local container `supabase_db_timefraim` includes Postgres tooling.
 
 Sandbox CLI:
 
