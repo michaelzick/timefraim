@@ -30,8 +30,7 @@ const childEnv = {
 console.log("Starting TimeFraim against linked Supabase");
 console.log(`  Supabase URL: ${linkedEnv.supabaseUrl}`);
 console.log(`  Postgres host: ${postgresHost(linkedEnv.postgresUrl)}`);
-console.log(`  Web: ${childEnv.VITE_APP_ORIGIN ?? "http://127.0.0.1:6173"}`);
-console.log(`  API: ${childEnv.API_BASE_URL ?? "http://127.0.0.1:4000"}`);
+console.log("  Web/API URLs will be printed by the dev servers.");
 if (!linkedEnv.hasJwtSecret) {
   console.warn("");
   console.warn("Warning: LINKED_SUPABASE_JWT_SECRET is not configured.");
