@@ -1,10 +1,25 @@
 import dotenv from "dotenv";
+import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
+// The bundled output lives at a different depth than src/config, so locate
+// the repo root by marker file instead of a fixed number of parent hops.
+function findRepoRoot(startDir: string): string {
+  let dir = startDir;
+  while (!existsSync(resolve(dir, "pnpm-workspace.yaml"))) {
+    const parent = dirname(dir);
+    if (parent === dir) {
+      return startDir;
+    }
+    dir = parent;
+  }
+  return dir;
+}
+
 const currentDir = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(currentDir, "../../../../");
+const repoRoot = findRepoRoot(currentDir);
 
 const envCandidates = [
   resolve(process.cwd(), ".env"),
