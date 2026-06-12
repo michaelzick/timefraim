@@ -136,6 +136,7 @@ pnpm dev:linked    # web + server in parallel against LINKED_SUPABASE_* values
 pnpm dev:web       # web only (6173)
 pnpm dev:server    # server only (4000)
 pnpm start:server  # run the built API (apps/server/dist) — production
+pnpm deploy:prod   # update the prod deploy: pull + install + build + restart timefraim-api (scripts/deploy-prod.sh)
 pnpm lint          # ESLint across shared/server/web
 pnpm typecheck     # tsc --noEmit across all packages
 pnpm test          # Vitest across all packages
