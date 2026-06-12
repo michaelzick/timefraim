@@ -32,6 +32,8 @@ timefraim/
 ├── apps/
 │   ├── server/          # Fastify API + MCP endpoint
 │   └── web/             # Vite + React SPA
+├── docs/
+│   └── deploy-linux-prod.md # Production deploy runbook (Linux/nginx via SSH tunnel)
 ├── packages/
 │   └── shared/          # Zod schemas shared by apps
 ├── skills/
@@ -66,7 +68,8 @@ timefraim/
 ### 4.2 apps/server (backend, port 4000)
 
 - **Entry:** `src/index.ts` — registers HTTP routes, mounts `POST /mcp`, constructs `PlannerService`.
-- **Config:** `src/config/env.ts` (Zod-validated env).
+- **Config:** `src/config/env.ts` (Zod-validated env; locates the repo-root `.env` by walking up to `pnpm-workspace.yaml`).
+- **Production build:** `tsup.config.ts` bundles `@timefraim/shared` into `dist/index.js` (the shared package resolves to TS source and is not runtime-loadable); run the build with `pnpm start:server`. Deploy runbook: `docs/deploy-linux-prod.md`.
 - **HTTP routes:** `src/http/` — `routes.ts` + modular `register-*-routes.ts` (planner, integration, preferences, auth, timer, draft). `auth.ts` verifies Supabase JWT. `route-helpers.ts` holds shared middleware.
 - **Repositories (data access):** `src/repositories/` — `planner-repository.ts` composes per-domain stores (`planner-repository-task-store.ts`, `-schedule-store.ts`, `-calendar-store.ts`, `-timer-store.ts`, `-integration-store.ts`, `-preferences-store.ts`, `-draft-store.ts`). Row → domain mapping in `planner-repository-mappers.ts`; row types in `planner-repository-types.ts`.
 - **Services (business logic):** `src/services/` — `planner-service.ts` orchestrates; `planner-service-google-integrations.ts`, `planner-service-toggl-integrations.ts` handle external calls; `planner-service-preferences.ts` reads/writes user preferences; `planner-domain.ts` applies drafts; `planner-*-changes.ts` compute diffs; `planner-service-apply.ts` confirms drafts; `planner-side-effects.ts` handles audit logs + external syncs.
@@ -132,6 +135,7 @@ pnpm dev           # web + server in parallel
 pnpm dev:linked    # web + server in parallel against LINKED_SUPABASE_* values
 pnpm dev:web       # web only (6173)
 pnpm dev:server    # server only (4000)
+pnpm start:server  # run the built API (apps/server/dist) — production
 pnpm lint          # ESLint across shared/server/web
 pnpm typecheck     # tsc --noEmit across all packages
 pnpm test          # Vitest across all packages
@@ -257,6 +261,8 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 | [apps/server/src/integration/toggl-track.ts](apps/server/src/integration/toggl-track.ts) | Toggl client |
 | [apps/server/src/mcp/create-mcp-server.ts](apps/server/src/mcp/create-mcp-server.ts) | MCP tools exposed to agents |
 | [packages/shared/src/index.ts](packages/shared/src/index.ts) | Shared schema barrel |
+| [docs/deploy-linux-prod.md](docs/deploy-linux-prod.md) | Production deploy runbook (Linux/nginx, SSH tunnel) |
+| [apps/server/tsup.config.ts](apps/server/tsup.config.ts) | Server build config (bundles `@timefraim/shared`) |
 | [skills/coding-standards/SKILL.md](skills/coding-standards/SKILL.md) | Production coding standards for Node, React, and TypeScript work |
 | [skills/sync-agent-briefs/SKILL.md](skills/sync-agent-briefs/SKILL.md) | Repo-local workflow for syncing agent orientation files |
 | [supabase/migrations/](supabase/migrations/) | Schema evolution |
