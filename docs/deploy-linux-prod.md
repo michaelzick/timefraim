@@ -198,6 +198,12 @@ Then browse **http://127.0.0.1:6173** (prefer `127.0.0.1` over `localhost` — i
 ## 8. Updating a deployment
 
 ```bash
+corepack pnpm deploy:prod   # runs scripts/deploy-prod.sh
+```
+
+The script targets `/opt/timefraim` (override with `TIMEFRAIM_DEPLOY_DIR`) and is equivalent to:
+
+```bash
 cd /opt/timefraim
 git pull
 corepack pnpm install
@@ -205,6 +211,8 @@ corepack pnpm build
 sudo systemctl restart timefraim-api
 # nginx serves the new apps/web/dist immediately; no reload needed.
 ```
+
+It then verifies `timefraim-api` is active and curls the web `/health` endpoint. The deploy clone pulls from the remote — push your changes before running it.
 
 ## Troubleshooting
 
