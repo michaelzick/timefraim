@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { KanbanCard } from "@/features/kanban/kanban-card";
 import { getTaskScheduleLabel } from "@/features/kanban/kanban-schedule-label";
-import type { KanbanColumnDefinition } from "@/features/kanban/kanban-types";
+import type { KanbanColumnDefinition, KanbanStatus } from "@/features/kanban/kanban-types";
 import { buildPlannerTaskHrefForTask } from "@/features/kanban/kanban-utils";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,7 @@ type KanbanColumnProps = {
   scheduleBlocks: ScheduleBlock[];
   tasks: Task[];
   onDeleteTask: (task: Task) => void;
-  onPlanTask: (task: Task) => void;
+  onPlanTask: (task: Task, targetStatus: KanbanStatus) => void;
   onPriorityChange: (task: Task, priority: Task["priority"]) => void;
   onRemoveTask: (task: Task) => void;
   onStartTimer: (taskId: string) => void;
