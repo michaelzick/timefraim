@@ -30,7 +30,7 @@ type KanbanCardProps = {
   scheduleLabel: string;
   task: Task;
   onDeleteTask: (task: Task) => void;
-  onPlanTask: (task: Task) => void;
+  onPlanTask: (task: Task, targetStatus: KanbanStatus) => void;
   onPriorityChange: (task: Task, priority: Task["priority"]) => void;
   onRemoveTask: (task: Task) => void;
   onStartTimer: (taskId: string) => void;
@@ -59,7 +59,7 @@ export function KanbanCard({
   });
   const isRunning = activeTimerTaskId === task.id;
   const elapsed = useElapsedSeconds(isRunning ? activeTimerStartedAt : null);
-  const canPlan = !task.scheduledBlockId && task.status !== "done";
+  const planCta = getPlanCta(kanbanStatus);
   const canDelete = kanbanStatus === "inbox";
   const canRemove = kanbanStatus !== "inbox";
 
@@ -131,10 +131,10 @@ export function KanbanCard({
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        {canPlan ? (
-          <Button type="button" size="sm" onClick={() => onPlanTask(task)}>
+        {planCta ? (
+          <Button type="button" size="sm" onClick={() => onPlanTask(task, planCta.target)}>
             <CalendarPlus className="h-4 w-4" />
-            Plan
+            {planCta.label}
           </Button>
         ) : null}
         {isRunning ? (
@@ -174,6 +174,16 @@ export function KanbanCard({
       </div>
     </article>
   );
+}
+
+function getPlanCta(kanbanStatus: KanbanStatus): { label: string; target: KanbanStatus } | null {
+  if (kanbanStatus === "inbox") {
+    return { label: "Plan", target: "planned" };
+  }
+  if (kanbanStatus === "planned") {
+    return { label: "Schedule", target: "scheduled" };
+  }
+  return null;
 }
 
 export function KanbanCardPreview({ task }: { task: Task }) {

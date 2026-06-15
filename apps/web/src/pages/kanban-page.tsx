@@ -10,6 +10,7 @@ import { buildKanbanCreateTaskInput } from "@/features/kanban/kanban-create-task
 import { getColumnTitle, readKanbanStatus, readKanbanTask } from "@/features/kanban/kanban-dnd";
 import { showKanbanActionError } from "@/features/kanban/kanban-errors";
 import { KanbanToolbar } from "@/features/kanban/kanban-toolbar";
+import type { KanbanStatus } from "@/features/kanban/kanban-types";
 import {
   filterKanbanTasks,
   groupTasksByKanbanStatus,
@@ -81,7 +82,7 @@ export function KanbanPage({
       .catch((error) => showKanbanActionError("Failed to move the task. Please try again.", error));
   };
 
-  const handlePlanTask = (task: Task) => {
+  const handlePlanTask = (task: Task, targetStatus: KanbanStatus) => {
     void moveTaskOnKanban({
       calendarEvents: dayPlan.calendarEvents,
       date,
@@ -89,11 +90,16 @@ export function KanbanPage({
       onDeleteScheduleBlock,
       onUpdateTask,
       scheduleBlocks: dayPlan.scheduleBlocks,
-      targetStatus: "scheduled",
+      targetStatus,
       task,
     })
-      .then(() => toast.success("Planned on the timeline", { duration: 3000 }))
-      .catch((error) => showKanbanActionError("Failed to plan the task. Please try again.", error));
+      .then(() =>
+        toast.success(
+          targetStatus === "scheduled" ? "Scheduled on the timeline" : "Moved to Planned",
+          { duration: 3000 },
+        ),
+      )
+      .catch((error) => showKanbanActionError("Failed to move the task. Please try again.", error));
   };
 
   const handleStartTimer = (taskId: string) => {

@@ -92,13 +92,13 @@ describe("KanbanPage", () => {
     expect(screen.queryByLabelText("Board task title")).not.toBeInTheDocument();
   });
 
-  it("plans an unscheduled card onto the selected day", async () => {
+  it("schedules a planned card onto the selected day", async () => {
     const user = userEvent.setup();
     const onCreateScheduleBlock = vi.fn().mockResolvedValue(undefined);
 
     renderKanbanPage({ onCreateScheduleBlock });
 
-    await user.click(screen.getAllByRole("button", { name: "Plan" })[0]);
+    await user.click(screen.getAllByRole("button", { name: "Schedule" })[0]);
 
     await waitFor(() => {
       expect(onCreateScheduleBlock).toHaveBeenCalledWith(
@@ -109,6 +109,29 @@ describe("KanbanPage", () => {
         }),
       );
     });
+  });
+
+  it("plans an inbox card into Planned without scheduling it", async () => {
+    const user = userEvent.setup();
+    const onUpdateTask = vi.fn().mockResolvedValue(undefined);
+    const onCreateScheduleBlock = vi.fn().mockResolvedValue(undefined);
+    const inboxTask = { ...buildDayPlan().tasks[0], status: "inbox" as const };
+
+    renderKanbanPage({
+      dayPlan: buildDayPlan({ tasks: [inboxTask] }),
+      onCreateScheduleBlock,
+      onUpdateTask,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Plan" }));
+
+    await waitFor(() => {
+      expect(onUpdateTask).toHaveBeenCalledWith(
+        inboxTask.id,
+        expect.objectContaining({ status: "planned" }),
+      );
+    });
+    expect(onCreateScheduleBlock).not.toHaveBeenCalled();
   });
 
   it("clears board search on Escape", async () => {
