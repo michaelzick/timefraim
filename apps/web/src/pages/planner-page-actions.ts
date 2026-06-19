@@ -12,12 +12,14 @@ type PlannerPageActionTaskStatus =
   | "in_progress"
   | "done";
 type PlannerPageActionTaskPriority = "low" | "medium" | "high" | "urgent";
+type PlannerPageActionTaskCategory = "personal" | "work";
 
 type PlannerPageActionTask = {
   id: string;
   title: string;
   estimatedMinutes: number;
   priority: PlannerPageActionTaskPriority;
+  category: PlannerPageActionTaskCategory;
   status: PlannerPageActionTaskStatus;
   notes: string | null;
   togglProjectId?: string | null;
@@ -37,6 +39,7 @@ export function buildPlannerCreateTaskInput(values: PlannerCreateTaskValues, dat
     notes: values.notes || undefined,
     estimatedMinutes: Number(values.estimatedMinutes),
     priority: values.priority,
+    category: values.category,
     status: "planned",
     togglProjectId: values.togglProjectId || null,
     plannerDate: date,
@@ -53,6 +56,7 @@ export function buildPlannerTaskUpdateInput(
     title: values.title,
     notes: values.notes,
     estimatedMinutes: values.estimatedMinutes,
+    category: values.category,
     priority: values.priority,
     status: resolvePlannerTaskStatus(selectedTask, values.lifecycle, activeTimerTaskId),
     togglProjectId: values.togglProjectId || null,
@@ -84,6 +88,7 @@ function taskUpdateInputFor(
     title: task.title,
     notes: task.notes ?? "",
     estimatedMinutes: task.estimatedMinutes,
+    category: task.category,
     priority: task.priority,
     status,
     togglProjectId: task.togglProjectId ?? null,

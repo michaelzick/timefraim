@@ -15,6 +15,8 @@ function renderToolbar(status: "not_synced" | "fully_synced" | "partially_synced
       }}
       onDateChange={vi.fn()}
       onSyncCalendar={vi.fn()}
+      categoryFilter="all"
+      onCategoryFilterChange={vi.fn()}
     />,
   );
 }

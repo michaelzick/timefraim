@@ -8,6 +8,7 @@ export const taskStatusSchema = z.enum([
   "done",
 ]);
 export const taskPrioritySchema = z.enum(["low", "medium", "high", "urgent"]);
+export const taskCategorySchema = z.enum(["personal", "work"]);
 
 const plannerDateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const taskTitleInputSchema = z.string().min(1).max(200);
@@ -25,6 +26,7 @@ export const taskSchema = z.object({
   estimatedMinutes: z.number().int().positive(),
   status: taskStatusSchema,
   priority: taskPrioritySchema,
+  category: taskCategorySchema.default("personal"),
   scheduledBlockId: z.string().uuid().nullable().optional(),
   scheduledStartAt: z.string().datetime().nullable().optional(),
   scheduledEndAt: z.string().datetime().nullable().optional(),
@@ -40,6 +42,7 @@ export const taskInputSchema = z.object({
   estimatedMinutes: taskEstimatedMinutesInputSchema.default(30),
   status: taskStatusSchema.default("planned"),
   priority: taskPrioritySchema.default("low"),
+  category: taskCategorySchema.default("personal"),
   togglProjectId: togglProjectIdInputSchema,
   completedOnDate: completedOnDateInputSchema,
   plannerDate: plannerDateInputSchema,
@@ -53,6 +56,7 @@ export const taskUpdateSchema = z.object({
   estimatedMinutes: taskEstimatedMinutesInputSchema.optional(),
   status: taskStatusSchema.optional(),
   priority: taskPrioritySchema.optional(),
+  category: taskCategorySchema.optional(),
   togglProjectId: togglProjectIdInputSchema,
   completedOnDate: completedOnDateInputSchema,
   plannerDate: plannerDateInputSchema,
@@ -69,6 +73,7 @@ export const taskDuplicatePayloadSchema = z.object({
 
 export type Task = z.infer<typeof taskSchema>;
 export type TaskPriority = z.infer<typeof taskPrioritySchema>;
+export type TaskCategory = z.infer<typeof taskCategorySchema>;
 export type TaskStatus = z.infer<typeof taskStatusSchema>;
 export type TaskInput = z.infer<typeof taskInputSchema>;
 export type TaskUpdate = z.infer<typeof taskUpdateSchema>;

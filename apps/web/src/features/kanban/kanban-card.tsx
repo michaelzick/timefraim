@@ -3,7 +3,6 @@ import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@timefraim/shared";
 import { CalendarPlus, ChevronDown, ExternalLink, GripVertical, Inbox, Play, Square, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { KanbanStatus } from "@/features/kanban/kanban-types";
+import { getPlanCta } from "@/features/kanban/kanban-card-preview";
+import { KanbanCategoryDropdown } from "@/features/kanban/kanban-category-dropdown";
 import {
   PRIORITY_OPTIONS,
   formatTaskPriority,
@@ -32,6 +33,7 @@ type KanbanCardProps = {
   onDeleteTask: (task: Task) => void;
   onPlanTask: (task: Task, targetStatus: KanbanStatus) => void;
   onPriorityChange: (task: Task, priority: Task["priority"]) => void;
+  onCategoryChange: (task: Task, category: Task["category"]) => void;
   onRemoveTask: (task: Task) => void;
   onStartTimer: (taskId: string) => void;
   onStopTimer: () => void;
@@ -48,6 +50,7 @@ export function KanbanCard({
   onDeleteTask,
   onPlanTask,
   onPriorityChange,
+  onCategoryChange,
   onRemoveTask,
   onStartTimer,
   onStopTimer,
@@ -76,7 +79,9 @@ export function KanbanCard({
       )}
     >
       <div className="mb-3 flex items-start justify-between gap-3">
-        <DropdownMenu>
+        <div className="flex items-center gap-1.5">
+          <KanbanCategoryDropdown task={task} onCategoryChange={onCategoryChange} />
+          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
@@ -109,6 +114,7 @@ export function KanbanCard({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
         <button
           type="button"
           className="cursor-grab rounded-full p-1 text-[var(--planner-surface-meta)] transition hover:bg-[var(--panel-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]"
@@ -172,31 +178,6 @@ export function KanbanCard({
           </Link>
         </Button>
       </div>
-    </article>
-  );
-}
-
-function getPlanCta(kanbanStatus: KanbanStatus): { label: string; target: KanbanStatus } | null {
-  if (kanbanStatus === "inbox") {
-    return { label: "Plan", target: "planned" };
-  }
-  if (kanbanStatus === "planned") {
-    return { label: "Schedule", target: "scheduled" };
-  }
-  return null;
-}
-
-export function KanbanCardPreview({ task }: { task: Task }) {
-  return (
-    <article
-      className={cn(
-        "w-[280px] rounded-[24px] border p-4 shadow-[var(--shadow-elevated)]",
-        getTaskPriorityCardClass(task.priority),
-      )}
-    >
-      <Badge className={getTaskPriorityBadgeClass(task.priority)}>{formatTaskPriority(task.priority)}</Badge>
-      <h4 className="mt-3 text-sm font-semibold leading-5 text-[var(--planner-surface-title)]">{task.title}</h4>
-      <div className="mt-2 text-xs text-[var(--planner-surface-meta)]">{task.estimatedMinutes} min</div>
     </article>
   );
 }

@@ -1,12 +1,13 @@
 import { PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { filterQueueTasks, getSelectedCalendarEventId, resolveSelectedCalendarEvent, resolveTaskSelection, selectDoneTasks, type PlannerSelection, type SelectedTaskSource } from "@/features/planner/planner-page-selection";
+import { filterQueueTasks, filterTasksByCategory, getSelectedCalendarEventId, resolveSelectedCalendarEvent, resolveTaskSelection, selectDoneTasks, type PlannerSelection, type SelectedTaskSource, type TaskCategoryFilter } from "@/features/planner/planner-page-selection";
 import { EMPTY_CREATE_TASK_VALUES, getTaskFormValues, type LocalPlannerTaskInput } from "@/features/planner/planner-page-utils";
 import { type CalendarEventFormValues, type CreateTaskValues, type PlannerPageProps, type PlannerScheduleBlockUpdateInput, type PlannerTaskUpdateInput, type TaskFormValues } from "@/features/planner/types";
 import { useAltKey } from "@/hooks/use-alt-key";
 import { createPlannerMutationHandlers } from "@/pages/planner-page-actions";
 import { createPlannerPageHandlers } from "@/pages/planner-page-controller-handlers";
+import { usePlannerSelectionSync } from "@/pages/use-planner-selection-sync";
 import { usePlannerTaskDeepLink } from "@/pages/use-planner-task-deep-link";
 
 export function usePlannerPageController({
@@ -54,6 +55,7 @@ export function usePlannerPageController({
     return firstQueue ? { type: "queue-task", taskId: firstQueue.id } : { type: "none" };
   });
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<TaskCategoryFilter>("all");
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const deferredSearch = useDeferredValue(search);
   const sensors = useSensors(
@@ -65,7 +67,14 @@ export function usePlannerPageController({
     defaultValues: EMPTY_CREATE_TASK_VALUES,
     mode: "onChange",
   });
-  const filteredQueueTasks = useMemo(() => filterQueueTasks(dayPlan.tasks, deferredSearch), [dayPlan.tasks, deferredSearch]);
+  const filteredQueueTasks = useMemo(
+    () => filterQueueTasks(dayPlan.tasks, deferredSearch, categoryFilter),
+    [dayPlan.tasks, deferredSearch, categoryFilter],
+  );
+  const filteredTimelineTasks = useMemo(
+    () => filterTasksByCategory(dayPlan.tasks, categoryFilter),
+    [dayPlan.tasks, categoryFilter],
+  );
   const doneTasks = useMemo(() => selectDoneTasks(dayPlan.tasks, date), [dayPlan.tasks, date]);
   const resolvedTaskSelection = useMemo(
     () =>
@@ -103,42 +112,14 @@ export function usePlannerPageController({
   const selectedTimelineCalendarEventId = getSelectedCalendarEventId(plannerSelection);
   usePlannerTaskDeepLink({ dayPlan, detailPanelRef, plannerSelection, setPlannerSelection, setSelectedTaskState });
 
-  useEffect(() => {
-    if (plannerSelection.type === "calendar-event" || plannerSelection.type === "none") {
-      return;
-    }
-
-    if (
-      selectedTaskState.taskId === resolvedTaskSelection.selectedTaskId &&
-      selectedTaskState.source === resolvedTaskSelection.selectedTaskSource
-    ) {
-      return;
-    }
-
-    startTransition(() => {
-      setSelectedTaskState({
-        taskId: resolvedTaskSelection.selectedTaskId,
-        source: resolvedTaskSelection.selectedTaskSource,
-      });
-    });
-  }, [
-    plannerSelection.type,
-    resolvedTaskSelection.selectedTaskId,
-    resolvedTaskSelection.selectedTaskSource,
-    selectedTaskState.source,
-    selectedTaskState.taskId,
-  ]);
-
-  function handleClearSelection() {
-    if (plannerSelection.type === "none" && selectedTaskState.taskId === null) {
-      return;
-    }
-
-    startTransition(() => {
-      setSelectedTaskState({ taskId: null, source: "queue" });
-      setPlannerSelection({ type: "none" });
-    });
-  }
+  const { handleClearSelection } = usePlannerSelectionSync({
+    plannerSelection,
+    resolvedSelectedTaskId: resolvedTaskSelection.selectedTaskId,
+    resolvedSelectedTaskSource: resolvedTaskSelection.selectedTaskSource,
+    selectedTaskState,
+    setSelectedTaskState,
+    setPlannerSelection,
+  });
 
   const {
     handleCreateTask,
@@ -177,11 +158,13 @@ export function usePlannerPageController({
 
   return {
     calendarEventForm,
+    categoryFilter,
     createTaskForm,
     detailForm,
     detailPanelRef,
     doneTasks,
     filteredQueueTasks,
+    filteredTimelineTasks,
     handleCreateTask,
     handleDismissCalendarEvent,
     handleDragEnd,
@@ -200,6 +183,7 @@ export function usePlannerPageController({
     selectedTimelineCalendarEventId,
     selectedTimelineTaskId,
     sensors,
+    setCategoryFilter,
     setSearch,
   };
 }

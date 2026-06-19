@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PlannerSectionHeader } from "@/features/planner/planner-section-header";
-import { PRIORITY_OPTIONS, formatTaskPriority } from "@/features/planner/task-presentation";
+import { PRIORITY_OPTIONS, CATEGORY_OPTIONS, formatTaskPriority, formatTaskCategory } from "@/features/planner/task-presentation";
 import {
   getDefaultTogglProjectLabel,
   getTogglProjectHelperText,
@@ -88,6 +88,13 @@ export function CreateTaskCard({
                       ))}
                     </Select>
                   </div>
+                  <Select aria-label="Task category" {...form.register("category")}>
+                    {CATEGORY_OPTIONS.map((category) => (
+                      <option key={category} value={category} className="bg-[var(--panel)]">
+                        {formatTaskCategory(category)}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               )}
             />

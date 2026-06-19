@@ -6,6 +6,7 @@ export function buildKanbanCreateTaskInput(values: CreateTaskValues): PlannerTas
     notes: values.notes || undefined,
     estimatedMinutes: Number(values.estimatedMinutes),
     priority: values.priority,
+    category: values.category,
     status: "inbox",
     togglProjectId: values.togglProjectId || null,
   };

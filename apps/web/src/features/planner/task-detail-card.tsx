@@ -12,13 +12,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
   PRIORITY_OPTIONS,
+  CATEGORY_OPTIONS,
   TASK_LIFECYCLE_OPTIONS,
+  formatTaskCategory,
   formatTaskLifecycle,
   formatTaskPriority,
   getTaskPriorityHeaderBadgeClass,
 } from "@/features/planner/task-presentation";
+import { TaskCategoryIcon } from "@/features/planner/task-category-icon";
+import { TaskDetailTogglProject } from "@/features/planner/task-detail-toggl-project";
 import { PlannerSectionHeader } from "@/features/planner/planner-section-header";
-import { getTogglProjectOptions } from "@/features/planner/toggl-project-options";
 import type { TaskFormValues } from "@/features/planner/types";
 
 type TaskDetailCardProps = {
@@ -47,7 +50,6 @@ export function TaskDetailCard({
   onStopTimer,
 }: TaskDetailCardProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const projectOptions = getTogglProjectOptions(togglSettings, selectedTask?.togglProjectId ?? null);
 
   return (
     <Card ref={detailPanelRef} data-planner-detail-panel="true">
@@ -58,11 +60,14 @@ export function TaskDetailCard({
         controlsId="task-detail-panel"
         onToggle={() => setIsOpen((prev) => !prev)}
         endContent={
-          <Badge
-            className={selectedTask ? getTaskPriorityHeaderBadgeClass(selectedTask.priority) : "normal-case tracking-[0.08em]"}
-          >
-            {selectedTask ? formatTaskPriority(selectedTask.priority) : "None"}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            {selectedTask ? <TaskCategoryIcon category={selectedTask.category} /> : null}
+            <Badge
+              className={selectedTask ? getTaskPriorityHeaderBadgeClass(selectedTask.priority) : "normal-case tracking-[0.08em]"}
+            >
+              {selectedTask ? formatTaskPriority(selectedTask.priority) : "None"}
+            </Badge>
+          </div>
         }
       />
       {isOpen ? (
@@ -89,7 +94,7 @@ export function TaskDetailCard({
                       />
                       <select
                         aria-label="Detail priority"
-                        className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+                        className="h-11 w-full min-w-0 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
                         {...form.register("priority")}
                       >
                         {PRIORITY_OPTIONS.map((priority) => (
@@ -99,6 +104,17 @@ export function TaskDetailCard({
                         ))}
                       </select>
                     </div>
+                    <select
+                      aria-label="Detail category"
+                      className="h-11 w-full min-w-0 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+                      {...form.register("category")}
+                    >
+                      {CATEGORY_OPTIONS.map((category) => (
+                        <option key={category} value={category}>
+                          {formatTaskCategory(category)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
               />
@@ -113,34 +129,7 @@ export function TaskDetailCard({
                   </option>
                 ))}
               </select>
-              <div className="space-y-2">
-                <select
-                  aria-label="Detail Toggl project"
-                  className="h-11 w-full rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!togglSettings.connected}
-                  {...form.register("togglProjectId")}
-                >
-                  <option value="">
-                    {togglSettings.defaultProjectName
-                      ? `Use workspace default (${togglSettings.defaultProjectName})`
-                      : togglSettings.connected
-                        ? "Without project"
-                        : "Connect Toggl in Settings to assign a project"}
-                  </option>
-                  {projectOptions.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-[var(--muted)]">
-                  {!togglSettings.connected
-                    ? "Connect Toggl in Settings to edit per-task project mapping."
-                    : selectedTask.togglProjectId && projectOptions[0]?.id === selectedTask.togglProjectId && projectOptions[0]?.name.startsWith("Missing project")
-                      ? "This task still references a Toggl project that is no longer in the current workspace catalog."
-                      : `This task will start timers in ${togglSettings.workspaceName ?? "your saved Toggl workspace"}.`}
-                </p>
-              </div>
+              <TaskDetailTogglProject form={form} selectedTask={selectedTask} togglSettings={togglSettings} />
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   type="submit"

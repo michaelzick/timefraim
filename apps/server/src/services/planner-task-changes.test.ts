@@ -15,6 +15,7 @@ const baseTask: Task = {
   estimatedMinutes: 30,
   status: "planned",
   priority: "medium",
+  category: "personal",
   scheduledBlockId: null,
   togglProjectId: null,
   completedOnDate: null,
@@ -148,5 +149,32 @@ describe("applyTaskUpdateDraft", () => {
       { estimatedMinutes: 45 },
       expect.anything(),
     );
+  });
+
+  it("passes category through to the updateTask patch", async () => {
+    const { context, repository } = buildContext({
+      currentTask: { ...baseTask, category: "personal" },
+      payload: { taskId: baseTask.id, category: "work" },
+    });
+
+    await applyTaskUpdateDraft(context);
+
+    expect(repository.updateTask).toHaveBeenCalledWith(
+      baseTask.id,
+      expect.objectContaining({ category: "work" }),
+      expect.anything(),
+    );
+  });
+
+  it("does not touch category when category is not part of the payload", async () => {
+    const { context, repository } = buildContext({
+      currentTask: baseTask,
+      payload: { taskId: baseTask.id, title: "Renamed" },
+    });
+
+    await applyTaskUpdateDraft(context);
+
+    const patch = repository.updateTask.mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(patch).not.toHaveProperty("category");
   });
 });

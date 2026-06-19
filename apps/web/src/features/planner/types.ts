@@ -1,6 +1,7 @@
 import type {
   DayPlan,
   PlannerDuplicateResult,
+  TaskCategory,
   TaskPriority,
   TaskStatus,
   TogglIntegrationSettings,
@@ -13,6 +14,7 @@ export type TaskFormValues = {
   notes: string;
   estimatedMinutes: number;
   priority: TaskPriority;
+  category: TaskCategory;
   lifecycle: TaskLifecycleValue;
   togglProjectId: string;
 };
@@ -32,6 +34,7 @@ export type PlannerTaskInput = {
   notes?: string;
   estimatedMinutes: number;
   priority: TaskPriority;
+  category: TaskCategory;
   status: TaskStatus;
   togglProjectId?: string | null;
   plannerDate?: string;

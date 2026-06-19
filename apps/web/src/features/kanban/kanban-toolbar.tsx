@@ -2,7 +2,9 @@ import { Plus, Search, X } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CategoryFilterControl } from "@/components/category-filter-control";
 import { Input } from "@/components/ui/input";
+import type { TaskCategoryFilter } from "@/features/planner/planner-page-selection";
 
 type KanbanToolbarProps = {
   doneCount: number;
@@ -10,7 +12,9 @@ type KanbanToolbarProps = {
   search: string;
   scheduledCount: number;
   taskCount: number;
+  categoryFilter: TaskCategoryFilter;
   onCreateTaskToggle: () => void;
+  onCategoryFilterChange: (value: TaskCategoryFilter) => void;
   onSearchChange: (value: string) => void;
 };
 
@@ -20,7 +24,9 @@ export function KanbanToolbar({
   search,
   scheduledCount,
   taskCount,
+  categoryFilter,
   onCreateTaskToggle,
+  onCategoryFilterChange,
   onSearchChange,
 }: KanbanToolbarProps) {
   const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -44,6 +50,11 @@ export function KanbanToolbar({
           </div>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <CategoryFilterControl
+            value={categoryFilter}
+            onChange={onCategoryFilterChange}
+            ariaLabel="Filter board by category"
+          />
           <Button
             type="button"
             variant={isCreateTaskOpen ? "secondary" : "default"}

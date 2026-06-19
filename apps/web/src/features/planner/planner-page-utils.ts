@@ -11,12 +11,14 @@ import type {
 } from "@/features/planner/types";
 
 export type PlannerPriority = "low" | "medium" | "high" | "urgent";
+export type PlannerCategory = "personal" | "work";
 export type PlannerStatus = "inbox" | "planned" | "scheduled" | "in_progress" | "done";
 export type PlannerCreateTaskValues = {
   title: string;
   notes: string;
   estimatedMinutes: number;
   priority: PlannerPriority;
+  category: PlannerCategory;
   togglProjectId: string;
 };
 export type LocalPlannerTaskInput = {
@@ -24,6 +26,7 @@ export type LocalPlannerTaskInput = {
   notes?: string;
   estimatedMinutes: number;
   priority: PlannerPriority;
+  category: PlannerCategory;
   status: PlannerStatus;
   togglProjectId?: string | null;
   plannerDate?: string;
@@ -34,6 +37,7 @@ export type LocalPlannerTaskUpdateInput = {
   notes: string;
   estimatedMinutes: number;
   priority: PlannerPriority;
+  category: PlannerCategory;
   status: PlannerStatus;
   togglProjectId?: string | null;
   completedOnDate?: string | null;
@@ -51,6 +55,7 @@ export type PlannerSaveTaskValues = {
   notes: string;
   estimatedMinutes: number;
   priority: PlannerPriority;
+  category: PlannerCategory;
   lifecycle: "active" | "done";
   togglProjectId: string;
 };
@@ -60,6 +65,7 @@ export const EMPTY_CREATE_TASK_VALUES: CreateTaskValues = {
   notes: "",
   estimatedMinutes: 30,
   priority: "low",
+  category: "personal",
   togglProjectId: "",
 };
 
@@ -68,6 +74,7 @@ const EMPTY_TASK_FORM_VALUES: TaskFormValues = {
   notes: "",
   estimatedMinutes: 30,
   priority: "low",
+  category: "personal",
   lifecycle: "active",
   togglProjectId: "",
 };
@@ -86,6 +93,7 @@ export function getTaskFormValues(selectedTask: Task | null): TaskFormValues {
     notes: selectedTask.notes ?? "",
     estimatedMinutes: selectedTask.estimatedMinutes,
     priority: selectedTask.priority,
+    category: selectedTask.category,
     lifecycle: getTaskLifecycleValue(selectedTask),
     togglProjectId: selectedTask.togglProjectId ?? "",
   };

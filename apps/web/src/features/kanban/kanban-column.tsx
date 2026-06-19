@@ -21,6 +21,7 @@ type KanbanColumnProps = {
   onDeleteTask: (task: Task) => void;
   onPlanTask: (task: Task, targetStatus: KanbanStatus) => void;
   onPriorityChange: (task: Task, priority: Task["priority"]) => void;
+  onCategoryChange: (task: Task, category: Task["category"]) => void;
   onRemoveTask: (task: Task) => void;
   onStartTimer: (taskId: string) => void;
   onStopTimer: () => void;
@@ -37,6 +38,7 @@ export function KanbanColumn({
   onDeleteTask,
   onPlanTask,
   onPriorityChange,
+  onCategoryChange,
   onRemoveTask,
   onStartTimer,
   onStopTimer,
@@ -82,6 +84,7 @@ export function KanbanColumn({
               task={task}
               onDeleteTask={onDeleteTask}
               onPlanTask={onPlanTask}
+              onCategoryChange={onCategoryChange}
               onPriorityChange={onPriorityChange}
               onRemoveTask={onRemoveTask}
               onStartTimer={onStartTimer}

@@ -202,6 +202,7 @@ describe("HTTP routes", () => {
         notes: "Protect focus time",
         estimatedMinutes: 60,
         priority: "high",
+        category: "personal",
         status: "planned",
       },
       "user",

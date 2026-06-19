@@ -5,21 +5,34 @@ import type { PlannerScheduleBlockUpdateInput } from "@/features/planner/types";
 
 export type SelectedTaskSource = "queue" | "timeline";
 
+export type TaskCategoryFilter = "all" | Task["category"];
+
 export type PlannerSelection =
   | { type: "queue-task"; taskId: string }
   | { type: "timeline-task"; taskId: string }
   | { type: "calendar-event"; calendarEventId: string }
   | { type: "none" };
 
-export function filterQueueTasks(tasks: Task[], search: string) {
+export function filterQueueTasks(tasks: Task[], search: string, categoryFilter: TaskCategoryFilter = "all") {
   const needle = search.trim().toLowerCase();
   return tasks.filter((task) => {
     if (task.scheduledBlockId !== null || task.status === "done") {
       return false;
     }
 
+    if (categoryFilter !== "all" && task.category !== categoryFilter) {
+      return false;
+    }
+
     return !needle || [task.title, task.notes ?? ""].join(" ").toLowerCase().includes(needle);
   });
+}
+
+export function filterTasksByCategory(tasks: Task[], categoryFilter: TaskCategoryFilter) {
+  if (categoryFilter === "all") {
+    return tasks;
+  }
+  return tasks.filter((task) => task.category === categoryFilter);
 }
 
 export function selectDoneTasks(tasks: Task[], date: string) {

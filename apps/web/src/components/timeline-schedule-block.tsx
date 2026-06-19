@@ -9,6 +9,7 @@ import {
 } from "@/components/timeline-resize-handle";
 import { getTimelinePlacement, isShortBlock } from "@/components/timeline-geometry";
 import { Badge } from "@/components/ui/badge";
+import { TaskCategoryIcon } from "@/features/planner/task-category-icon";
 import {
   formatTaskPriority,
   getTaskPriorityBadgeClass,
@@ -172,6 +173,7 @@ export function TimelineScheduleBlock({
             </Badge>
           ) : null}
           <Badge className={getTaskPriorityBadgeClass(priority)}>{formatTaskPriority(priority)}</Badge>
+          {task ? <TaskCategoryIcon category={task.category} /> : null}
           {task && onDuplicateTask ? (
             <TaskPillKebab
               label={title}

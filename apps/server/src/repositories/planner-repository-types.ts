@@ -4,6 +4,7 @@ import type {
   IntegrationStatus,
   TogglProjectOption,
   TogglWorkspaceOption,
+  TaskCategory,
   TaskPriority,
   ScheduleBlockSource,
   ScheduleBlockState,
@@ -70,6 +71,7 @@ export type CreateTaskInput = {
   estimatedMinutes: number;
   status: TaskStatus;
   priority: TaskPriority;
+  category: TaskCategory;
   togglProjectId: string | null;
   completedOnDate?: string | null;
 };
@@ -80,6 +82,7 @@ export type TaskPatch = Partial<{
   estimatedMinutes: number;
   status: TaskStatus;
   priority: TaskPriority;
+  category: TaskCategory;
   togglProjectId: string | null;
   scheduledBlockId: string | null;
   completedOnDate: string | null;

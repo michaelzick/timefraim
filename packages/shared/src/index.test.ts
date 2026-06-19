@@ -6,6 +6,7 @@ import {
   calendarSyncResultSchema,
   googleCalendarSettingsSchema,
   plannerMutationResultSchema,
+  taskCategorySchema,
   taskInputSchema,
   taskSchema,
   taskUpdateSchema,
@@ -21,6 +22,7 @@ describe("shared barrel exports", () => {
         estimatedMinutes: 45,
         status: "planned",
         priority: "medium",
+        category: "personal",
         scheduledBlockId: null,
         togglProjectId: null,
         createdAt: "2026-04-06T08:00:00.000Z",
@@ -99,6 +101,7 @@ describe("shared barrel exports", () => {
     expect(taskInputSchema.parse({ title: "Deep work" })).toMatchObject({
       estimatedMinutes: 30,
       priority: "low",
+      category: "personal",
       status: "planned",
     });
 
@@ -115,5 +118,39 @@ describe("shared barrel exports", () => {
         estimatedMinutes: 60,
       }),
     ).toEqual({ estimatedMinutes: 60 });
+  });
+
+  it("defaults task category to personal and accepts explicit work", () => {
+    expect(taskInputSchema.parse({ title: "Personal errand" }).category).toBe("personal");
+    expect(taskInputSchema.parse({ title: "Client review", category: "work" }).category).toBe("work");
+
+    expect(
+      taskUpdateSchema.omit({ taskId: true }).parse({ category: "work" }),
+    ).toEqual({ category: "work" });
+  });
+
+  it("rejects invalid task categories", () => {
+    expect(() => taskCategorySchema.parse("personal")).not.toThrow();
+    expect(() => taskCategorySchema.parse("work")).not.toThrow();
+    expect(() => taskCategorySchema.parse("none")).toThrow();
+    expect(() => taskCategorySchema.parse("")).toThrow();
+    expect(() => taskInputSchema.parse({ title: "x", category: "invalid" })).toThrow();
+  });
+
+  it("includes category in the parsed task schema", () => {
+    const task = taskSchema.parse({
+      id: "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1",
+      title: "Plan launch week",
+      notes: null,
+      estimatedMinutes: 45,
+      status: "planned",
+      priority: "medium",
+      category: "work",
+      scheduledBlockId: null,
+      togglProjectId: null,
+      createdAt: "2026-04-06T08:00:00.000Z",
+      updatedAt: "2026-04-06T08:00:00.000Z",
+    });
+    expect(task.category).toBe("work");
   });
 });

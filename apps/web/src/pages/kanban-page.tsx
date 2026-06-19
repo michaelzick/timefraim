@@ -3,7 +3,7 @@ import { PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { Task } from "@timefraim/shared";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { KanbanCardPreview } from "@/features/kanban/kanban-card";
+import { KanbanCardPreview } from "@/features/kanban/kanban-card-preview";
 import { clearDoneTasks } from "@/features/kanban/kanban-clear-done";
 import { KanbanColumn } from "@/features/kanban/kanban-column";
 import { KanbanCreateTaskPanel } from "@/features/kanban/kanban-create-task-panel";
@@ -18,7 +18,8 @@ import {
   KANBAN_COLUMNS,
   moveTaskOnKanban,
 } from "@/features/kanban/kanban-utils";
-import { formatTaskPriority } from "@/features/planner/task-presentation";
+import { createCategoryChangeHandler, createPriorityChangeHandler } from "@/features/kanban/kanban-task-field-handlers";
+import type { TaskCategoryFilter } from "@/features/planner/planner-page-selection";
 import type { CreateTaskValues, PlannerPageProps } from "@/features/planner/types";
 
 type KanbanPageProps = Pick<
@@ -50,10 +51,14 @@ export function KanbanPage({
   togglSettings,
 }: KanbanPageProps) {
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<TaskCategoryFilter>("all");
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
-  const visibleTasks = useMemo(() => filterKanbanTasks(dayPlan.tasks, search), [dayPlan.tasks, search]);
+  const visibleTasks = useMemo(
+    () => filterKanbanTasks(dayPlan.tasks, search, categoryFilter),
+    [dayPlan.tasks, search, categoryFilter],
+  );
   const groupedTasks = useMemo(() => groupTasksByKanbanStatus(visibleTasks), [visibleTasks]);
   const scheduledCount = groupedTasks.scheduled.length;
   const doneCount = groupedTasks.done.length;
@@ -142,15 +147,8 @@ export function KanbanPage({
 
   const handleClearDone = () => void clearDoneTasks(groupedTasks.done, onDeleteTask);
 
-  const handlePriorityChange = (task: Task, priority: Task["priority"]) => {
-    if (task.priority === priority) {
-      return;
-    }
-
-    void onUpdateTask(task.id, { priority })
-      .then(() => toast.success(`Priority changed to ${formatTaskPriority(priority)}`, { duration: 3000 }))
-      .catch((error) => showKanbanActionError("Failed to change priority. Please try again.", error));
-  };
+  const handlePriorityChange = createPriorityChangeHandler(onUpdateTask);
+  const handleCategoryChange = createCategoryChangeHandler(onUpdateTask);
 
   const handleCreateTask = async (values: CreateTaskValues) => {
     try {
@@ -170,8 +168,10 @@ export function KanbanPage({
           search={search}
           scheduledCount={scheduledCount}
           taskCount={visibleTasks.length}
+          categoryFilter={categoryFilter}
           isCreateTaskOpen={isCreateTaskOpen}
           onCreateTaskToggle={() => setIsCreateTaskOpen((current) => !current)}
+          onCategoryFilterChange={setCategoryFilter}
           onSearchChange={setSearch}
         />
         {isCreateTaskOpen ? (
@@ -196,6 +196,7 @@ export function KanbanPage({
               onDeleteTask={handleDeleteTask}
               onPlanTask={handlePlanTask}
               onPriorityChange={handlePriorityChange}
+              onCategoryChange={handleCategoryChange}
               onRemoveTask={handleRemoveTask}
               onStartTimer={handleStartTimer}
               onStopTimer={handleStopTimer}

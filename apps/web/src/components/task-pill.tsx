@@ -4,6 +4,7 @@ import type { Task } from "@timefraim/shared";
 import { Check, Clock3, GripVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TaskPillKebab } from "@/components/task-pill-kebab";
+import { TaskCategoryIcon } from "@/features/planner/task-category-icon";
 import {
   formatTaskPriority,
   getTaskPriorityBadgeClass,
@@ -70,7 +71,10 @@ export function TaskPill({
             Running
           </Badge>
         ) : (
-          <Badge className={getTaskPriorityBadgeClass(task.priority)}>{formatTaskPriority(task.priority)}</Badge>
+          <div className="flex items-center gap-1.5">
+            <TaskCategoryIcon category={task.category} />
+            <Badge className={getTaskPriorityBadgeClass(task.priority)}>{formatTaskPriority(task.priority)}</Badge>
+          </div>
         )}
         <div className="flex items-center gap-1">
           {runState === "done" ? (

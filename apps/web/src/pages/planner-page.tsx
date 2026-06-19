@@ -32,11 +32,13 @@ export function PlannerPage({
 }: PlannerPageProps) {
   const {
     calendarEventForm,
+    categoryFilter,
     createTaskForm,
     detailForm,
     detailPanelRef,
     doneTasks,
     filteredQueueTasks,
+    filteredTimelineTasks,
     handleCreateTask,
     handleDismissCalendarEvent,
     handleDragEnd,
@@ -55,6 +57,7 @@ export function PlannerPage({
     selectedTimelineCalendarEventId,
     selectedTimelineTaskId,
     sensors,
+    setCategoryFilter,
     setSearch,
   } = usePlannerPageController({
     date,
@@ -122,6 +125,8 @@ export function PlannerPage({
           isSyncing={isSyncing}
           calendarSync={dayPlan.calendarSync}
           linkedGoogleEmail={linkedGoogleEmail}
+          categoryFilter={categoryFilter}
+          onCategoryFilterChange={setCategoryFilter}
           onDateChange={onDateChange}
           onSyncCalendar={() => void onSyncCalendar()}
         />
@@ -145,6 +150,7 @@ export function PlannerPage({
           <PlannerTimelineColumn
             date={date}
             dayPlan={dayPlan}
+            tasks={filteredTimelineTasks}
             selectedTimelineTaskId={selectedTimelineTaskId}
             selectedTimelineCalendarEventId={selectedTimelineCalendarEventId}
             copyDragScheduleBlockId={copyDragScheduleBlockId}

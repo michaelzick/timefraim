@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_CREATE_TASK_VALUES } from "@/features/planner/planner-page-utils";
-import { PRIORITY_OPTIONS, formatTaskPriority } from "@/features/planner/task-presentation";
+import { PRIORITY_OPTIONS, CATEGORY_OPTIONS, formatTaskPriority, formatTaskCategory } from "@/features/planner/task-presentation";
 import {
   getDefaultTogglProjectLabel,
   getTogglProjectHelperText,
@@ -88,21 +88,28 @@ export function KanbanCreateTaskPanel({
                   </option>
                 ))}
               </Select>
-              <Select
-                aria-label="Board task Toggl project"
-                disabled={!togglSettings.connected}
-                {...form.register("togglProjectId")}
-              >
-                <option value="" className="bg-[var(--panel)]">
-                  {getDefaultTogglProjectLabel(togglSettings)}
-                </option>
-                {togglSettings.availableProjects.map((project) => (
-                  <option key={project.id} value={project.id} className="bg-[var(--panel)]">
-                    {project.name}
+              <Select aria-label="Board task category" {...form.register("category")}>
+                {CATEGORY_OPTIONS.map((category) => (
+                  <option key={category} value={category} className="bg-[var(--panel)]">
+                    {formatTaskCategory(category)}
                   </option>
                 ))}
               </Select>
             </div>
+            <Select
+              aria-label="Board task Toggl project"
+              disabled={!togglSettings.connected}
+              {...form.register("togglProjectId")}
+            >
+              <option value="" className="bg-[var(--panel)]">
+                {getDefaultTogglProjectLabel(togglSettings)}
+              </option>
+              {togglSettings.availableProjects.map((project) => (
+                <option key={project.id} value={project.id} className="bg-[var(--panel)]">
+                  {project.name}
+                </option>
+              ))}
+            </Select>
             <p className="text-xs text-[var(--muted)]">{getTogglProjectHelperText(togglSettings)}</p>
           </div>
         </div>

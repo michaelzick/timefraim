@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight, CircleCheck, CircleMinus, LoaderCircle, Refr
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CategoryFilterControl } from "@/components/category-filter-control";
+import type { TaskCategoryFilter } from "@/features/planner/planner-page-selection";
 import { getTodayDate } from "@/lib/utils";
 
 type PlannerToolbarProps = {
@@ -10,6 +12,8 @@ type PlannerToolbarProps = {
   isSyncing: boolean;
   linkedGoogleEmail: string | null;
   calendarSync: CalendarSync;
+  categoryFilter: TaskCategoryFilter;
+  onCategoryFilterChange: (value: TaskCategoryFilter) => void;
   onDateChange: (nextDate: string) => void;
   onSyncCalendar: () => void;
 };
@@ -19,6 +23,8 @@ export function PlannerToolbar({
   isSyncing,
   linkedGoogleEmail,
   calendarSync,
+  categoryFilter,
+  onCategoryFilterChange,
   onDateChange,
   onSyncCalendar,
 }: PlannerToolbarProps) {
@@ -66,6 +72,11 @@ export function PlannerToolbar({
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2 xl:contents">
+          <CategoryFilterControl
+            value={categoryFilter}
+            onChange={onCategoryFilterChange}
+            ariaLabel="Filter tasks by category"
+          />
           <Button
             type="button"
             variant="secondary"

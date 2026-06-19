@@ -19,6 +19,7 @@ const task: Task = {
   estimatedMinutes: 30,
   status: "planned",
   priority: "medium",
+  category: "personal",
   scheduledBlockId: null,
   togglProjectId: null,
   completedOnDate: null,
