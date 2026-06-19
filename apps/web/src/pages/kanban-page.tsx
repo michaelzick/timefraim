@@ -4,6 +4,7 @@ import type { Task } from "@timefraim/shared";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { KanbanCardPreview } from "@/features/kanban/kanban-card";
+import { clearDoneTasks } from "@/features/kanban/kanban-clear-done";
 import { KanbanColumn } from "@/features/kanban/kanban-column";
 import { KanbanCreateTaskPanel } from "@/features/kanban/kanban-create-task-panel";
 import { buildKanbanCreateTaskInput } from "@/features/kanban/kanban-create-task-utils";
@@ -139,6 +140,8 @@ export function KanbanPage({
       .catch((error) => showKanbanActionError("Failed to delete the task. Please try again.", error));
   };
 
+  const handleClearDone = () => void clearDoneTasks(groupedTasks.done, onDeleteTask);
+
   const handlePriorityChange = (task: Task, priority: Task["priority"]) => {
     if (task.priority === priority) {
       return;
@@ -189,6 +192,7 @@ export function KanbanPage({
               date={date}
               scheduleBlocks={dayPlan.scheduleBlocks}
               tasks={groupedTasks[column.status]}
+              onClearDone={column.status === "done" ? handleClearDone : undefined}
               onDeleteTask={handleDeleteTask}
               onPlanTask={handlePlanTask}
               onPriorityChange={handlePriorityChange}
