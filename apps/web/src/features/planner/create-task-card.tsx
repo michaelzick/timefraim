@@ -74,7 +74,7 @@ export function CreateTaskCard({
                     onSelect={field.onChange}
                     ariaLabelPrefix="Task"
                   />
-                  <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-3">
+                  <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
                     <DurationInput
                       valueMinutes={field.value}
                       onChange={field.onChange}
@@ -87,14 +87,14 @@ export function CreateTaskCard({
                         </option>
                       ))}
                     </Select>
-                    <Select aria-label="Task category" {...form.register("category")}>
-                      {CATEGORY_OPTIONS.map((category) => (
-                        <option key={category} value={category} className="bg-[var(--panel)]">
-                          {formatTaskCategory(category)}
-                        </option>
-                      ))}
-                    </Select>
                   </div>
+                  <Select aria-label="Task category" {...form.register("category")}>
+                    {CATEGORY_OPTIONS.map((category) => (
+                      <option key={category} value={category} className="bg-[var(--panel)]">
+                        {formatTaskCategory(category)}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               )}
             />
