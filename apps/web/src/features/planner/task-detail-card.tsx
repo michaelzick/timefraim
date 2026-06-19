@@ -86,7 +86,7 @@ export function TaskDetailCard({
                       onSelect={field.onChange}
                       ariaLabelPrefix="Detail"
                     />
-                    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-3">
+                    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
                       <DurationInput
                         valueMinutes={field.value}
                         onChange={field.onChange}
@@ -94,7 +94,7 @@ export function TaskDetailCard({
                       />
                       <select
                         aria-label="Detail priority"
-                        className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+                        className="h-11 w-full min-w-0 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
                         {...form.register("priority")}
                       >
                         {PRIORITY_OPTIONS.map((priority) => (
@@ -103,18 +103,18 @@ export function TaskDetailCard({
                           </option>
                         ))}
                       </select>
-                      <select
-                        aria-label="Detail category"
-                        className="h-11 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
-                        {...form.register("category")}
-                      >
-                        {CATEGORY_OPTIONS.map((category) => (
-                          <option key={category} value={category}>
-                            {formatTaskCategory(category)}
-                          </option>
-                        ))}
-                      </select>
                     </div>
+                    <select
+                      aria-label="Detail category"
+                      className="h-11 w-full min-w-0 rounded-2xl border border-[var(--field-border)] bg-[var(--field-bg)] px-4 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+                      {...form.register("category")}
+                    >
+                      {CATEGORY_OPTIONS.map((category) => (
+                        <option key={category} value={category}>
+                          {formatTaskCategory(category)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
               />

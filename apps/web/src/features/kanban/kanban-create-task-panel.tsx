@@ -80,7 +80,7 @@ export function KanbanCreateTaskPanel({
                 </div>
               )}
             />
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <Select aria-label="Board task priority" {...form.register("priority")}>
                 {PRIORITY_OPTIONS.map((priority) => (
                   <option key={priority} value={priority} className="bg-[var(--panel)]">
@@ -95,21 +95,21 @@ export function KanbanCreateTaskPanel({
                   </option>
                 ))}
               </Select>
-              <Select
-                aria-label="Board task Toggl project"
-                disabled={!togglSettings.connected}
-                {...form.register("togglProjectId")}
-              >
-                <option value="" className="bg-[var(--panel)]">
-                  {getDefaultTogglProjectLabel(togglSettings)}
-                </option>
-                {togglSettings.availableProjects.map((project) => (
-                  <option key={project.id} value={project.id} className="bg-[var(--panel)]">
-                    {project.name}
-                  </option>
-                ))}
-              </Select>
             </div>
+            <Select
+              aria-label="Board task Toggl project"
+              disabled={!togglSettings.connected}
+              {...form.register("togglProjectId")}
+            >
+              <option value="" className="bg-[var(--panel)]">
+                {getDefaultTogglProjectLabel(togglSettings)}
+              </option>
+              {togglSettings.availableProjects.map((project) => (
+                <option key={project.id} value={project.id} className="bg-[var(--panel)]">
+                  {project.name}
+                </option>
+              ))}
+            </Select>
             <p className="text-xs text-[var(--muted)]">{getTogglProjectHelperText(togglSettings)}</p>
           </div>
         </div>
