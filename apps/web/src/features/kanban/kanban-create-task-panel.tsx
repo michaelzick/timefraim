@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPTY_CREATE_TASK_VALUES } from "@/features/planner/planner-page-utils";
-import { PRIORITY_OPTIONS, formatTaskPriority } from "@/features/planner/task-presentation";
+import { PRIORITY_OPTIONS, CATEGORY_OPTIONS, formatTaskPriority, formatTaskCategory } from "@/features/planner/task-presentation";
 import {
   getDefaultTogglProjectLabel,
   getTogglProjectHelperText,
@@ -80,11 +80,18 @@ export function KanbanCreateTaskPanel({
                 </div>
               )}
             />
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-3">
               <Select aria-label="Board task priority" {...form.register("priority")}>
                 {PRIORITY_OPTIONS.map((priority) => (
                   <option key={priority} value={priority} className="bg-[var(--panel)]">
                     {formatTaskPriority(priority)}
+                  </option>
+                ))}
+              </Select>
+              <Select aria-label="Board task category" {...form.register("category")}>
+                {CATEGORY_OPTIONS.map((category) => (
+                  <option key={category} value={category} className="bg-[var(--panel)]">
+                    {formatTaskCategory(category)}
                   </option>
                 ))}
               </Select>

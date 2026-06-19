@@ -4,6 +4,7 @@ import { buildTask } from "@/test/fixtures";
 import {
   buildPlannerTaskHref,
   buildPlannerTaskHrefForTask,
+  filterKanbanTasks,
   findNextOpenTimelineSlot,
   groupTasksByKanbanStatus,
   moveTaskOnKanban,
@@ -151,5 +152,61 @@ describe("kanban-utils", () => {
       task.id,
       expect.objectContaining({ completedOnDate: DATE, status: "done" }),
     );
+  });
+});
+
+describe("filterKanbanTasks", () => {
+  it("returns all tasks when search is empty and filter is all", () => {
+    const tasks = [
+      buildTask({ id: "a", category: "personal" }),
+      buildTask({ id: "b", category: "work" }),
+    ];
+
+    expect(filterKanbanTasks(tasks, "", "all").map((t) => t.id)).toEqual(["a", "b"]);
+  });
+
+  it("filters by category when categoryFilter is set", () => {
+    const tasks = [
+      buildTask({ id: "a", category: "personal" }),
+      buildTask({ id: "b", category: "work" }),
+      buildTask({ id: "c", category: "work" }),
+    ];
+
+    expect(filterKanbanTasks(tasks, "", "personal").map((t) => t.id)).toEqual(["a"]);
+    expect(filterKanbanTasks(tasks, "", "work").map((t) => t.id)).toEqual(["b", "c"]);
+  });
+
+  it("combines search and category filter", () => {
+    const tasks = [
+      buildTask({ id: "a", title: "Deep work", category: "personal" }),
+      buildTask({ id: "b", title: "Deep work review", category: "work" }),
+    ];
+
+    expect(filterKanbanTasks(tasks, "deep", "work").map((t) => t.id)).toEqual(["b"]);
+  });
+
+  it("matches category in the searchable text", () => {
+    const tasks = [
+      buildTask({ id: "a", title: "Errand", notes: null, category: "personal" }),
+      buildTask({ id: "b", title: "Client", notes: null, category: "work" }),
+    ];
+
+    expect(filterKanbanTasks(tasks, "personal", "all").map((t) => t.id)).toEqual(["a"]);
+    expect(filterKanbanTasks(tasks, "work", "all").map((t) => t.id)).toEqual(["b"]);
+  });
+
+  it("returns empty when no tasks match the category", () => {
+    const tasks = [buildTask({ id: "a", category: "personal" })];
+
+    expect(filterKanbanTasks(tasks, "", "work")).toEqual([]);
+  });
+
+  it("defaults categoryFilter to all when omitted", () => {
+    const tasks = [
+      buildTask({ id: "a", category: "personal" }),
+      buildTask({ id: "b", category: "work" }),
+    ];
+
+    expect(filterKanbanTasks(tasks, "").map((t) => t.id)).toEqual(["a", "b"]);
   });
 });

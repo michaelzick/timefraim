@@ -33,6 +33,7 @@ export function mapTask(row: QueryResultRow) {
     estimatedMinutes: row.estimated_minutes,
     status: row.status,
     priority: row.priority,
+    category: row.category,
     scheduledBlockId: row.scheduled_block_id,
     scheduledStartAt: asIso(row.scheduled_start_at),
     scheduledEndAt: asIso(row.scheduled_end_at),

@@ -37,17 +37,24 @@ export function buildPlannerTaskHrefForTask(task: Task, fallbackDate: string, sc
   return buildPlannerTaskHref(resolvePlannerLinkDate(task, fallbackDate, scheduleBlocks), task.id);
 }
 
-export function filterKanbanTasks(tasks: Task[], search: string) {
+export function filterKanbanTasks(
+  tasks: Task[],
+  search: string,
+  categoryFilter: "all" | Task["category"] = "all",
+) {
   const needle = search.trim().toLowerCase();
-  if (!needle) {
-    return tasks;
-  }
-  return tasks.filter((task) =>
-    [task.title, task.notes ?? "", task.priority, resolveKanbanStatus(task)]
+  return tasks.filter((task) => {
+    if (categoryFilter !== "all" && task.category !== categoryFilter) {
+      return false;
+    }
+    if (!needle) {
+      return true;
+    }
+    return [task.title, task.notes ?? "", task.priority, task.category, resolveKanbanStatus(task)]
       .join(" ")
       .toLowerCase()
-      .includes(needle),
-  );
+      .includes(needle);
+  });
 }
 
 export function groupTasksByKanbanStatus(tasks: Task[]) {

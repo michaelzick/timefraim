@@ -85,6 +85,7 @@ describe("KanbanPage", () => {
         notes: "From the board",
         estimatedMinutes: 30,
         priority: "high",
+        category: "personal",
         status: "inbox",
         togglProjectId: null,
       });

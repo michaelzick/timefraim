@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { selectDoneTasks } from "./planner-page-selection.js";
+import { filterQueueTasks, filterTasksByCategory, selectDoneTasks } from "./planner-page-selection.js";
 import { buildTask } from "@/test/fixtures";
 
 describe("selectDoneTasks", () => {
@@ -35,5 +35,84 @@ describe("selectDoneTasks", () => {
     ];
 
     expect(selectDoneTasks(tasks, "2026-04-20")).toEqual([]);
+  });
+});
+
+describe("filterQueueTasks", () => {
+  it("returns unscheduled, non-done tasks matching the search", () => {
+    const tasks = [
+      buildTask({ id: "a", title: "Deep work", notes: null, status: "planned", scheduledBlockId: null }),
+      buildTask({ id: "b", title: "Review roadmap", notes: null, status: "planned", scheduledBlockId: null }),
+      buildTask({ id: "c", title: "Scheduled task", notes: null, status: "planned", scheduledBlockId: "block-1" }),
+      buildTask({ id: "d", title: "Done task", notes: null, status: "done" }),
+    ];
+
+    expect(filterQueueTasks(tasks, "deep", "all").map((t) => t.id)).toEqual(["a"]);
+  });
+
+  it("filters by category when categoryFilter is set", () => {
+    const tasks = [
+      buildTask({ id: "a", title: "Personal errand", category: "personal", scheduledBlockId: null }),
+      buildTask({ id: "b", title: "Client review", category: "work", scheduledBlockId: null }),
+      buildTask({ id: "c", title: "Team sync", category: "work", scheduledBlockId: null }),
+    ];
+
+    expect(filterQueueTasks(tasks, "", "personal").map((t) => t.id)).toEqual(["a"]);
+    expect(filterQueueTasks(tasks, "", "work").map((t) => t.id)).toEqual(["b", "c"]);
+  });
+
+  it("returns all categories when filter is all", () => {
+    const tasks = [
+      buildTask({ id: "a", category: "personal", scheduledBlockId: null }),
+      buildTask({ id: "b", category: "work", scheduledBlockId: null }),
+    ];
+
+    expect(filterQueueTasks(tasks, "", "all").map((t) => t.id)).toEqual(["a", "b"]);
+  });
+
+  it("combines search and category filter", () => {
+    const tasks = [
+      buildTask({ id: "a", title: "Deep work", category: "personal", scheduledBlockId: null }),
+      buildTask({ id: "b", title: "Deep work review", category: "work", scheduledBlockId: null }),
+    ];
+
+    expect(filterQueueTasks(tasks, "deep", "work").map((t) => t.id)).toEqual(["b"]);
+  });
+
+  it("defaults categoryFilter to all when omitted", () => {
+    const tasks = [
+      buildTask({ id: "a", category: "personal", scheduledBlockId: null }),
+      buildTask({ id: "b", category: "work", scheduledBlockId: null }),
+    ];
+
+    expect(filterQueueTasks(tasks, "").map((t) => t.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("filterTasksByCategory", () => {
+  it("returns all tasks when filter is all", () => {
+    const tasks = [
+      buildTask({ id: "a", category: "personal" }),
+      buildTask({ id: "b", category: "work" }),
+    ];
+
+    expect(filterTasksByCategory(tasks, "all").map((t) => t.id)).toEqual(["a", "b"]);
+  });
+
+  it("filters to a single category", () => {
+    const tasks = [
+      buildTask({ id: "a", category: "personal" }),
+      buildTask({ id: "b", category: "work" }),
+      buildTask({ id: "c", category: "personal" }),
+    ];
+
+    expect(filterTasksByCategory(tasks, "personal").map((t) => t.id)).toEqual(["a", "c"]);
+    expect(filterTasksByCategory(tasks, "work").map((t) => t.id)).toEqual(["b"]);
+  });
+
+  it("returns empty array when no tasks match the category", () => {
+    const tasks = [buildTask({ id: "a", category: "personal" })];
+
+    expect(filterTasksByCategory(tasks, "work")).toEqual([]);
   });
 });

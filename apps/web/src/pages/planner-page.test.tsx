@@ -111,6 +111,7 @@ describe("PlannerPage", () => {
         notes: "Protect a quiet block.",
         estimatedMinutes: 45,
         priority: "high",
+        category: "personal",
         status: "planned",
         togglProjectId: null,
         plannerDate: "2026-04-06",

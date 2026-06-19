@@ -51,8 +51,8 @@ export class PlannerRepositoryTaskStore {
 
   async createTask(input: CreateTaskInput, db: Queryable) {
     const result = await db.query(
-      `insert into public.tasks (title, notes, estimated_minutes, status, priority, toggl_project_id, completed_on_date)
-       values ($1, $2, $3, $4, $5, $6, $7)
+      `insert into public.tasks (title, notes, estimated_minutes, status, priority, category, toggl_project_id, completed_on_date)
+       values ($1, $2, $3, $4, $5, $6, $7, $8)
        returning *`,
       [
         input.title,
@@ -60,6 +60,7 @@ export class PlannerRepositoryTaskStore {
         input.estimatedMinutes,
         input.status,
         input.priority,
+        input.category,
         input.togglProjectId,
         input.completedOnDate ?? null,
       ],
@@ -80,6 +81,7 @@ export class PlannerRepositoryTaskStore {
     if (typeof patch.estimatedMinutes !== "undefined") assign("estimated_minutes", patch.estimatedMinutes);
     if (typeof patch.status !== "undefined") assign("status", patch.status);
     if (typeof patch.priority !== "undefined") assign("priority", patch.priority);
+    if (typeof patch.category !== "undefined") assign("category", patch.category);
     if (typeof patch.togglProjectId !== "undefined") assign("toggl_project_id", patch.togglProjectId);
     if (typeof patch.scheduledBlockId !== "undefined") assign("scheduled_block_id", patch.scheduledBlockId);
     if (typeof patch.completedOnDate !== "undefined") assign("completed_on_date", patch.completedOnDate);

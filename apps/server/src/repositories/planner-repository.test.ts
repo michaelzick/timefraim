@@ -273,4 +273,75 @@ describe("planner-repository", () => {
       updatedAt: "2026-04-15T12:00:00.000Z",
     });
   });
+
+  it("includes category in the createTask insert columns and params", async () => {
+    const db = {
+      query: vi.fn().mockResolvedValue({
+        rows: [
+          {
+            id: "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1",
+            title: "Client review",
+            notes: null,
+            estimated_minutes: 30,
+            status: "planned",
+            priority: "medium",
+            category: "work",
+            scheduled_block_id: null,
+            toggl_project_id: null,
+            completed_on_date: null,
+            created_at: "2026-04-06T08:00:00.000Z",
+            updated_at: "2026-04-06T08:00:00.000Z",
+          },
+        ],
+      }),
+    };
+    const repository = new PlannerRepository();
+
+    await repository.createTask(
+      {
+        title: "Client review",
+        notes: null,
+        estimatedMinutes: 30,
+        status: "planned",
+        priority: "medium",
+        category: "work",
+        togglProjectId: null,
+      },
+      db as never,
+    );
+
+    const [sql, params] = db.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("category");
+    expect(params).toContain("work");
+  });
+
+  it("includes category in the updateTask SET clause when patched", async () => {
+    const db = {
+      query: vi.fn().mockResolvedValue({
+        rows: [
+          {
+            id: "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1",
+            title: "Client review",
+            notes: null,
+            estimated_minutes: 30,
+            status: "planned",
+            priority: "medium",
+            category: "work",
+            scheduled_block_id: null,
+            toggl_project_id: null,
+            completed_on_date: null,
+            created_at: "2026-04-06T08:00:00.000Z",
+            updated_at: "2026-04-06T08:00:00.000Z",
+          },
+        ],
+      }),
+    };
+    const repository = new PlannerRepository();
+
+    await repository.updateTask("84a87ef5-f143-4b9b-9f6b-b7c608d72ac1", { category: "work" }, db as never);
+
+    const [sql, params] = db.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("category = $");
+    expect(params).toContain("work");
+  });
 });

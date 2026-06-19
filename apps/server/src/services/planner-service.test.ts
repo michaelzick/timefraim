@@ -57,6 +57,7 @@ const baseTask: Task = {
   estimatedMinutes: 45,
   status: "scheduled",
   priority: "high",
+  category: "personal",
   scheduledBlockId: "3f441c84-f3c7-4f40-8e88-8f2a6520f528",
   togglProjectId: null,
   completedOnDate: null,
@@ -408,6 +409,57 @@ describe("planner-service", () => {
       fakeDb,
     );
     expect(upsertGoogleScheduledTask).not.toHaveBeenCalled();
+  });
+
+  it("passes category through to createTask and defaults to personal", async () => {
+    const repository = createRepositoryMock();
+    const createdTask = {
+      ...baseTask,
+      id: "970c02c6-d0e2-491d-a386-4d447b6dce7a",
+      title: "Client review",
+      category: "work" as const,
+    };
+
+    repository.createTask.mockResolvedValue(createdTask);
+
+    const service = new PlannerService(repository as never);
+
+    await service.applyChange(
+      "task.create",
+      {
+        title: "Client review",
+        estimatedMinutes: 30,
+        priority: "medium",
+        category: "work",
+        status: "planned",
+        plannerDate: "2026-04-06",
+      },
+      "user",
+    );
+
+    expect(repository.createTask).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Client review", category: "work" }),
+      fakeDb,
+    );
+  });
+
+  it("defaults category to personal when omitted from create payload", async () => {
+    const repository = createRepositoryMock();
+    const createdTask = { ...baseTask, id: "new-task-id", title: "Errand" };
+    repository.createTask.mockResolvedValue(createdTask);
+
+    const service = new PlannerService(repository as never);
+
+    await service.applyChange(
+      "task.create",
+      { title: "Errand", estimatedMinutes: 30, status: "planned", plannerDate: "2026-04-06" },
+      "user",
+    );
+
+    expect(repository.createTask).toHaveBeenCalledWith(
+      expect.objectContaining({ category: "personal" }),
+      fakeDb,
+    );
   });
 
   it("resizes a scheduled block when task duration changes", async () => {

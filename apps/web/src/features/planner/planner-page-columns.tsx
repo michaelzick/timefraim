@@ -67,6 +67,7 @@ export function PlannerQueueColumn({
 type PlannerTimelineColumnProps = {
   date: string;
   dayPlan: DayPlan;
+  tasks: Task[];
   selectedTimelineTaskId: string | null;
   selectedTimelineCalendarEventId: string | null;
   copyDragScheduleBlockId: string | null;
@@ -83,6 +84,7 @@ type PlannerTimelineColumnProps = {
 export function PlannerTimelineColumn({
   date,
   dayPlan,
+  tasks,
   selectedTimelineTaskId,
   selectedTimelineCalendarEventId,
   copyDragScheduleBlockId,
@@ -95,11 +97,15 @@ export function PlannerTimelineColumn({
   onMarkTaskDone,
   onResizeTaskDuration,
 }: PlannerTimelineColumnProps) {
+  const visibleTaskIds = new Set(tasks.map((task) => task.id));
+  const scheduleBlocks = dayPlan.scheduleBlocks.filter(
+    (block) => visibleTaskIds.has(block.taskId),
+  );
   return (
     <TimelineBoard
       date={date}
-      tasks={dayPlan.tasks}
-      scheduleBlocks={dayPlan.scheduleBlocks}
+      tasks={tasks}
+      scheduleBlocks={scheduleBlocks}
       calendarEvents={dayPlan.calendarEvents}
       activeTimer={dayPlan.activeTimer}
       selectedTaskId={selectedTimelineTaskId}

@@ -82,7 +82,7 @@ timefraim/
 
 Zod schemas and inferred types, barrel-exported from `src/index.ts`. Consumed as TypeScript source (no build step required for dev).
 
-- `task.ts` — `Task`, `TaskInput`, `TaskUpdate`, `TaskStatus`, `TaskPriority` (`low | medium | high | urgent`).
+- `task.ts` — `Task`, `TaskInput`, `TaskUpdate`, `TaskStatus`, `TaskPriority` (`low | medium | high | urgent`), `TaskCategory` (`personal | work`).
 - `schedule.ts` — `ScheduleBlock`, `ScheduleBlockCreate/Update`, Google event/task mirror IDs, `CalendarEvent`, `CalendarEventView`.
 - `drafts.ts` — `SyncDraft`, `DraftKind`, `DraftStatus`, `ActorRole`, `formatDraftSummary()`.
 - `integration.ts` — Google/Toggl schemas, Google planner sync target, `AuthUser`, `AuthSession`.
@@ -97,7 +97,7 @@ Migrations live in `supabase/migrations/` (timestamp-prefixed, applied in order)
 
 | Table | Purpose |
 |---|---|
-| `tasks` | User tasks: status, priority, estimated minutes, notes, toggl_project_id. |
+| `tasks` | User tasks: status, priority, category (personal/work), estimated minutes, notes, toggl_project_id. |
 | `schedule_blocks` | Time blocks tied to tasks; `google_event_id` / `google_task_id` are mutually exclusive external mirrors. |
 | `calendar_events` | Synced external events: provider, external_event_id, raw_payload JSONB. |
 | `integration_tokens` | Encrypted OAuth/API tokens keyed by provider; metadata JSONB. |
@@ -112,7 +112,7 @@ Conventions: UUID PKs (`gen_random_uuid()`), `timestamptz` for every date, `upda
 
 Public app tables have RLS enabled for hosted Supabase use. Browser data access still goes through the Fastify API; the Supabase client is used for auth. RLS protects the hosted PostgREST surface by allowing full app-table access only to authenticated JWTs whose email is present in `public.app_access_users`; anon receives no app-table policies. The backend's direct Postgres connection is still trusted to enforce API-layer authorization.
 
-Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event, per-day calendar sync runs, schedule block Google Task mirror IDs, per-user preferences (theme + notifications), single-user RLS allowlist.
+Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event, per-day calendar sync runs, schedule block Google Task mirror IDs, per-user preferences (theme + notifications), single-user RLS allowlist, task category (personal/work).
 
 ## 6. External integrations
 

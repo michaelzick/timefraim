@@ -27,6 +27,7 @@ export async function duplicateTaskInContext(context: DraftHandlerContext): Prom
       estimatedMinutes: sourceTask.estimatedMinutes,
       status: "planned",
       priority: sourceTask.priority,
+      category: sourceTask.category,
       togglProjectId: sourceTask.togglProjectId ?? null,
     },
     context.client,

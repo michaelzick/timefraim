@@ -1,7 +1,9 @@
 import type { Task, TimerSession, TogglIntegrationSettings } from "@timefraim/shared";
+import { Briefcase, User, type LucideIcon } from "lucide-react";
 import type { TaskLifecycleValue } from "@/features/planner/types";
 
 export const PRIORITY_OPTIONS: Task["priority"][] = ["low", "medium", "high", "urgent"];
+export const CATEGORY_OPTIONS: Task["category"][] = ["personal", "work"];
 export const TASK_LIFECYCLE_OPTIONS: TaskLifecycleValue[] = ["active", "done"];
 
 const PRIORITY_LABELS: Record<Task["priority"], string> = {
@@ -9,6 +11,16 @@ const PRIORITY_LABELS: Record<Task["priority"], string> = {
   medium: "Medium",
   high: "High",
   urgent: "Urgent",
+};
+
+const CATEGORY_LABELS: Record<Task["category"], string> = {
+  personal: "Personal",
+  work: "Work",
+};
+
+const CATEGORY_ICONS: Record<Task["category"], LucideIcon> = {
+  personal: User,
+  work: Briefcase,
 };
 
 const LIFECYCLE_LABELS: Record<TaskLifecycleValue, string> = {
@@ -50,6 +62,14 @@ const PRIORITY_TIMELINE_BLOCK_CLASSES: Record<Task["priority"], string> = {
 
 export function formatTaskPriority(priority: Task["priority"]) {
   return PRIORITY_LABELS[priority];
+}
+
+export function formatTaskCategory(category: Task["category"]) {
+  return CATEGORY_LABELS[category];
+}
+
+export function getCategoryIcon(category: Task["category"]): LucideIcon {
+  return CATEGORY_ICONS[category];
 }
 
 export function formatTaskLifecycle(value: TaskLifecycleValue) {

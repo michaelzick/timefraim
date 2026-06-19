@@ -27,6 +27,7 @@ export function buildTask(overrides: Partial<Task> = {}): Task {
     estimatedMinutes: 45,
     status: "planned",
     priority: "medium",
+    category: "personal",
     scheduledBlockId: null,
     togglProjectId: null,
     completedOnDate: null,

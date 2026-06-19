@@ -61,6 +61,7 @@ export async function applyTaskCreateDraft(context: DraftHandlerContext) {
       estimatedMinutes: payload.estimatedMinutes ?? 30,
       status,
       priority: payload.priority ?? "low",
+      category: payload.category ?? "personal",
       togglProjectId: payload.togglProjectId ?? null,
       completedOnDate:
         status === "done" ? payload.completedOnDate ?? todayIsoDate() : null,
@@ -101,6 +102,7 @@ export async function applyTaskUpdateDraft(context: DraftHandlerContext) {
   if (typeof payload.estimatedMinutes !== "undefined") patch.estimatedMinutes = payload.estimatedMinutes;
   if (typeof payload.status !== "undefined") patch.status = payload.status;
   if (typeof payload.priority !== "undefined") patch.priority = payload.priority;
+  if (typeof payload.category !== "undefined") patch.category = payload.category;
   if (typeof payload.togglProjectId !== "undefined") patch.togglProjectId = payload.togglProjectId;
   if (typeof completedOnDate !== "undefined") patch.completedOnDate = completedOnDate;
 
