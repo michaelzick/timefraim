@@ -60,7 +60,7 @@ export function KanbanCard({
   const isRunning = activeTimerTaskId === task.id;
   const elapsed = useElapsedSeconds(isRunning ? activeTimerStartedAt : null);
   const planCta = getPlanCta(kanbanStatus);
-  const canDelete = kanbanStatus === "inbox";
+  const canDelete = kanbanStatus === "inbox" || kanbanStatus === "done";
   const canRemove = kanbanStatus !== "inbox";
 
   return (

@@ -1,6 +1,8 @@
 import { useDroppable } from "@dnd-kit/core";
 import type { ScheduleBlock, Task } from "@timefraim/shared";
+import { Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { KanbanCard } from "@/features/kanban/kanban-card";
 import { getTaskScheduleLabel } from "@/features/kanban/kanban-schedule-label";
@@ -15,6 +17,7 @@ type KanbanColumnProps = {
   date: string;
   scheduleBlocks: ScheduleBlock[];
   tasks: Task[];
+  onClearDone?: () => void;
   onDeleteTask: (task: Task) => void;
   onPlanTask: (task: Task, targetStatus: KanbanStatus) => void;
   onPriorityChange: (task: Task, priority: Task["priority"]) => void;
@@ -30,6 +33,7 @@ export function KanbanColumn({
   date,
   scheduleBlocks,
   tasks,
+  onClearDone,
   onDeleteTask,
   onPlanTask,
   onPriorityChange,
@@ -53,7 +57,15 @@ export function KanbanColumn({
       <header className="mb-3 px-1">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-sm font-semibold text-[var(--heading)]">{column.title}</h3>
-          <Badge>{tasks.length}</Badge>
+          <div className="flex items-center gap-2">
+            {column.status === "done" && onClearDone && tasks.length > 0 ? (
+              <Button type="button" size="sm" variant="destructive" onClick={onClearDone}>
+                <Trash2 className="h-4 w-4" />
+                Clear
+              </Button>
+            ) : null}
+            <Badge>{tasks.length}</Badge>
+          </div>
         </div>
         <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{column.caption}</p>
       </header>
