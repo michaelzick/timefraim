@@ -1,4 +1,5 @@
 import type { Task } from "@timefraim/shared";
+import { ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,9 +22,10 @@ export function KanbanCategoryDropdown({
         <button
           type="button"
           aria-label={`Category for ${task.title}`}
-          className="rounded-full outline-none transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]"
+          className="inline-flex h-6 items-center gap-1 rounded-full outline-none transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]"
         >
           <TaskCategoryIcon category={task.category} />
+          <ChevronDown className="pointer-events-none h-3 w-3 text-[var(--planner-surface-meta)]" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[88px] rounded-xl p-1 text-xs">
