@@ -198,7 +198,7 @@ preview_start("web")     # Vite dev server on 6173
 
 **Auth bypass (Google OAuth is unavailable on localhost):**
 
-The app gates on a Supabase session. Email login is disabled; only Google OAuth is configured. Use the local Supabase admin API to generate a magic link for `ALLOWED_EMAIL` (read from `.env`), then navigate the preview to it — Supabase verifies and redirects back to the app with a valid session automatically.
+The app gates on a Supabase session. Email login is disabled; only Google OAuth is configured. Mint a magic link for `ALLOWED_EMAIL` with the local Supabase admin API, then establish the session **in the preview page via the app's own Supabase client** (drive this with the `preview_*` tools).
 
 ```bash
 # Generate a magic link (use SUPABASE_SERVICE_ROLE_KEY and ALLOWED_EMAIL from .env)
@@ -206,16 +206,18 @@ curl -s -X POST "http://127.0.0.1:55331/auth/v1/admin/generate_link" \
   -H "Authorization: Bearer $SERVICE_KEY" \
   -H "apikey: $SERVICE_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"type": "magiclink", "email": "$ALLOWED_EMAIL"}'
-# Response includes "action_link": "http://127.0.0.1:55331/auth/v1/verify?token=...&redirect_to=http://127.0.0.1:6173"
+  -d '{"type": "magiclink", "email": "<ALLOWED_EMAIL>"}'
+# The returned action_link's `token` query param is the token_hash used below.
 ```
 
-Then in `preview_eval`:
+Then in `preview_eval`, verify the OTP through the app's client so the session persists under the correct storage key (`sb-127-auth-token`):
 ```js
-window.location.href = "<action_link from response>";
+(await import('/src/lib/supabase.ts')).supabase.auth.verifyOtp({ token_hash: '<TOKEN_HASH>', type: 'magiclink' })
+// once it resolves ok, navigate to the page under test, e.g. the Board:
+window.location.href = '/board';
 ```
 
-The Supabase JS client picks up the tokens from the redirect URL hash and the session is established. This works even though email login is disabled — `generate_link` is an admin endpoint that bypasses provider restrictions. It does **not** change the user's password.
+`generate_link` is an admin endpoint that bypasses provider restrictions and does **not** change the user's password. **Important:** navigating directly to the raw `action_link` (the implicit `#access_token=...` redirect) does *not* reliably persist a session in an MCP-driven browser — the hash is dropped before the SDK consumes it, so use the `verifyOtp` call above instead. Routes: Planner `/`, Board `/board`, Settings `/settings`.
 
 ## 8. Environment
 
