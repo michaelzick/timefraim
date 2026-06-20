@@ -16,6 +16,9 @@ export function getPlanCta(kanbanStatus: KanbanStatus): { label: string; target:
   if (kanbanStatus === "planned") {
     return { label: "Schedule", target: "scheduled" };
   }
+  if (kanbanStatus === "scheduled") {
+    return { label: "Mark done", target: "done" };
+  }
   return null;
 }
 

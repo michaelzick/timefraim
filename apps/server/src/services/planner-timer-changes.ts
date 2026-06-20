@@ -37,7 +37,6 @@ export async function applyTimerStartDraft(context: DraftHandlerContext) {
     { taskId: task.id, startedAt: new Date().toISOString(), source: payload.source },
     context.client,
   );
-  await context.repository.updateTask(task.id, { status: "in_progress" }, context.client);
   await context.repository.createAuditLog(
     {
       actorRole: context.actorRole,

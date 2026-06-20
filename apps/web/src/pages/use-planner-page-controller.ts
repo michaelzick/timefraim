@@ -152,7 +152,6 @@ export function usePlannerPageController({
     setSelectedTaskState,
     updateScheduleBlock,
     updateTask,
-    activeTimerTaskId: dayPlan.activeTimer?.taskId ?? null,
     detailForm,
   });
 

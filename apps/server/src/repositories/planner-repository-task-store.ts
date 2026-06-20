@@ -18,7 +18,6 @@ export class PlannerRepositoryTaskStore {
        left join public.schedule_blocks sb on sb.id = t.scheduled_block_id
        order by
          case t.status
-           when 'in_progress' then 0
            when 'scheduled' then 1
            when 'planned' then 2
            when 'inbox' then 2

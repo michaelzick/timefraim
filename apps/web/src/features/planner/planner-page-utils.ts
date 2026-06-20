@@ -12,7 +12,7 @@ import type {
 
 export type PlannerPriority = "low" | "medium" | "high" | "urgent";
 export type PlannerCategory = "personal" | "work";
-export type PlannerStatus = "inbox" | "planned" | "scheduled" | "in_progress" | "done";
+export type PlannerStatus = "inbox" | "planned" | "scheduled" | "done";
 export type PlannerCreateTaskValues = {
   title: string;
   notes: string;
@@ -99,13 +99,9 @@ export function getTaskFormValues(selectedTask: Task | null): TaskFormValues {
   };
 }
 
-export function resolvePlannerTaskStatus(task: Pick<Task, "id" | "scheduledBlockId">, lifecycle: PlannerSaveTaskValues["lifecycle"], activeTimerTaskId: string | null): PlannerStatus {
+export function resolvePlannerTaskStatus(task: Pick<Task, "scheduledBlockId">, lifecycle: PlannerSaveTaskValues["lifecycle"]): PlannerStatus {
   if (lifecycle !== "active") {
     return lifecycle;
-  }
-
-  if (activeTimerTaskId === task.id) {
-    return "in_progress";
   }
 
   return task.scheduledBlockId ? "scheduled" : "planned";

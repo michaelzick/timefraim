@@ -4,7 +4,6 @@ export const KANBAN_STATUSES = [
   "inbox",
   "planned",
   "scheduled",
-  "in_progress",
   "done",
 ] as const satisfies TaskStatus[];
 

@@ -20,3 +20,16 @@ export function readKanbanStatus(data: unknown): KanbanStatus | null {
 export function getColumnTitle(status: KanbanStatus) {
   return KANBAN_COLUMNS.find((column) => column.status === status)?.title ?? "Board";
 }
+
+export function getKanbanMoveToast(status: KanbanStatus) {
+  if (status === "done") {
+    return "Marked as done";
+  }
+  if (status === "scheduled") {
+    return "Scheduled on the timeline";
+  }
+  if (status === "planned") {
+    return "Moved to Planned";
+  }
+  return `Moved to ${getColumnTitle(status)}`;
+}

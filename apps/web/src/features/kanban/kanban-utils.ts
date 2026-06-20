@@ -7,7 +7,6 @@ export const KANBAN_COLUMNS = [
   { status: "inbox", title: "Inbox", caption: "Ideas and unsorted work" },
   { status: "planned", title: "Planned", caption: "Ready to schedule" },
   { status: "scheduled", title: "Scheduled", caption: "Committed on a timeline" },
-  { status: "in_progress", title: "In Progress", caption: "Actively being worked" },
   { status: "done", title: "Done", caption: "Completed work" },
 ] as const;
 
@@ -22,8 +21,8 @@ const PLANNING_START_HOUR = 5;
 const MINUTE_MS = 60_000;
 
 export function resolveKanbanStatus(task: Task): KanbanStatus {
-  if (task.status === "done" || task.status === "in_progress") {
-    return task.status;
+  if (task.status === "done") {
+    return "done";
   }
   return task.scheduledBlockId ? "scheduled" : task.status;
 }
@@ -62,7 +61,6 @@ export function groupTasksByKanbanStatus(tasks: Task[]) {
     inbox: [],
     planned: [],
     scheduled: [],
-    in_progress: [],
     done: [],
   };
   for (const task of tasks) {

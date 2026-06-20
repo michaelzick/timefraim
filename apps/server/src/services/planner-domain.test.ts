@@ -90,7 +90,7 @@ describe("planner-domain", () => {
         title: "Timer task",
         notes: null,
         estimatedMinutes: 25,
-        status: "in_progress",
+        status: "scheduled",
         priority: "urgent",
         category: "personal",
         scheduledBlockId: null,

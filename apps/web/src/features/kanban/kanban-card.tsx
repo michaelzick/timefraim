@@ -1,7 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@timefraim/shared";
-import { CalendarPlus, ChevronDown, ExternalLink, GripVertical, Inbox, Play, Square, Trash2 } from "lucide-react";
+import { CalendarPlus, CheckCircle2, ChevronDown, ExternalLink, GripVertical, Inbox, Play, Square, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -139,7 +139,7 @@ export function KanbanCard({
       <div className="mt-4 flex flex-wrap gap-2">
         {planCta ? (
           <Button type="button" size="sm" onClick={() => onPlanTask(task, planCta.target)}>
-            <CalendarPlus className="h-4 w-4" />
+            {planCta.target === "done" ? <CheckCircle2 className="h-4 w-4" /> : <CalendarPlus className="h-4 w-4" />}
             {planCta.label}
           </Button>
         ) : null}
