@@ -4,7 +4,6 @@ export const taskStatusSchema = z.enum([
   "inbox",
   "planned",
   "scheduled",
-  "in_progress",
   "done",
 ]);
 export const taskPrioritySchema = z.enum(["low", "medium", "high", "urgent"]);

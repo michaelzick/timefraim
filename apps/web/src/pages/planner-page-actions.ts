@@ -9,7 +9,6 @@ type PlannerPageActionTaskStatus =
   | "inbox"
   | "planned"
   | "scheduled"
-  | "in_progress"
   | "done";
 type PlannerPageActionTaskPriority = "low" | "medium" | "high" | "urgent";
 type PlannerPageActionTaskCategory = "personal" | "work";
@@ -50,7 +49,6 @@ export function buildPlannerCreateTaskInput(values: PlannerCreateTaskValues, dat
 export function buildPlannerTaskUpdateInput(
   selectedTask: PlannerPageActionTask,
   values: PlannerSaveTaskValues,
-  activeTimerTaskId: string | null,
 ): LocalPlannerTaskUpdateInput {
   return {
     title: values.title,
@@ -58,7 +56,7 @@ export function buildPlannerTaskUpdateInput(
     estimatedMinutes: values.estimatedMinutes,
     category: values.category,
     priority: values.priority,
-    status: resolvePlannerTaskStatus(selectedTask, values.lifecycle, activeTimerTaskId),
+    status: resolvePlannerTaskStatus(selectedTask, values.lifecycle),
     togglProjectId: values.togglProjectId || null,
   };
 }

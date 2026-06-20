@@ -125,11 +125,3 @@ export function formatActiveTimerHeading(
 
   return `${task.title} (${projectName})`;
 }
-
-export function resolveActiveTaskStatus(task: Pick<Task, "id" | "scheduledBlockId">, activeTimerTaskId: string | null) {
-  if (activeTimerTaskId === task.id) {
-    return "in_progress" as const;
-  }
-
-  return task.scheduledBlockId ? "scheduled" : "planned";
-}

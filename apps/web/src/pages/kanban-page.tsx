@@ -3,20 +3,21 @@ import { PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { Task } from "@timefraim/shared";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { KanbanActiveTimerBanner } from "@/features/kanban/kanban-active-timer-banner";
 import { KanbanCardPreview } from "@/features/kanban/kanban-card-preview";
 import { clearDoneTasks } from "@/features/kanban/kanban-clear-done";
 import { KanbanColumn } from "@/features/kanban/kanban-column";
 import { KanbanCreateTaskPanel } from "@/features/kanban/kanban-create-task-panel";
 import { buildKanbanCreateTaskInput } from "@/features/kanban/kanban-create-task-utils";
-import { getColumnTitle, readKanbanStatus, readKanbanTask } from "@/features/kanban/kanban-dnd";
+import { readKanbanStatus, readKanbanTask } from "@/features/kanban/kanban-dnd";
 import { showKanbanActionError } from "@/features/kanban/kanban-errors";
+import { createKanbanMoveRunner } from "@/features/kanban/kanban-move-handlers";
 import { KanbanToolbar } from "@/features/kanban/kanban-toolbar";
 import type { KanbanStatus } from "@/features/kanban/kanban-types";
 import {
   filterKanbanTasks,
   groupTasksByKanbanStatus,
   KANBAN_COLUMNS,
-  moveTaskOnKanban,
 } from "@/features/kanban/kanban-utils";
 import { createCategoryChangeHandler, createPriorityChangeHandler } from "@/features/kanban/kanban-task-field-handlers";
 import type { TaskCategoryFilter } from "@/features/planner/planner-page-selection";
@@ -67,6 +68,15 @@ export function KanbanPage({
     setActiveTask(readKanbanTask(event.active.data.current));
   };
 
+  const runKanbanMove = createKanbanMoveRunner({
+    calendarEvents: dayPlan.calendarEvents,
+    date,
+    onCreateScheduleBlock,
+    onDeleteScheduleBlock,
+    onUpdateTask,
+    scheduleBlocks: dayPlan.scheduleBlocks,
+  });
+
   const handleDragEnd = (event: DragEndEvent) => {
     const task = readKanbanTask(event.active.data.current);
     const targetStatus = readKanbanStatus(event.over?.data.current);
@@ -74,38 +84,11 @@ export function KanbanPage({
     if (!task || !targetStatus) {
       return;
     }
-    void moveTaskOnKanban({
-      calendarEvents: dayPlan.calendarEvents,
-      date,
-      onCreateScheduleBlock,
-      onDeleteScheduleBlock,
-      onUpdateTask,
-      scheduleBlocks: dayPlan.scheduleBlocks,
-      targetStatus,
-      task,
-    })
-      .then(() => toast.success(`Moved to ${getColumnTitle(targetStatus)}`, { duration: 3000 }))
-      .catch((error) => showKanbanActionError("Failed to move the task. Please try again.", error));
+    void runKanbanMove(task, targetStatus);
   };
 
   const handlePlanTask = (task: Task, targetStatus: KanbanStatus) => {
-    void moveTaskOnKanban({
-      calendarEvents: dayPlan.calendarEvents,
-      date,
-      onCreateScheduleBlock,
-      onDeleteScheduleBlock,
-      onUpdateTask,
-      scheduleBlocks: dayPlan.scheduleBlocks,
-      targetStatus,
-      task,
-    })
-      .then(() =>
-        toast.success(
-          targetStatus === "scheduled" ? "Scheduled on the timeline" : "Moved to Planned",
-          { duration: 3000 },
-        ),
-      )
-      .catch((error) => showKanbanActionError("Failed to move the task. Please try again.", error));
+    void runKanbanMove(task, targetStatus);
   };
 
   const handleStartTimer = (taskId: string) => {
@@ -121,18 +104,7 @@ export function KanbanPage({
   };
 
   const handleRemoveTask = (task: Task) => {
-    void moveTaskOnKanban({
-      calendarEvents: dayPlan.calendarEvents,
-      date,
-      onCreateScheduleBlock,
-      onDeleteScheduleBlock,
-      onUpdateTask,
-      scheduleBlocks: dayPlan.scheduleBlocks,
-      targetStatus: "inbox",
-      task,
-    })
-      .then(() => toast.success("Moved to Inbox", { duration: 3000 }))
-      .catch((error) => showKanbanActionError("Failed to remove the task. Please try again.", error));
+    void runKanbanMove(task, "inbox");
   };
 
   const handleDeleteTask = (task: Task) => {
@@ -182,7 +154,12 @@ export function KanbanPage({
             onSubmit={handleCreateTask}
           />
         ) : null}
-        <div className="grid gap-4 xl:grid-cols-5">
+        <KanbanActiveTimerBanner
+          dayPlan={dayPlan}
+          togglSettings={togglSettings}
+          onStopTimer={handleStopTimer}
+        />
+        <div className="grid gap-4 xl:grid-cols-4">
           {KANBAN_COLUMNS.map((column) => (
             <KanbanColumn
               key={column.status}

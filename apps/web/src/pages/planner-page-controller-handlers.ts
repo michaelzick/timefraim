@@ -60,7 +60,6 @@ export function createPlannerPageHandlers(args: {
     taskId: string,
     values: ReturnType<typeof buildPlannerTaskUpdateInput>,
   ) => Promise<unknown>;
-  activeTimerTaskId: string | null;
   detailForm: UseFormReturn<TaskFormValues>;
 }) {
   async function handleCreateTask(values: PlannerCreateTaskValues) {
@@ -163,11 +162,7 @@ export function createPlannerPageHandlers(args: {
     try {
       await args.updateTask(
         args.selectedTask.id,
-        buildPlannerTaskUpdateInput(
-          args.selectedTask,
-          values,
-          args.activeTimerTaskId,
-        ),
+        buildPlannerTaskUpdateInput(args.selectedTask, values),
       );
       args.detailForm.reset(values as TaskFormValues);
     } catch (error) {

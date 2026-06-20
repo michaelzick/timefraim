@@ -1,10 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { KanbanPage } from "@/pages/kanban-page";
-import { buildDayPlan, buildTogglSettings } from "@/test/fixtures";
+import { buildDayPlan, buildTask, buildTogglSettings } from "@/test/fixtures";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -210,7 +210,7 @@ describe("KanbanPage", () => {
       scheduledBlockId: "block-1f8f9660-0000-4000-8000-000000000001",
       scheduledStartAt: "2026-04-08T16:00:00.000Z",
       scheduledEndAt: "2026-04-08T16:45:00.000Z",
-      status: "in_progress" as const,
+      status: "scheduled" as const,
     };
 
     renderKanbanPage({
@@ -229,8 +229,38 @@ describe("KanbanPage", () => {
       }),
     });
 
-    expect(screen.getByText(/Apr 8,/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Apr 8,/).length).toBeGreaterThan(0);
     expect(screen.getByText(/Running 01:0/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument();
+  });
+
+  it("shows the active-timer banner while a timer runs", () => {
+    const task = buildTask();
+
+    renderKanbanPage({
+      dayPlan: buildDayPlan({
+        activeTimer: {
+          id: "timer-1f8f9660-0000-4000-8000-000000000001",
+          taskId: task.id,
+          calendarEventId: null,
+          togglEntryId: null,
+          startedAt: new Date(Date.now() - 65_000).toISOString(),
+          endedAt: null,
+          durationSeconds: null,
+          source: "manual",
+        },
+        tasks: [task],
+      }),
+    });
+
+    const banner = screen.getByRole("region", { name: "Active timer" });
+    expect(within(banner).getByText(/Plan launch week/)).toBeInTheDocument();
+    expect(within(banner).getByRole("button", { name: "Stop timer" })).toBeInTheDocument();
+  });
+
+  it("hides the active-timer banner when no timer is running", () => {
+    renderKanbanPage({ dayPlan: buildDayPlan({ activeTimer: null }) });
+
+    expect(screen.queryByRole("region", { name: "Active timer" })).not.toBeInTheDocument();
   });
 });
