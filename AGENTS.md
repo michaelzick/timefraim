@@ -57,7 +57,7 @@ timefraim/
 - **Entry:** `src/main.tsx` → `src/App.tsx` (theme provider + auth guard + QueryClientProvider + BrowserRouter + toaster).
 - **Pages:** `src/pages/planner-page.tsx`, `src/pages/kanban-page.tsx`, `src/pages/settings-page.tsx`.
 - **Settings integrations:** `src/pages/settings-google-calendars-card.tsx`, `src/pages/settings-toggl-card.tsx`.
-- **Feature code:** `src/features/planner/` — task cards, calendar cards, timeline board, column layout; `src/features/kanban/` — status board columns/cards, planner links, an active-timer banner, and timeline scheduling helpers.
+- **Feature code:** `src/features/planner/` — task cards, calendar cards, timeline board, column layout; `src/features/kanban/` — status board columns/cards, planner links, an active-timer banner, per-column date/priority sorting, and timeline scheduling helpers.
 - **Reusable UI:** `src/components/ui/` (shadcn-style primitives), `src/components/layout/app-shell.tsx`.
 - **Theme:** `src/theme/` — local light/dark/system preference, document class management, and resolved theme hook.
 - **Hooks:** `src/hooks/` — `use-planner-mutations.ts` (optimistic updates), `use-app-shell-data.ts`, `use-supabase-session.ts`, `use-planner-page-controller.ts`.

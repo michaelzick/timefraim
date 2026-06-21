@@ -19,6 +19,11 @@ import {
   groupTasksByKanbanStatus,
   KANBAN_COLUMNS,
 } from "@/features/kanban/kanban-utils";
+import {
+  DEFAULT_COLUMN_SORT_MODES,
+  sortGroupedColumns,
+  type KanbanSortMode,
+} from "@/features/kanban/kanban-sort";
 import { createCategoryChangeHandler, createPriorityChangeHandler } from "@/features/kanban/kanban-task-field-handlers";
 import type { TaskCategoryFilter } from "@/features/planner/planner-page-selection";
 import type { CreateTaskValues, PlannerPageProps } from "@/features/planner/types";
@@ -53,6 +58,7 @@ export function KanbanPage({
 }: KanbanPageProps) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<TaskCategoryFilter>("all");
+  const [columnSortModes, setColumnSortModes] = useState(DEFAULT_COLUMN_SORT_MODES);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -61,6 +67,10 @@ export function KanbanPage({
     [dayPlan.tasks, search, categoryFilter],
   );
   const groupedTasks = useMemo(() => groupTasksByKanbanStatus(visibleTasks), [visibleTasks]);
+  const sortedColumns = useMemo(
+    () => sortGroupedColumns(groupedTasks, columnSortModes, dayPlan.scheduleBlocks),
+    [groupedTasks, columnSortModes, dayPlan.scheduleBlocks],
+  );
   const scheduledCount = groupedTasks.scheduled.length;
   const doneCount = groupedTasks.done.length;
 
@@ -122,6 +132,9 @@ export function KanbanPage({
   const handlePriorityChange = createPriorityChangeHandler(onUpdateTask);
   const handleCategoryChange = createCategoryChangeHandler(onUpdateTask);
 
+  const handleSortModeChange = (status: KanbanStatus, mode: KanbanSortMode) =>
+    setColumnSortModes((current) => ({ ...current, [status]: mode }));
+
   const handleCreateTask = async (values: CreateTaskValues) => {
     try {
       await onCreateTask(buildKanbanCreateTaskInput(values));
@@ -168,13 +181,15 @@ export function KanbanPage({
               column={column}
               date={date}
               scheduleBlocks={dayPlan.scheduleBlocks}
-              tasks={groupedTasks[column.status]}
+              sortMode={columnSortModes[column.status]}
+              tasks={sortedColumns[column.status]}
               onClearDone={column.status === "done" ? handleClearDone : undefined}
               onDeleteTask={handleDeleteTask}
               onPlanTask={handlePlanTask}
               onPriorityChange={handlePriorityChange}
               onCategoryChange={handleCategoryChange}
               onRemoveTask={handleRemoveTask}
+              onSortModeChange={(mode) => handleSortModeChange(column.status, mode)}
               onStartTimer={handleStartTimer}
               onStopTimer={handleStopTimer}
             />
