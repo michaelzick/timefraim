@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { KanbanCard } from "@/features/kanban/kanban-card";
 import { getTaskScheduleLabel } from "@/features/kanban/kanban-schedule-label";
+import type { KanbanSortMode } from "@/features/kanban/kanban-sort";
+import { KanbanSortDropdown } from "@/features/kanban/kanban-sort-dropdown";
 import type { KanbanColumnDefinition, KanbanStatus } from "@/features/kanban/kanban-types";
 import { buildPlannerTaskHrefForTask } from "@/features/kanban/kanban-utils";
 import { cn } from "@/lib/utils";
@@ -16,6 +18,7 @@ type KanbanColumnProps = {
   column: KanbanColumnDefinition;
   date: string;
   scheduleBlocks: ScheduleBlock[];
+  sortMode: KanbanSortMode;
   tasks: Task[];
   onClearDone?: () => void;
   onDeleteTask: (task: Task) => void;
@@ -23,6 +26,7 @@ type KanbanColumnProps = {
   onPriorityChange: (task: Task, priority: Task["priority"]) => void;
   onCategoryChange: (task: Task, category: Task["category"]) => void;
   onRemoveTask: (task: Task) => void;
+  onSortModeChange: (mode: KanbanSortMode) => void;
   onStartTimer: (taskId: string) => void;
   onStopTimer: () => void;
 };
@@ -33,6 +37,7 @@ export function KanbanColumn({
   column,
   date,
   scheduleBlocks,
+  sortMode,
   tasks,
   onClearDone,
   onDeleteTask,
@@ -40,6 +45,7 @@ export function KanbanColumn({
   onPriorityChange,
   onCategoryChange,
   onRemoveTask,
+  onSortModeChange,
   onStartTimer,
   onStopTimer,
 }: KanbanColumnProps) {
@@ -60,6 +66,11 @@ export function KanbanColumn({
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-sm font-semibold text-[var(--heading)]">{column.title}</h3>
           <div className="flex items-center gap-2">
+            <KanbanSortDropdown
+              columnTitle={column.title}
+              sortMode={sortMode}
+              onSortModeChange={onSortModeChange}
+            />
             {column.status === "done" && onClearDone && tasks.length > 0 ? (
               <Button type="button" size="sm" variant="destructive" onClick={onClearDone}>
                 <Trash2 className="h-4 w-4" />

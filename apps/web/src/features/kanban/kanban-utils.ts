@@ -1,6 +1,7 @@
 import type { CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
 import { getTimelineWindow, TIMELINE_INCREMENT_MINUTES } from "@/components/timeline-geometry";
 import { getTimezoneOffsetForDate } from "@/lib/utils";
+import { compareKanbanTasks } from "@/features/kanban/kanban-sort";
 import type { KanbanMoveInput, KanbanStatus } from "@/features/kanban/kanban-types";
 
 export const KANBAN_COLUMNS = [
@@ -9,13 +10,6 @@ export const KANBAN_COLUMNS = [
   { status: "scheduled", title: "Scheduled", caption: "Committed on a timeline" },
   { status: "done", title: "Done", caption: "Completed work" },
 ] as const;
-
-const PRIORITY_RANK: Record<Task["priority"], number> = {
-  urgent: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
-};
 
 const PLANNING_START_HOUR = 5;
 const MINUTE_MS = 60_000;
@@ -116,14 +110,6 @@ export async function moveTaskOnKanban(args: KanbanMoveInput) {
     plannerDate: args.date,
     tzOffsetMinutes,
   });
-}
-
-function compareKanbanTasks(left: Task, right: Task) {
-  const priorityDelta = PRIORITY_RANK[left.priority] - PRIORITY_RANK[right.priority];
-  if (priorityDelta !== 0) {
-    return priorityDelta;
-  }
-  return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
 }
 
 function resolvePlannerLinkDate(task: Task, fallbackDate: string, scheduleBlocks: ScheduleBlock[]) {
