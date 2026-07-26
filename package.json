@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@11.17.0+sha512.cca3cea332ad254bb84145f966d19f4879615210346fc92c79a047f23a0d7b3cca3c3792f0076ba1f1831d277efbcf0a9119b31a9a60eca7fb3d6231f331ef72",
   "bin": {
     "timefraim": "scripts/timefraim.mjs"
   },
@@ -49,18 +49,5 @@
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.30.1",
     "vitest": "^4.1.5"
-  },
-  "pnpm": {
-    "overrides": {
-      "hono": "^4.12.25",
-      "js-yaml": "^4.2.0",
-      "fast-uri": "^3.1.2",
-      "ip-address": "^10.1.1",
-      "@hono/node-server": "^1.19.13",
-      "brace-expansion@>=5.0.0 <5.0.6": "5.0.6",
-      "qs@>=6.11.1 <=6.15.1": "6.15.2",
-      "ws@>=8.0.0 <8.21.0": "8.21.0",
-      "esbuild@>=0.17.0 <0.28.1": "0.28.1"
-    }
   }
 }

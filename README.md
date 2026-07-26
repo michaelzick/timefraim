@@ -12,7 +12,7 @@ Single-user scheduling app scaffolded as a local-first Sunsama-style planner wit
 1. Enable `pnpm` through Corepack:
 
    ```bash
-   corepack prepare pnpm@10.11.0 --activate
+   corepack prepare pnpm@11.17.0 --activate
    ```
 
 2. Install dependencies:
