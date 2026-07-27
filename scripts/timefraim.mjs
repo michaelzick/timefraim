@@ -122,7 +122,7 @@ function dockerRunArgs() {
     [
       "set -e",
       "corepack enable",
-      "corepack prepare pnpm@10.11.0 --activate",
+      "corepack prepare pnpm@11.17.0 --activate",
       "pnpm config set store-dir /pnpm/store",
       "pnpm install --frozen-lockfile",
     ].join("; ") +

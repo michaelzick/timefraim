@@ -23,7 +23,7 @@ Primary flows:
 - **Database:** PostgreSQL via local Supabase (host ports `55331`–`55337`), accessed with `pg` (parameterized queries).
 - **Shared contracts:** Zod schemas in `packages/shared` consumed by both apps.
 - **Integrations:** Google Calendar + Google Tasks (`googleapis`), Toggl Track REST, MCP (`@modelcontextprotocol/sdk`) over HTTP Streamable transport.
-- **Tooling:** pnpm 10.11.0 workspaces, ESLint flat config, Vitest, React Testing Library.
+- **Tooling:** pnpm 11.17.0 workspaces, ESLint flat config, Vitest, React Testing Library.
 
 ## 3. Monorepo layout
 
