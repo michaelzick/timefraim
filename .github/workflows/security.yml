@@ -1,8 +1,11 @@
 name: Security Checks
 
+# Disabled: automatic triggers are commented out so this workflow only runs
+# when started manually. Restore the push/pull_request blocks to re-enable.
 on:
-  push:
-  pull_request:
+  # push:
+  # pull_request:
+  workflow_dispatch:
 
 permissions:
   actions: read

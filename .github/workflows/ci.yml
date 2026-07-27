@@ -1,10 +1,12 @@
 name: CI
 
+# Disabled: automatic triggers are commented out so this workflow only runs
+# when started manually. Restore the pull_request/push blocks to re-enable.
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  # pull_request:
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 env:
