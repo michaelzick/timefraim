@@ -118,7 +118,8 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
   });
   useAutoGoogleTaskSync({
     date,
-    enabled: location.pathname === "/" && Boolean(dayPlanQuery.data?.integrationStatus.googleConnected),
+    enabled: isGoogleTaskSyncRoute(location.pathname)
+      && Boolean(dayPlanQuery.data?.integrationStatus.googleConnected),
     manualSyncPending: plannerMutations.isSyncing,
     token,
   });
@@ -143,6 +144,10 @@ export function useAppShellData(session: Session | null): UseAppShellDataResult 
     setDate,
     togglSettingsQuery,
   };
+}
+
+export function isGoogleTaskSyncRoute(pathname: string) {
+  return pathname === "/" || pathname === "/board";
 }
 
 function readDateParam(search: string) {

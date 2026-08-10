@@ -77,11 +77,17 @@ export async function syncPlannerGoogleCalendar(
     pool,
   );
 
-  await syncGoogleTaskCompletionStatuses({
-    repository,
-    connection,
-    range: scope.range,
-  });
+  try {
+    await syncGoogleTaskCompletionStatuses({
+      repository,
+      connection,
+      range: scope.range,
+      tzOffsetMinutes,
+    });
+  } catch (error) {
+    // A Google Tasks hiccup must not fail the calendar sync; the next 30s tick retries.
+    console.error("google task completion sync failed", error);
+  }
 
   const events = await repository.listCalendarEventsForRange(scope.range, pool);
   return {
