@@ -9,8 +9,12 @@ function isAfter(value: string | null, reference: string) {
   return value ? new Date(value).getTime() > new Date(reference).getTime() : false;
 }
 
-function completedOnDate(record: GoogleScheduledTaskRecord) {
-  return record.completed?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+function toLocalIsoDate(instant: string, tzOffsetMinutes: number) {
+  return new Date(new Date(instant).getTime() - tzOffsetMinutes * 60000).toISOString().slice(0, 10);
+}
+
+function completedOnDate(record: GoogleScheduledTaskRecord, tzOffsetMinutes: number) {
+  return toLocalIsoDate(record.completed ?? new Date().toISOString(), tzOffsetMinutes);
 }
 
 function statusForGoogleTask(record: GoogleScheduledTaskRecord, isScheduled: boolean): TaskStatus {
@@ -24,6 +28,7 @@ export async function syncGoogleTaskCompletionStatuses(args: {
   repository: PlannerRepository;
   connection: GoogleConnection | null;
   range: { startAt: string; endAt: string };
+  tzOffsetMinutes: number;
 }) {
   const blocks = await args.repository.listScheduleBlocksWithGoogleTaskIdsForRange(args.range, pool);
   const googleTaskIds = blocks.flatMap((block) => block.googleTaskId ? [block.googleTaskId] : []);
@@ -54,7 +59,10 @@ export async function syncGoogleTaskCompletionStatuses(args: {
     if (task.status === nextStatus) {
       continue;
     }
-    if (!isAfter(record.updated, task.updatedAt)) {
+    // Push local status back to Google only when the local task is strictly newer;
+    // ties, clock skew, and a missing Google timestamp must not revert a user's
+    // Google-side change (e.g. silently un-completing a task they just checked off).
+    if (record.updated !== null && isAfter(task.updatedAt, record.updated)) {
       await upsertGoogleScheduledTask({ connection: args.connection, task, block });
       continue;
     }
@@ -63,7 +71,7 @@ export async function syncGoogleTaskCompletionStatuses(args: {
       task.id,
       {
         status: nextStatus,
-        completedOnDate: nextStatus === "done" ? completedOnDate(record) : null,
+        completedOnDate: nextStatus === "done" ? completedOnDate(record, args.tzOffsetMinutes) : null,
       },
       pool,
     );
