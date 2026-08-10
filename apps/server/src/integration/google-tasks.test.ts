@@ -309,6 +309,41 @@ describe("google-tasks integration", () => {
     expect(tasksInsert).not.toHaveBeenCalled();
   });
 
+  it("omits notes on status-only patches so Google keeps the existing footer", async () => {
+    await upsertGoogleScheduledTask({
+      connection,
+      task: { ...task, status: "done" },
+      block: { ...block, googleTaskId: "google-task-123" },
+    });
+
+    expect(tasksPatch).toHaveBeenCalledWith({
+      tasklist: "@default",
+      task: "google-task-123",
+      requestBody: {
+        title: "Plan launch week",
+        status: "completed",
+      },
+    });
+  });
+
+  it("rebuilds notes on patches that carry the planner date and timezone", async () => {
+    await upsertGoogleScheduledTask({
+      connection,
+      task,
+      block: { ...block, googleTaskId: "google-task-123" },
+      plannerDate: "2026-04-06",
+      tzOffsetMinutes: 420,
+    });
+
+    expect(tasksPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestBody: expect.objectContaining({
+          notes: "Outline the week.\n\nTimeFraim: Mon, Apr 6 10:00 AM to 10:45 AM (45 min)",
+        }),
+      }),
+    );
+  });
+
   it("deletes Google Task mirrors from the default list", async () => {
     await deleteGoogleTask(connection, "google-task-123");
 

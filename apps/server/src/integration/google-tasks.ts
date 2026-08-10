@@ -120,11 +120,16 @@ export async function upsertGoogleScheduledTask(params: {
   }
   const plannerDate = resolveGoogleTaskDate(params);
   const due = toGoogleTaskDue(plannerDate);
+  // Status-only pushes carry no plannerDate/tzOffsetMinutes, so the
+  // "TimeFraim: <time range>" notes footer cannot be rebuilt. Omit notes on
+  // those patches; PATCH semantics keep Google's existing notes intact.
+  const canRebuildNotes = typeof params.tzOffsetMinutes === "number" && Boolean(plannerDate);
+  const includeNotes = canRebuildNotes || !params.block.googleTaskId;
 
   const requestBody = {
     title: params.task.title,
-    notes: buildGoogleTaskNotes({ ...params, plannerDate }),
     status: params.task.status === "done" ? ("completed" as const) : ("needsAction" as const),
+    ...(includeNotes ? { notes: buildGoogleTaskNotes({ ...params, plannerDate }) } : {}),
     ...(due ? { due } : {}),
   };
 
