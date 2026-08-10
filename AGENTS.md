@@ -271,6 +271,50 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 | [supabase/migrations/](supabase/migrations/) | Schema evolution |
 | [eslint.config.mjs](eslint.config.mjs) | Lint rules incl. `max-lines: 200` |
 
+## 11. Pull requests
+
+When opening a pull request, use this summary format and keep the writeup specific to the measured problem, the concrete files changed, and the verification performed:
+
+```md
+## Summary
+
+[One or two tight paragraphs explaining the user-visible problem, root cause, and scale of impact. Include concrete measurements when available, such as item counts, DOM nodes, request counts, timing, body height, or viewport size.]
+
+## What changed
+
+- **`FileName.tsx` — concise change label.** Explain the code change and the behavior it creates.
+- **`AnotherFile.ts` — concise change label.** Explain any supporting refactor, cache, guard, test hook, or cleanup.
+
+## Why
+
+[Explain the reasoning behind the fix. Tie it to profiling, trace output, production symptoms, data model constraints, or the specific regression mechanism.]
+
+## Measurements
+
+| | Before | After |
+|---|---|---|
+| [Metric] | **[before]** | **[after]** |
+| [Metric] | **[before]** | **[after]** |
+
+[Note unchanged layouts, flows, or platforms when relevant.]
+
+## Test plan
+
+- [x] `pnpm lint`
+- [x] `pnpm typecheck`
+- [x] `pnpm test`
+- [ ] Visual: [manual check with viewport, route, or workflow]
+- [ ] Visual: [second manual check, if relevant]
+```
+
+Rules for the PR body:
+
+- Use the exact section order: `Summary`, `What changed`, `Why`, `Measurements`, `Test plan`.
+- In `What changed`, start bullets with bold file or area names, then an em dash and a short change label.
+- Include a `Measurements` table when the PR addresses performance, rendering volume, query count, payload size, or another measurable regression. If there is nothing meaningful to measure, write `Not applicable` under `Measurements` with a one-sentence reason.
+- Keep checked test-plan items limited to commands or manual checks actually run. Leave relevant follow-up visual checks unchecked when they were not performed.
+- Mention unchanged important surfaces when that helps reviewers understand blast radius.
+
 ---
 
 ## Maintaining this file
