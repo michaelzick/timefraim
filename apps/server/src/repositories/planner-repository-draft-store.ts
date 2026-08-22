@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import type { DraftStatus, SyncDraft } from "@timefraim/shared";
 import type { Queryable } from "../db/pool.ts";
 import { mapDraft } from "./planner-repository-mappers.ts";
@@ -7,7 +6,7 @@ import type { CreateDraftInput } from "./planner-repository-types.ts";
 
 export class PlannerRepositoryDraftStore extends PlannerRepositoryIntegrationStore {
   async createDraft(input: CreateDraftInput, db: Queryable): Promise<SyncDraft> {
-    const id = randomUUID();
+    const id = crypto.randomUUID();
     const result = await db.query(
       `insert into public.sync_drafts (id, owner_user_id, kind, payload, diff_summary, actor_role, expires_at)
        values ($1, $2, $3, $4, $5, $6, $7)

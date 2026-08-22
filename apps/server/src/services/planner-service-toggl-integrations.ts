@@ -27,7 +27,7 @@ export async function getTogglConnection(
   }
 
   return {
-    apiToken: decryptSecret(row.apiTokenCiphertext),
+    apiToken: await decryptSecret(row.apiTokenCiphertext),
     apiTokenHint: row.apiTokenHint,
     workspaceId: row.workspaceId,
     workspaceName: row.workspaceName,
@@ -79,7 +79,7 @@ export async function saveTogglConnection(
   const apiToken = providedApiToken
     ? providedApiToken
     : existing
-      ? decryptSecret(existing.apiTokenCiphertext)
+      ? await decryptSecret(existing.apiTokenCiphertext)
       : null;
 
   if (!apiToken) {
@@ -101,7 +101,7 @@ export async function saveTogglConnection(
     userId,
     {
       apiTokenCiphertext: providedApiToken
-        ? encryptSecret(apiToken)
+        ? await encryptSecret(apiToken)
         : existing!.apiTokenCiphertext,
       apiTokenHint: validated.apiTokenHint,
       workspaceId: validated.workspaceId,

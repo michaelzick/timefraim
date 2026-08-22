@@ -1,8 +1,8 @@
+import "./config/load-dotenv.ts";
 import cors from "@fastify/cors";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import Fastify from "fastify";
-import { randomUUID } from "node:crypto";
 import { env } from "./config/env.ts";
 import { registerHttpRoutes } from "./http/routes.ts";
 import { requireMcpProfile } from "./http/auth.ts";
@@ -83,7 +83,7 @@ app.post("/mcp", async (request, reply) => {
 
     if (!transport) {
       transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
+        sessionIdGenerator: () => crypto.randomUUID(),
         enableJsonResponse: true,
         onsessioninitialized: (nextSessionId) => {
           mcpSessions.set(nextSessionId, { transport: transport! });

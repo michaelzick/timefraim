@@ -43,7 +43,14 @@ export function isAuthorizationError(error: unknown): error is AuthorizationErro
 }
 
 const JWKS = createRemoteJWKSet(new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
-const JWT_SECRET = new TextEncoder().encode(env.SUPABASE_JWT_SECRET);
+const JWT_SECRET = env.SUPABASE_JWT_SECRET ? new TextEncoder().encode(env.SUPABASE_JWT_SECRET) : null;
+
+function requireJwtSecret() {
+  if (!JWT_SECRET) {
+    throw new AuthenticationError("HS256 tokens require AUTH_JWT_SECRET to be configured");
+  }
+  return JWT_SECRET;
+}
 
 function getBearerToken(header: string | undefined) {
   if (!header) {
@@ -68,7 +75,7 @@ export async function requireAuthenticatedUser(authorizationHeader: string | und
   try {
     const header = decodeProtectedHeader(token);
     const { payload } = header.alg?.startsWith("HS")
-      ? await jwtVerify(token, JWT_SECRET)
+      ? await jwtVerify(token, requireJwtSecret())
       : await jwtVerify(token, JWKS);
     parsed = payloadSchema.parse(payload);
   } catch {

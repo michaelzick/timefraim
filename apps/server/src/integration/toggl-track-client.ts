@@ -1,5 +1,5 @@
 function getAuthHeader(apiToken: string): string {
-  return `Basic ${Buffer.from(`${apiToken}:api_token`).toString("base64")}`;
+  return `Basic ${btoa(`${apiToken}:api_token`)}`;
 }
 
 export function getStringId(value: unknown) {

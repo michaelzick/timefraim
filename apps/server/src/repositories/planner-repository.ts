@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import type { Queryable } from "../db/pool.ts";
 import { mapAuditLog } from "./planner-repository-mappers.ts";
 import { PlannerRepositoryPreferencesStore } from "./planner-repository-preferences-store.ts";
@@ -18,7 +17,7 @@ export class PlannerRepository extends PlannerRepositoryPreferencesStore {
   }
 
   async createAuditLog(input: CreateAuditLogInput, db: Queryable) {
-    const id = randomUUID();
+    const id = crypto.randomUUID();
     const result = await db.query(
       `insert into public.audit_logs (id, actor_role, action, entity_type, entity_id, diff_summary, payload)
        values ($1, $2, $3, $4, $5, $6, $7)
