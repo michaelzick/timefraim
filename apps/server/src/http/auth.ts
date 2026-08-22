@@ -100,13 +100,29 @@ export function requireMcpProfile(authorizationHeader: string | undefined): "rea
     throw new AuthenticationError("Missing MCP bearer token");
   }
 
-  if (token === env.MCP_BEARER_TOKEN) {
+  // Evaluate both comparisons so the response time does not reveal which token matched.
+  const isFullAccess = secureEquals(token, env.MCP_BEARER_TOKEN);
+  const isReadOnly = secureEquals(token, env.MCP_READ_ONLY_TOKEN);
+  if (isFullAccess) {
     return "full-access";
   }
-
-  if (token === env.MCP_READ_ONLY_TOKEN) {
+  if (isReadOnly) {
     return "read-only";
   }
 
   throw new AuthenticationError("Invalid MCP bearer token");
+}
+
+const textEncoder = new TextEncoder();
+
+/** Constant-time string equality (runtime-neutral; no node:crypto on the edge). */
+export function secureEquals(candidate: string, expected: string): boolean {
+  const a = textEncoder.encode(candidate);
+  const b = textEncoder.encode(expected);
+  // Length is not secret for fixed-length tokens; compare bytes without early exit.
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < b.length; i += 1) {
+    diff |= (a[i] ?? 0) ^ (b[i] ?? 0);
+  }
+  return diff === 0;
 }
