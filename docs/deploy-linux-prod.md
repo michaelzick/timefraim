@@ -1,3 +1,7 @@
+> **LEGACY.** The droplet deployment described here was retired in favor of
+> the free Cloudflare + Supabase Edge Functions setup in
+> [deploy-free-hosting.md](deploy-free-hosting.md). Kept for reference only.
+
 # Production deploy: Linux + nginx, accessed via SSH tunnel
 
 Instructions for a coding agent (Claude) deploying TimeFraim as a **production build** on a Linux server. The app is reached from the user's machine through an SSH tunnel — nothing is exposed publicly. Follow the steps in order; each has a verification command.

@@ -151,3 +151,6 @@ supabase/.branches/
 
 # VS Code files
 .vscode/*
+
+# Wrangler local state (Cloudflare vite plugin / wrangler dev)
+.wrangler/

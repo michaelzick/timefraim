@@ -22,8 +22,9 @@ Primary flows:
 - **Backend:** Fastify 5 + TypeScript on Node ≥ 24.
 - **Database:** PostgreSQL via local Supabase (host ports `55331`–`55337`), accessed with `pg` (parameterized queries).
 - **Shared contracts:** Zod schemas in `packages/shared` consumed by both apps.
-- **Integrations:** Google Calendar + Google Tasks (`googleapis`), Toggl Track REST, MCP (`@modelcontextprotocol/sdk`) over HTTP Streamable transport.
-- **Tooling:** pnpm 11.17.0 workspaces, ESLint flat config, Vitest, React Testing Library.
+- **Integrations:** Google Calendar + Google Tasks (fetch-based REST client, `src/integration/google-api-client.ts`), Toggl Track REST, MCP (`@modelcontextprotocol/sdk`) over HTTP Streamable transport.
+- **Hosting:** Cloudflare Workers static assets for the SPA + Supabase Edge Functions (Deno 2, Hono) for the API/MCP, both reusing `apps/server/src` in place. The Fastify entry remains for local dev. Runbook: `docs/deploy-free-hosting.md`.
+- **Tooling:** pnpm 11.17.0 workspaces, ESLint flat config, Vitest, React Testing Library, Deno 2 (edge-function checks), Supabase CLI, Wrangler.
 
 ## 3. Monorepo layout
 
@@ -33,15 +34,18 @@ timefraim/
 │   ├── server/          # Fastify API + MCP endpoint
 │   └── web/             # Vite + React SPA
 ├── docs/
-│   └── deploy-linux-prod.md # Production deploy runbook (Linux/nginx via SSH tunnel)
+│   ├── deploy-free-hosting.md # Production runbook: Cloudflare assets + Supabase Edge Functions
+│   └── deploy-linux-prod.md # Legacy droplet runbook (retired)
 ├── packages/
 │   └── shared/          # Zod schemas shared by apps
 ├── skills/
 │   ├── coding-standards/ # Repo-local production coding standards for Node/React/TypeScript
 │   └── sync-agent-briefs/ # Repo-local maintenance skill for AGENTS/CLAUDE/GEMINI sync
+├── scripts/             # Workspace helpers (dev-functions, dev-linked, sandbox, deploy)
 ├── supabase/
-│   ├── config.toml
+│   ├── config.toml      # Local stack + [functions.*] verify_jwt settings
 │   ├── seed.sql
+│   ├── functions/       # Edge functions: api/ (Hono router), mcp/ (stateless MCP), _shared/, deno.lock
 │   └── migrations/      # Timestamped SQL migrations
 ├── .env.example         # Canonical env var list
 ├── eslint.config.mjs    # Flat config, max-lines: 200 for source
@@ -64,16 +68,17 @@ timefraim/
 - **API clients & config:** `src/lib/` — `api-planner.ts`, `api-integrations.ts`, `api-client.ts`, `env.ts`, `supabase.ts`.
 - **Styles:** `src/styles/` (Tailwind globals) plus `index.html` for the pre-hydration theme resolver.
 - **State model:** React Query owns server state; React Hook Form owns forms; Supabase client owns auth session.
+- **Hosting:** `wrangler.jsonc` + `@cloudflare/vite-plugin` turn `vite build` into a static-assets Worker (SPA fallback, no Worker code). `pnpm deploy:web` builds and runs `wrangler deploy`; production `VITE_*` values come from the gitignored root `.env.production`.
 
 ### 4.2 apps/server (backend, port 4000)
 
 - **Entry:** `src/index.ts` — registers HTTP routes, mounts `POST /mcp`, constructs `PlannerService`.
-- **Config:** `src/config/env.ts` (Zod-validated env; locates the repo-root `.env` by walking up to `pnpm-workspace.yaml`).
-- **Production build:** `tsup.config.ts` bundles `@timefraim/shared` into `dist/index.js` (the shared package resolves to TS source and is not runtime-loadable); run the build with `pnpm start:server`. Deploy runbook: `docs/deploy-linux-prod.md`.
-- **HTTP routes:** `src/http/` — `routes.ts` + modular `register-*-routes.ts` (planner, integration, preferences, auth, timer, draft). `auth.ts` verifies Supabase JWT. `route-helpers.ts` holds shared middleware.
+- **Config:** `src/config/env.ts` (Zod-validated, runtime-neutral: reads `Deno.env` or `process.env`; accepts `AUTH_JWT_SECRET` / `SUPABASE_DB_URL` as edge-side aliases). `src/config/load-dotenv.ts` is the Node-only `.env` bootstrap imported first by `index.ts` and the vitest setup.
+- **Production runtime:** the same `src/` is served by the Supabase edge functions (`supabase/functions/api`, `supabase/functions/mcp`) via a Deno import map; nothing under `src/` may import `node:*`, `Buffer`, or `process` except `index.ts` and `config/load-dotenv.ts`. `tsup.config.ts` still bundles a Node build (`pnpm start:server`) for local/legacy use.
+- **HTTP routes:** `src/http/` — `api-routes.ts` defines the framework-neutral `ApiRoute` contract (`parseOrThrow` for input validation); `*-routes.ts` export route tables (auth, integration, preferences, planner + mutation/duplicate/draft/timer) composed by `routes.ts`. `fastify-adapter.ts` mounts them on Fastify; `api-errors.ts` maps errors to `{ code, message, requestId }`; `auth.ts` verifies Supabase JWTs + `ALLOWED_EMAIL`; `cors-policy.ts` holds the shared origin allowlist.
 - **Repositories (data access):** `src/repositories/` — `planner-repository.ts` composes per-domain stores (`planner-repository-task-store.ts`, `-schedule-store.ts`, `-calendar-store.ts`, `-timer-store.ts`, `-integration-store.ts`, `-preferences-store.ts`, `-draft-store.ts`). Row → domain mapping in `planner-repository-mappers.ts`; row types in `planner-repository-types.ts`.
 - **Services (business logic):** `src/services/` — `planner-service.ts` orchestrates; `planner-service-google-integrations.ts`, `planner-service-toggl-integrations.ts` handle external calls; `planner-service-preferences.ts` reads/writes user preferences; `planner-domain.ts` applies drafts; `planner-*-changes.ts` compute diffs; `planner-service-apply.ts` confirms drafts; `planner-side-effects.ts` handles audit logs + external syncs.
-- **Integrations:** `src/integration/` — `google-calendar.ts` (+ `-helpers.ts`), `google-auth.ts`, `google-tasks.ts`, `toggl-track.ts` (+ `-catalog.ts`, `-client.ts`), `integration-crypto.ts` (AES for stored tokens).
+- **Integrations:** `src/integration/` — `google-api-client.ts` (fetch client: bearer auth, refresh-token exchange, `GoogleApiError`), `google-api-types.ts`, `google-calendar.ts` (+ `-helpers.ts`), `google-tasks.ts` (+ `-sync.ts`), `toggl-track.ts` (+ `-catalog.ts`, `-client.ts`), `integration-crypto.ts` (WebCrypto AES-GCM for stored tokens).
 - **MCP:** `src/mcp/create-mcp-server.ts` defines two tool profiles (read-only, full-access) selected by bearer token.
 - **DB pool:** `src/db/pool.ts` exposes `pg.Pool` + `withTransaction` helper.
 - **Utilities:** `src/utils/date.ts`.
@@ -110,16 +115,16 @@ Migrations live in `supabase/migrations/` (timestamp-prefixed, applied in order)
 
 Conventions: UUID PKs (`gen_random_uuid()`), `timestamptz` for every date, `updated_at` trigger on mutable tables, FK `on delete cascade`, indexes on time ranges and common filters.
 
-Public app tables have RLS enabled for hosted Supabase use. Browser data access still goes through the Fastify API; the Supabase client is used for auth. RLS protects the hosted PostgREST surface by allowing full app-table access only to authenticated JWTs whose email is present in `public.app_access_users`; anon receives no app-table policies. The backend's direct Postgres connection is still trusted to enforce API-layer authorization.
+Public app tables have RLS enabled for hosted Supabase use. Browser data access still goes through the API; the Supabase client is used for auth. RLS protects the hosted PostgREST surface by allowing full app-table access only to authenticated JWTs whose email is present in `public.app_access_users`; anon receives no app-table policies. The secret-bearing tables `integration_tokens` and `user_toggl_connections` have no `authenticated` policies or grants at all — only the API's direct Postgres connection reads them. Google tokens are stored encrypted (`metadata.tokenEncryption = "aes-gcm-v1"`); legacy plaintext rows are re-saved encrypted on first read.
 
-Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event, per-day calendar sync runs, schedule block Google Task mirror IDs, per-user preferences (theme + notifications), single-user RLS allowlist, task category (personal/work), removal of `in_progress` status.
+Recent migrations (see filenames for dates): task priority, per-user Toggl connections, Google calendar event colors, event timers + multi-calendar, removal of `archived` status, Toggl project per calendar event, per-day calendar sync runs, schedule block Google Task mirror IDs, per-user preferences (theme + notifications), single-user RLS allowlist, task category (personal/work), removal of `in_progress` status, secret-table RLS lockdown (`integration_tokens`, `user_toggl_connections`).
 
 ## 6. External integrations
 
-- **Google Calendar** — OAuth 2.0 (`googleapis`). Lists calendars, fetches events per date range, optionally creates/updates/deletes events for schedule blocks (uses `extendedProperties` for linkage), resolves colors. Primary + "Free Time Tasks" planner calendar via `GOOGLE_CALENDAR_ID` / `GOOGLE_PLANNER_CALENDAR_ID`.
-- **Google Tasks** — OAuth 2.0 (`googleapis`). Timeline sync can target the default Google Tasks list instead of Calendar events; scheduled block add/update/delete mirrors create/update/delete a single Google Task, mutually exclusive with `google_event_id`. Completion status syncs bidirectionally for TimeFraim-created task mirrors: TimeFraim done/not-done changes patch Google Tasks, and planner sync pulls Google Tasks done/not-done changes back into local task status. The OAuth Google Cloud project must have `tasks.googleapis.com` enabled before the Tasks target can be saved or used. The public Tasks API only stores due dates, not due times; TimeFraim sends the local planner date as the due date and writes the time range + duration into the task notes.
+- **Google Calendar** — OAuth 2.0 tokens from the Supabase Google sign-in, used by the fetch-based client in `google-api-client.ts` (refreshes with `GOOGLE_CLIENT_ID`/`SECRET` before expiry or on a 401; refreshed tokens are written back encrypted). Lists calendars, fetches events per date range, optionally creates/updates/deletes events for schedule blocks (uses `extendedProperties` for linkage), resolves colors. Primary + "Free Time Tasks" planner calendar via `GOOGLE_CALENDAR_ID` / `GOOGLE_PLANNER_CALENDAR_ID`.
+- **Google Tasks** — same client and tokens as Calendar (Tasks v1 REST). Timeline sync can target the default Google Tasks list instead of Calendar events; scheduled block add/update/delete mirrors create/update/delete a single Google Task, mutually exclusive with `google_event_id`. Completion status syncs bidirectionally for TimeFraim-created task mirrors: TimeFraim done/not-done changes patch Google Tasks, and planner sync pulls Google Tasks done/not-done changes back into local task status. The OAuth Google Cloud project must have `tasks.googleapis.com` enabled before the Tasks target can be saved or used. The public Tasks API only stores due dates, not due times; TimeFraim sends the local planner date as the due date and writes the time range + duration into the task notes.
 - **Toggl Track** — Personal API token, encrypted at rest in `integration_tokens`. Discover workspaces/projects, start/stop time entries, per-task and per-event project overrides.
-- **MCP** — `POST /mcp` with `Authorization: Bearer <token>`. `MCP_BEARER_TOKEN` grants full-access tools; `MCP_READ_ONLY_TOKEN` grants read-only. Tools include `list_tasks`, `list_calendar_view`, `get_day_plan`, `propose_task_create`, `propose_schedule_block_*`, `confirm_draft`, `start_task_timer`, `stop_active_timer`.
+- **MCP** — `POST /mcp` with `Authorization: Bearer <token>` (production: `https://<ref>.supabase.co/functions/v1/mcp`, stateless — a fresh server per request, no session ids). `MCP_BEARER_TOKEN` grants full-access tools; `MCP_READ_ONLY_TOKEN` grants read-only. Tools include `list_tasks`, `list_calendar_view`, `get_day_plan`, `propose_task_create`, `propose_schedule_block_*`, `confirm_draft`, `start_task_timer`, `stop_active_timer`.
 
 ## 7. Commands
 
@@ -135,14 +140,20 @@ pnpm dev           # web + server in parallel
 pnpm dev:linked    # web + server in parallel against LINKED_SUPABASE_* values
 pnpm dev:web       # web only (6173)
 pnpm dev:server    # server only (4000)
-pnpm start:server  # run the built API (apps/server/dist) — production
-pnpm deploy:prod   # update the prod deploy: pull + install + build + restart timefraim-api (scripts/deploy-prod.sh)
+pnpm dev:functions # serve the Supabase edge functions locally from .env (scripts/dev-functions.mjs)
+pnpm start:server  # run the built Node API (apps/server/dist) — legacy/local
+pnpm deploy:functions # supabase functions deploy api && mcp (production API)
+pnpm deploy:web    # vite build + wrangler deploy (production SPA)
+pnpm deploy:prod   # legacy droplet deploy (scripts/deploy-prod.sh)
 pnpm lint          # ESLint across shared/server/web
 pnpm typecheck     # tsc --noEmit across all packages
 pnpm test          # Vitest across all packages
 pnpm build         # build shared → server → web
-pnpm check         # agent brief sync check + lint + typecheck + test + build
+pnpm functions:check # deno check (frozen lock) + deno lint + deno test for supabase/functions
+pnpm check         # agent brief sync check + lint + typecheck + test + build + functions:check
 ```
+
+Production deploys are manual and edge functions deploy separately from git (merging does not update them); see `docs/deploy-free-hosting.md` for the one-time setup, secret mapping, and verification checklist.
 
 Supabase (local):
 
@@ -224,7 +235,8 @@ window.location.href = '/board';
 Canonical list lives in [.env.example](.env.example). Highlights:
 
 - **Frontend (`VITE_*`):** `VITE_APP_ORIGIN`, `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ALLOWED_EMAIL`.
-- **Backend:** `NODE_ENV`, `PORT`, `HOST`, `APP_ORIGIN` (comma-separated CORS origins), `API_BASE_URL`, `DATABASE_URL`, `SUPABASE_URL`/`ANON_KEY`/`SERVICE_ROLE_KEY`/`JWT_SECRET`, `INTEGRATION_ENCRYPTION_KEY`, `ALLOWED_EMAIL`, `MCP_BEARER_TOKEN`, `MCP_READ_ONLY_TOKEN`, `GOOGLE_CLIENT_ID`/`SECRET`, `GOOGLE_CALENDAR_ID`, `GOOGLE_PLANNER_CALENDAR_ID`, `TUNNEL_PUBLIC_BASE_URL`.
+- **Backend:** `NODE_ENV`, `PORT`, `HOST`, `APP_ORIGIN` (comma-separated CORS origins), `DATABASE_URL` (falls back to the edge-injected `SUPABASE_DB_URL`), `SUPABASE_URL`, `SUPABASE_JWT_SECRET` (edge alias `AUTH_JWT_SECRET`; optional unless tokens are HS256), `INTEGRATION_ENCRYPTION_KEY`, `ALLOWED_EMAIL`, `MCP_BEARER_TOKEN`, `MCP_READ_ONLY_TOKEN`, `GOOGLE_CLIENT_ID`/`SECRET`, `GOOGLE_CALENDAR_ID`, `GOOGLE_PLANNER_CALENDAR_ID`, `TUNNEL_PUBLIC_BASE_URL`. `SUPABASE_ANON_KEY`/`SERVICE_ROLE_KEY` are optional and unused by server code.
+- **Edge secrets:** set one at a time with `supabase secrets set NAME=value` (never `--env-file`); `SUPABASE_*` names are reserved by Supabase. Production `VITE_*` values live in the gitignored root `.env.production`.
 - **Linked dev (`pnpm dev:linked`):** `LINKED_SUPABASE_URL`, `LINKED_SUPABASE_PUBLISHABLE_KEY`, `LINKED_SUPABASE_SERVICE_ROLE_KEY`, `LINKED_SUPABASE_POSTGRES_URL`, optional `LINKED_SUPABASE_JWT_SECRET`.
 
 `ALLOWED_EMAIL` gates login (single-user app). `INTEGRATION_ENCRYPTION_KEY` must be a long random secret — regenerating it invalidates stored Toggl tokens.
@@ -240,7 +252,8 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 - **Repository layer:** `no-unsafe-argument` / `no-unsafe-assignment` are relaxed here only; keep unsafe code confined to this layer.
 - **Testing:** co-located `*.test.ts[x]`, Vitest runner, React Testing Library for components. `max-lines` and several type-safety rules are off in tests.
 - **Dates:** always `timestamptz` in DB, always UTC on the wire. Frontend passes timezone offset via `tz` query param.
-- **Secrets:** integration tokens encrypted via `integration-crypto.ts` before hitting the DB.
+- **Secrets:** integration tokens (Toggl and Google) encrypted via `integration-crypto.ts` before hitting the DB.
+- **Runtime neutrality:** relative imports use explicit `.ts` extensions (Deno resolves them literally); `apps/server/src` must stay free of `node:*`, `Buffer`, and `process` outside `index.ts` / `config/load-dotenv.ts`; edge function entrypoints in `supabase/functions` are thin shells that import `apps/server/src` and `_shared/` helpers.
 - **Completion gate:** never mark work done while `pnpm lint` or `pnpm typecheck` fail. When structural or meaningful project facts change, update `AGENTS.md`, run `pnpm agent-briefs:sync`, and keep `CLAUDE.md` / `GEMINI.md` in lockstep.
 - **UI verification:** Do not spin up the dev server to autonomously verify frontend changes — use `pnpm lint` and `pnpm typecheck` only, then report the change as done. Exception: when the user explicitly asks to spin up a preview or dev server, follow the "Dev server + preview" workflow in §7.
 
@@ -256,15 +269,21 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 | [apps/web/src/hooks/use-planner-mutations.ts](apps/web/src/hooks/use-planner-mutations.ts) | Task/schedule/timer mutations |
 | [apps/web/src/lib/api-planner.ts](apps/web/src/lib/api-planner.ts) | Planner HTTP client |
 | [apps/web/src/components/timeline-board.tsx](apps/web/src/components/timeline-board.tsx) | Timeline rendering |
-| [apps/server/src/index.ts](apps/server/src/index.ts) | Server entry, route + MCP registration |
+| [apps/server/src/index.ts](apps/server/src/index.ts) | Node/Fastify entry (local dev), route + MCP registration |
+| [apps/server/src/http/api-routes.ts](apps/server/src/http/api-routes.ts) | Framework-neutral route contract shared by Fastify and the edge function |
+| [supabase/functions/api/index.ts](supabase/functions/api/index.ts) | Production API edge function (Hono router over the route table) |
+| [supabase/functions/mcp/index.ts](supabase/functions/mcp/index.ts) | Production MCP edge function (stateless transport) |
+| [apps/web/wrangler.jsonc](apps/web/wrangler.jsonc) | Cloudflare static-assets Worker config for the SPA |
 | [apps/server/src/services/planner-service.ts](apps/server/src/services/planner-service.ts) | Business-logic orchestrator |
 | [apps/server/src/repositories/planner-repository.ts](apps/server/src/repositories/planner-repository.ts) | Data access entry point |
+| [apps/server/src/integration/google-api-client.ts](apps/server/src/integration/google-api-client.ts) | Fetch-based Google REST client (auth, refresh, errors) |
 | [apps/server/src/integration/google-calendar.ts](apps/server/src/integration/google-calendar.ts) | Google Calendar client |
 | [apps/server/src/integration/google-tasks.ts](apps/server/src/integration/google-tasks.ts) | Google Tasks client |
 | [apps/server/src/integration/toggl-track.ts](apps/server/src/integration/toggl-track.ts) | Toggl client |
 | [apps/server/src/mcp/create-mcp-server.ts](apps/server/src/mcp/create-mcp-server.ts) | MCP tools exposed to agents |
 | [packages/shared/src/index.ts](packages/shared/src/index.ts) | Shared schema barrel |
-| [docs/deploy-linux-prod.md](docs/deploy-linux-prod.md) | Production deploy runbook (Linux/nginx, SSH tunnel) |
+| [docs/deploy-free-hosting.md](docs/deploy-free-hosting.md) | Production runbook (Cloudflare assets + Supabase Edge Functions) |
+| [docs/deploy-linux-prod.md](docs/deploy-linux-prod.md) | Legacy droplet runbook (retired) |
 | [apps/server/tsup.config.ts](apps/server/tsup.config.ts) | Server build config (bundles `@timefraim/shared`) |
 | [skills/coding-standards/SKILL.md](skills/coding-standards/SKILL.md) | Production coding standards for Node, React, and TypeScript work |
 | [skills/sync-agent-briefs/SKILL.md](skills/sync-agent-briefs/SKILL.md) | Repo-local workflow for syncing agent orientation files |
