@@ -42,7 +42,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
         date: dayQuerySchema.shape.date.optional(),
       },
     },
-    async ({ date }) => {
+    async ({ date }: { date?: string }) => {
       const dayPlan = await plannerService.getDayPlan(null, date ?? todayIsoDate());
       return {
         content: [{ type: "text", text: JSON.stringify(dayPlan.calendarEvents, null, 2) }],
@@ -60,7 +60,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
         date: dayQuerySchema.shape.date.optional(),
       },
     },
-    async ({ date }) => {
+    async ({ date }: { date?: string }) => {
       const dayPlan = await plannerService.getDayPlan(null, date ?? todayIsoDate());
       return {
         content: [{ type: "text", text: JSON.stringify(dayPlan, null, 2) }],

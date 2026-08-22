@@ -20,7 +20,7 @@ export async function syncPlannerGoogleCalendar(
   options: { restoreHidden?: boolean } = {},
 ): Promise<CalendarSyncResult> {
   const row = await repository.getIntegrationToken("google", pool);
-  const connection = readGoogleConnection(row);
+  const connection = await readGoogleConnection(row, repository);
   const syncCalendarIds = readGoogleSyncCalendarIds(row);
   const scope = buildGoogleCalendarSyncScope({ connection, date, syncCalendarIds, tzOffsetMinutes });
   if (!connection) {

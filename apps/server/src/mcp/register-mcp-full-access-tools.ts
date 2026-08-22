@@ -5,6 +5,12 @@ import {
   taskDuplicatePayloadSchema,
   taskInputSchema,
   timerStartSchema,
+  type ScheduleBlockCreate,
+  type ScheduleBlockDelete,
+  type ScheduleBlockUpdate,
+  type TaskDuplicatePayload,
+  type TaskInput,
+  type TimerStart,
 } from "@timefraim/shared";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -18,7 +24,7 @@ export function registerMcpFullAccessTools(server: McpServer, plannerService: Pl
       description: "Create a pending draft for a new task.",
       inputSchema: taskInputSchema.shape,
     },
-    async (input) => {
+    async (input: TaskInput) => {
       const draft = await plannerService.createDraft("task.create", input, "assistant");
       return {
         content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
@@ -34,7 +40,7 @@ export function registerMcpFullAccessTools(server: McpServer, plannerService: Pl
       description: "Create a pending draft that duplicates an existing task.",
       inputSchema: taskDuplicatePayloadSchema.shape,
     },
-    async (input) => {
+    async (input: TaskDuplicatePayload) => {
       const draft = await plannerService.createDraft("task.duplicate", input, "assistant");
       return {
         content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
@@ -50,7 +56,7 @@ export function registerMcpFullAccessTools(server: McpServer, plannerService: Pl
       description: "Create a pending draft for a new scheduled work block.",
       inputSchema: scheduleBlockCreateSchema.shape,
     },
-    async (input) => {
+    async (input: ScheduleBlockCreate) => {
       const draft = await plannerService.createDraft("schedule_block.create", input, "assistant");
       return {
         content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
@@ -66,7 +72,7 @@ export function registerMcpFullAccessTools(server: McpServer, plannerService: Pl
       description: "Create a pending draft for moving or resizing a schedule block.",
       inputSchema: scheduleBlockUpdateSchema.shape,
     },
-    async (input) => {
+    async (input: ScheduleBlockUpdate) => {
       const draft = await plannerService.createDraft("schedule_block.update", input, "assistant");
       return {
         content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
@@ -82,7 +88,7 @@ export function registerMcpFullAccessTools(server: McpServer, plannerService: Pl
       description: "Create a pending draft for deleting a scheduled block.",
       inputSchema: scheduleBlockDeleteSchema.shape,
     },
-    async (input) => {
+    async (input: ScheduleBlockDelete) => {
       const draft = await plannerService.createDraft("schedule_block.delete", input, "assistant");
       return {
         content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
@@ -100,7 +106,7 @@ export function registerMcpFullAccessTools(server: McpServer, plannerService: Pl
         draftId: z.string().uuid(),
       },
     },
-    async ({ draftId }) => {
+    async ({ draftId }: { draftId: string }) => {
       const draft = await plannerService.confirmDraft(draftId, "assistant");
       return {
         content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],
@@ -116,7 +122,7 @@ export function registerMcpFullAccessTools(server: McpServer, plannerService: Pl
       description: "Start a Toggl-backed timer for a task by creating and applying a timer draft.",
       inputSchema: timerStartSchema.shape,
     },
-    async (input) => {
+    async (input: TimerStart) => {
       const draft = await plannerService.createDraft("timer.start", input, "assistant");
       return {
         content: [{ type: "text", text: JSON.stringify(draft, null, 2) }],

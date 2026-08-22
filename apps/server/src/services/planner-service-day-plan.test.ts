@@ -63,6 +63,7 @@ function createRepositoryMock() {
     getActiveTimer: vi.fn().mockResolvedValue(null),
     getIntegrationStatus: vi.fn().mockReturnValue(integrationStatus),
     getIntegrationToken: vi.fn().mockResolvedValue(null),
+    upsertIntegrationToken: vi.fn().mockResolvedValue(undefined),
     getCalendarSyncRun: vi.fn().mockResolvedValue(null),
     getUserTogglConnection: vi.fn().mockResolvedValue(null),
     countHiddenCalendarEventsForRange: vi.fn().mockResolvedValue(0),

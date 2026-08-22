@@ -60,7 +60,7 @@ export async function getGoogleCalendarSyncScope(
 ) {
   const row = await repository.getIntegrationToken("google", pool);
   return buildGoogleCalendarSyncScope({
-    connection: readGoogleConnection(row),
+    connection: await readGoogleConnection(row, repository),
     date,
     syncCalendarIds: readGoogleSyncCalendarIds(row),
     tzOffsetMinutes,
