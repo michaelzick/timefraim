@@ -104,3 +104,16 @@ enabled = true
 port = 55337
 vector_port = 55338
 backend = "postgres"
+
+[edge_runtime]
+deno_version = 2
+
+# Both functions enforce their own authentication (the api function verifies
+# Supabase JWTs with jose and applies the ALLOWED_EMAIL gate; the mcp function
+# compares static bearer tokens), so the gateway's JWT check stays off and the
+# functions can return the app's own 401/403 envelopes.
+[functions.api]
+verify_jwt = false
+
+[functions.mcp]
+verify_jwt = false
