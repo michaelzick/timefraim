@@ -28,7 +28,7 @@
     "start:server": "corepack pnpm --filter @timefraim/server start",
     "deploy:prod": "bash scripts/deploy-prod.sh",
     "deploy:functions": "supabase functions deploy api && supabase functions deploy mcp",
-    "deploy:web": "corepack pnpm --filter @timefraim/web deploy",
+    "deploy:web": "corepack pnpm --filter @timefraim/web run deploy",
     "prod": "corepack pnpm deploy:prod",
     "lint": "corepack pnpm exec eslint eslint.config.mjs && corepack pnpm --filter @timefraim/shared lint && corepack pnpm --filter @timefraim/server lint && corepack pnpm --filter @timefraim/web lint",
     "typecheck": "corepack pnpm --filter @timefraim/shared typecheck && corepack pnpm --filter @timefraim/server typecheck && corepack pnpm --filter @timefraim/web typecheck",
