@@ -40,8 +40,14 @@ export class GoogleApiError extends Error {
   }
 }
 
+// Google resolves "@me" / "@default" aliases and "id@group.calendar.google.com"
+// calendar IDs only when the "@" is literal; percent-encoding it yields a 404.
+function encodePathSegment(segment: string): string {
+  return encodeURIComponent(segment).replaceAll("%40", "@");
+}
+
 export function googleUrl(base: string, segments: string[], query: Record<string, QueryValue> = {}) {
-  const url = new URL(`${base}/${segments.map(encodeURIComponent).join("/")}`);
+  const url = new URL(`${base}/${segments.map(encodePathSegment).join("/")}`);
   for (const [key, value] of Object.entries(query)) {
     if (value !== undefined && value !== null) {
       url.searchParams.set(key, String(value));

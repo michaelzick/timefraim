@@ -71,7 +71,7 @@ const block: ScheduleBlock = {
   updatedAt: "2026-04-06T08:00:00.000Z",
 };
 
-const FREE_TIME_CALENDAR_PATH = "/calendar/v3/calendars/free-time-tasks-id%40group.calendar.google.com/events";
+const FREE_TIME_CALENDAR_PATH = "/calendar/v3/calendars/free-time-tasks-id@group.calendar.google.com/events";
 
 let calendarListItems: unknown[];
 let colorsPayload: unknown;

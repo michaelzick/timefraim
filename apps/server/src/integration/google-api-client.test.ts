@@ -43,7 +43,7 @@ describe("google api client", () => {
 
   it("builds encoded urls and drops empty query values", () => {
     expect(googleUrl("https://example.com/v1", ["lists", "@default", "tasks"], { pageToken: undefined, showHidden: true })).toBe(
-      "https://example.com/v1/lists/%40default/tasks?showHidden=true",
+      "https://example.com/v1/lists/@default/tasks?showHidden=true",
     );
   });
 

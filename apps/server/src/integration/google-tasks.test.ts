@@ -18,7 +18,7 @@ import {
 import { getGoogleScheduledTasksByIds, listGoogleScheduledTasks } from "./google-tasks-sync.ts";
 
 const fetchMock = vi.fn<typeof fetch>();
-const TASKS_PATH = "/tasks/v1/lists/%40default/tasks";
+const TASKS_PATH = "/tasks/v1/lists/@default/tasks";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -84,7 +84,7 @@ describe("google-tasks integration", () => {
     fetchMock.mockImplementation((input, init) => {
       const url = requestUrl(input);
       const method = init?.method ?? "GET";
-      if (url.pathname === "/tasks/v1/users/%40me/lists/%40default") return Promise.resolve(jsonResponse({ id: "@default" }));
+      if (url.pathname === "/tasks/v1/users/@me/lists/@default") return Promise.resolve(jsonResponse({ id: "@default" }));
       if (url.pathname === TASKS_PATH && method === "GET") return Promise.resolve(jsonResponse(listResponses.shift() ?? { items: [] }));
       if (url.pathname === TASKS_PATH && method === "POST") return Promise.resolve(jsonResponse({ id: "google-task-123" }));
       if (url.pathname.startsWith(`${TASKS_PATH}/`) && method === "GET") return Promise.resolve(jsonResponse(getResponses.shift() ?? {}));
@@ -103,7 +103,7 @@ describe("google-tasks integration", () => {
     await assertGoogleTasksAccess(connection);
 
     expect(requests().map((request) => `${request.method} ${request.url.pathname}`)).toEqual([
-      "GET /tasks/v1/users/%40me/lists/%40default",
+      "GET /tasks/v1/users/@me/lists/@default",
     ]);
   });
 
