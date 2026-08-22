@@ -93,6 +93,38 @@ Edge functions deploy separately from git — merging a PR does not update the
 hosted functions. Deploy them in the same task that changes
 `supabase/functions/**` or `apps/server/src/**`.
 
+### Optional: build the SPA with Cloudflare Workers Builds
+
+Instead of `pnpm deploy:web` from a laptop, the Worker can be connected to the
+GitHub repository (Worker → Settings → Build) so every push to the production
+branch builds and deploys the SPA on Cloudflare. The repository is a pnpm
+workspace and the Worker config lives in `apps/web`, so use:
+
+| Setting | Value |
+|---|---|
+| Root directory | `/` |
+| Build command | `pnpm run build` |
+| Deploy command | `pnpm --filter @timefraim/web exec wrangler deploy` |
+| Version command | `pnpm --filter @timefraim/web exec wrangler versions upload` |
+| Production branch | `main` |
+| Build variables | `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ALLOWED_EMAIL` — the same values as `.env.production`, which is gitignored and therefore absent from the build |
+
+Node 24 comes from the committed `.node-version`; pnpm 11 from `packageManager`
+in `package.json`. The API token only needs Workers Builds permission on the
+account — a token generated from the Build settings of any Worker in the account
+works, but a dedicated one keeps the two apps' deploy credentials independent.
+Without the build variables the build succeeds and the deployed app fails at
+load with `Missing required Vite env var`, so set them before the first
+production build.
+
+Cloudflare stores build variables per target. The dashboard form writes the
+production target only; builds for non-production branches (preview versions
+under `https://<branch>-timefraim.<account>.workers.dev`) use a separate
+`previews_base_config` that has no dashboard UI. Either accept that previews
+run without the variables, or copy them to the preview target with the same
+`PATCH /accounts/<account>/builds/workers/<script_tag>` call the dashboard
+uses. A build's detail page lists the variables it actually ran with.
+
 ## Local development
 
 ```bash
