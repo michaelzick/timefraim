@@ -154,3 +154,6 @@ supabase/.branches/
 
 # Wrangler local state (Cloudflare vite plugin / wrangler dev)
 .wrangler/
+
+# Linked-DB dumps (contain secrets)
+backup-*.sql
