@@ -1,8 +1,8 @@
 import type { FastifyInstance } from "fastify";
-import { parseWithReply, withAuthenticatedRoute } from "./route-helpers.js";
-import { draftIdSchema } from "./planner-route-schemas.js";
-import type { PlannerService } from "../services/planner-service.js";
-import { todayIsoDate } from "../utils/date.js";
+import { parseWithReply, withAuthenticatedRoute } from "./route-helpers.ts";
+import { draftIdSchema } from "./planner-route-schemas.ts";
+import type { PlannerService } from "../services/planner-service.ts";
+import { todayIsoDate } from "../utils/date.ts";
 
 export function registerPlannerDraftRoutes(
   app: FastifyInstance,

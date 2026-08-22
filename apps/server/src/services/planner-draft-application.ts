@@ -2,23 +2,23 @@ import type { SyncDraft } from "@timefraim/shared";
 import {
   applyCalendarEventDismissDraft,
   applyCalendarEventUpdateDraft,
-} from "./planner-calendar-changes.js";
+} from "./planner-calendar-changes.ts";
 import {
   applyScheduleBlockDuplicateDraft,
   applyTaskDuplicateDraft,
-} from "./planner-duplicate-changes.js";
+} from "./planner-duplicate-changes.ts";
 import {
   applyScheduleBlockCreateDraft,
   applyScheduleBlockDeleteDraft,
   applyScheduleBlockUpdateDraft,
-} from "./planner-schedule-changes.js";
+} from "./planner-schedule-changes.ts";
 import {
   applyTaskCreateDraft,
   applyTaskDeleteDraft,
   applyTaskUpdateDraft,
-} from "./planner-task-changes.js";
-import { applyTimerStartDraft, applyTimerStartEventDraft, applyTimerStopDraft } from "./planner-timer-changes.js";
-import type { DraftHandlerContext } from "./planner-service-types.js";
+} from "./planner-task-changes.ts";
+import { applyTimerStartDraft, applyTimerStartEventDraft, applyTimerStopDraft } from "./planner-timer-changes.ts";
+import type { DraftHandlerContext } from "./planner-service-types.ts";
 
 export async function applyDraftChange(context: DraftHandlerContext): Promise<SyncDraft | null> {
   switch (context.draft.kind) {

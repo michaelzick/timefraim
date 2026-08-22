@@ -1,8 +1,8 @@
 import type { ScheduleBlock, Task } from "@timefraim/shared";
 import { google, type calendar_v3 } from "googleapis";
-import { buildGoogleEventPayload } from "../services/planner-domain.js";
-import { getGoogleOAuthClient } from "./google-auth.js";
-import { loadGoogleColorPalette, resolveCalendarColors, resolveCalendarId, resolveEventColors, withCalendarFallback, type GoogleColorPalette, type GoogleColorValues } from "./google-calendar-helpers.js";
+import { buildGoogleEventPayload } from "../services/planner-domain.ts";
+import { getGoogleOAuthClient } from "./google-auth.ts";
+import { loadGoogleColorPalette, resolveCalendarColors, resolveCalendarId, resolveEventColors, withCalendarFallback, type GoogleColorPalette, type GoogleColorValues } from "./google-calendar-helpers.ts";
 
 export type GoogleConnection = { accessToken: string; refreshToken: string | null; expiresAt: string | null; calendarId: string; plannerCalendarId: string; email: string };
 export type GoogleEventRecord = { externalEventId: string; title: string; startAt: string; endAt: string; isAppManaged: boolean; backgroundColor: string | null; foregroundColor: string | null; rawPayload: Record<string, unknown>; scheduleBlockId: string | null; externalUpdatedAt: string | null; sourceCalendarId: string | null; sourceCalendarName: string | null };

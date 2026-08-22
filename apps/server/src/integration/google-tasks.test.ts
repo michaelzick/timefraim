@@ -1,6 +1,6 @@
 import type { ScheduleBlock, Task } from "@timefraim/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { GoogleConnection } from "./google-calendar.js";
+import type { GoogleConnection } from "./google-calendar.ts";
 
 const {
   oauthSetCredentials,
@@ -22,7 +22,7 @@ const {
   tasksPatch: vi.fn(),
 }));
 
-vi.mock("../config/env.js", () => ({
+vi.mock("../config/env.ts", () => ({
   env: {
     GOOGLE_CLIENT_ID: "google-client-id",
     GOOGLE_CLIENT_SECRET: "google-client-secret",
@@ -45,8 +45,8 @@ import {
   deleteGoogleTask,
   getGoogleTasksAccessErrorMessage,
   upsertGoogleScheduledTask,
-} from "./google-tasks.js";
-import { getGoogleScheduledTasksByIds, listGoogleScheduledTasks } from "./google-tasks-sync.js";
+} from "./google-tasks.ts";
+import { getGoogleScheduledTasksByIds, listGoogleScheduledTasks } from "./google-tasks-sync.ts";
 
 const connection: GoogleConnection = {
   accessToken: "google-token",

@@ -1,7 +1,7 @@
 import type { ScheduleBlock, Task } from "@timefraim/shared";
 import { google } from "googleapis";
-import type { GoogleConnection } from "./google-calendar.js";
-import { getGoogleOAuthClient } from "./google-auth.js";
+import type { GoogleConnection } from "./google-calendar.ts";
+import { getGoogleOAuthClient } from "./google-auth.ts";
 
 function toGoogleTaskDue(plannerDate: string | null | undefined) {
   return plannerDate ? `${plannerDate}T00:00:00.000Z` : undefined;

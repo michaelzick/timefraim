@@ -1,6 +1,6 @@
 import type { GoogleCalendarSettings, GooglePlannerSyncTarget } from "@timefraim/shared";
-import type { GoogleCalendarListEntry } from "../integration/google-calendar.js";
-import { invalidInput } from "./planner-errors.js";
+import type { GoogleCalendarListEntry } from "../integration/google-calendar.ts";
+import { invalidInput } from "./planner-errors.ts";
 
 function sortGoogleCalendars(calendars: GoogleCalendarListEntry[]) {
   calendars.sort((a, b) => {

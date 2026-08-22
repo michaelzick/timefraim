@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import type { DraftStatus, SyncDraft } from "@timefraim/shared";
-import type { Queryable } from "../db/pool.js";
-import { mapDraft } from "./planner-repository-mappers.js";
-import { PlannerRepositoryIntegrationStore } from "./planner-repository-integration-store.js";
-import type { CreateDraftInput } from "./planner-repository-types.js";
+import type { Queryable } from "../db/pool.ts";
+import { mapDraft } from "./planner-repository-mappers.ts";
+import { PlannerRepositoryIntegrationStore } from "./planner-repository-integration-store.ts";
+import type { CreateDraftInput } from "./planner-repository-types.ts";
 
 export class PlannerRepositoryDraftStore extends PlannerRepositoryIntegrationStore {
   async createDraft(input: CreateDraftInput, db: Queryable): Promise<SyncDraft> {

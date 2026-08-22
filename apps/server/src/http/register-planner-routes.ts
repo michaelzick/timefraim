@@ -1,10 +1,10 @@
 import type { FastifyInstance } from "fastify";
-import { registerPlannerDraftRoutes } from "./register-planner-draft-routes.js";
-import { registerPlannerDuplicateRoutes } from "./register-planner-duplicate-routes.js";
-import { registerPlannerMutationRoutes } from "./register-planner-mutation-routes.js";
-import { registerPlannerTimerRoutes } from "./register-planner-timer-routes.js";
-import { parseCalendarSyncQuery, parseDayQuery, withAuthenticatedRoute } from "./route-helpers.js";
-import type { PlannerService } from "../services/planner-service.js";
+import { registerPlannerDraftRoutes } from "./register-planner-draft-routes.ts";
+import { registerPlannerDuplicateRoutes } from "./register-planner-duplicate-routes.ts";
+import { registerPlannerMutationRoutes } from "./register-planner-mutation-routes.ts";
+import { registerPlannerTimerRoutes } from "./register-planner-timer-routes.ts";
+import { parseCalendarSyncQuery, parseDayQuery, withAuthenticatedRoute } from "./route-helpers.ts";
+import type { PlannerService } from "../services/planner-service.ts";
 
 export function registerPlannerRoutes(app: FastifyInstance, plannerService: PlannerService) {
   app.get(

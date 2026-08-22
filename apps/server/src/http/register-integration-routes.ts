@@ -5,9 +5,9 @@ import {
   togglDiscoverInputSchema,
 } from "@timefraim/shared";
 import type { FastifyInstance } from "fastify";
-import { AuthorizationError } from "./auth.js";
-import { parseWithReply, withAuthenticatedRoute } from "./route-helpers.js";
-import type { PlannerService } from "../services/planner-service.js";
+import { AuthorizationError } from "./auth.ts";
+import { parseWithReply, withAuthenticatedRoute } from "./route-helpers.ts";
+import type { PlannerService } from "../services/planner-service.ts";
 
 export function registerIntegrationRoutes(app: FastifyInstance, plannerService: PlannerService) {
   app.get(

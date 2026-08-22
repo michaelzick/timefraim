@@ -1,5 +1,5 @@
 import type { TogglDiscoverResult, TogglProjectOption, TogglWorkspaceOption } from "@timefraim/shared";
-import { getStringId, togglRequest } from "./toggl-track-client.js";
+import { getStringId, togglRequest } from "./toggl-track-client.ts";
 
 type TogglWorkspaceResponse = {
   id?: string | number;

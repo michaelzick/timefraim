@@ -1,7 +1,7 @@
 import type { ApiErrorCode } from "@timefraim/shared";
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { isAuthenticationError, isAuthorizationError } from "./auth.js";
-import { isPlannerError } from "../services/planner-errors.js";
+import { isAuthenticationError, isAuthorizationError } from "./auth.ts";
+import { isPlannerError } from "../services/planner-errors.ts";
 
 const statusByCode: Record<ApiErrorCode, number> = {
   invalid_input: 400,

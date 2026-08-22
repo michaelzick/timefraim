@@ -4,18 +4,18 @@ import {
   type GoogleCalendarSettingsUpdate,
   type GooglePlannerSyncTarget,
 } from "@timefraim/shared";
-import { env } from "../config/env.js";
-import { pool } from "../db/pool.js";
-import { listGoogleCalendars, type GoogleConnection } from "../integration/google-calendar.js";
-import { assertGoogleTasksAccess, getGoogleTasksAccessErrorMessage } from "../integration/google-tasks.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
-import type { IntegrationTokenRow } from "../repositories/planner-repository-types.js";
-import { dependencyUnavailable } from "./planner-errors.js";
+import { env } from "../config/env.ts";
+import { pool } from "../db/pool.ts";
+import { listGoogleCalendars, type GoogleConnection } from "../integration/google-calendar.ts";
+import { assertGoogleTasksAccess, getGoogleTasksAccessErrorMessage } from "../integration/google-tasks.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
+import type { IntegrationTokenRow } from "../repositories/planner-repository-types.ts";
+import { dependencyUnavailable } from "./planner-errors.ts";
 import {
   buildGoogleCalendarSettings,
   getSelectableGoogleCalendars,
   validateSyncCalendarIds,
-} from "./planner-service-google-settings.js";
+} from "./planner-service-google-settings.ts";
 
 type IntegrationRowWithMetadata = Pick<IntegrationTokenRow, "metadata"> | null | undefined;
 

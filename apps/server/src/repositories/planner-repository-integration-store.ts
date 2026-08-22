@@ -1,13 +1,13 @@
 import type { IntegrationStatus, TogglIntegrationSettings } from "@timefraim/shared";
 import { integrationStatusSchema, togglIntegrationSettingsSchema } from "@timefraim/shared";
-import type { Queryable } from "../db/pool.js";
-import { mapUserTogglConnection } from "./planner-repository-mappers.js";
-import { PlannerRepositoryCalendarSyncStore } from "./planner-repository-calendar-sync-store.js";
+import type { Queryable } from "../db/pool.ts";
+import { mapUserTogglConnection } from "./planner-repository-mappers.ts";
+import { PlannerRepositoryCalendarSyncStore } from "./planner-repository-calendar-sync-store.ts";
 import type {
   EnvironmentStatus,
   IntegrationTokenRow,
   UserTogglConnectionRecord,
-} from "./planner-repository-types.js";
+} from "./planner-repository-types.ts";
 
 export class PlannerRepositoryIntegrationStore extends PlannerRepositoryCalendarSyncStore {
   async upsertIntegrationToken(

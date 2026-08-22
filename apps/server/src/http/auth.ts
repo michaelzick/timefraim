@@ -1,6 +1,6 @@
 import { createRemoteJWKSet, decodeProtectedHeader, jwtVerify } from "jose";
 import { z } from "zod";
-import { env } from "../config/env.js";
+import { env } from "../config/env.ts";
 
 const payloadSchema = z.object({
   sub: z.string().uuid(),

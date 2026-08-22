@@ -1,7 +1,7 @@
 import { userPreferencesUpdateSchema } from "@timefraim/shared";
 import type { FastifyInstance } from "fastify";
-import { parseWithReply, withAuthenticatedRoute } from "./route-helpers.js";
-import type { PlannerService } from "../services/planner-service.js";
+import { parseWithReply, withAuthenticatedRoute } from "./route-helpers.ts";
+import type { PlannerService } from "../services/planner-service.ts";
 
 export function registerPreferencesRoutes(app: FastifyInstance, plannerService: PlannerService) {
   app.get(

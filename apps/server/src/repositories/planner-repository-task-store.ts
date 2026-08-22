@@ -1,14 +1,14 @@
-import type { Queryable } from "../db/pool.js";
+import type { Queryable } from "../db/pool.ts";
 import {
   mapScheduleBlock,
   mapTask,
-} from "./planner-repository-mappers.js";
+} from "./planner-repository-mappers.ts";
 import type {
   CreateScheduleBlockInput,
   CreateTaskInput,
   ScheduleBlockPatch,
   TaskPatch,
-} from "./planner-repository-types.js";
+} from "./planner-repository-types.ts";
 
 export class PlannerRepositoryTaskStore {
   async listTasks(db: Queryable) {

@@ -1,10 +1,10 @@
 import { dayPlanSchema, type IntegrationStatus } from "@timefraim/shared";
-import { pool } from "../db/pool.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
-import { endOfDay, startOfDay } from "../utils/date.js";
-import { resolveAuditLogDisplaySummaries } from "./planner-audit-log-display.js";
-import { getGoogleCalendarSyncForDay } from "./planner-service-calendar-sync.js";
-import { getAllowedPlannerUserId } from "./planner-service-integrations.js";
+import { pool } from "../db/pool.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
+import { endOfDay, startOfDay } from "../utils/date.ts";
+import { resolveAuditLogDisplaySummaries } from "./planner-audit-log-display.ts";
+import { getGoogleCalendarSyncForDay } from "./planner-service-calendar-sync.ts";
+import { getAllowedPlannerUserId } from "./planner-service-integrations.ts";
 
 export async function getPlannerDayPlan(args: {
   repository: PlannerRepository;

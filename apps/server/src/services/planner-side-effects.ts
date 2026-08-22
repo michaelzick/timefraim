@@ -1,9 +1,9 @@
-import { deleteGoogleScheduleBlock, upsertGoogleScheduleBlock, type GoogleConnection } from "../integration/google-calendar.js";
-import { deleteGoogleTask, upsertGoogleScheduledTask } from "../integration/google-tasks.js";
-import { startTogglTimer, startTogglTimerForEvent, stopTogglTimer, type TogglConnection } from "../integration/toggl-track.js";
-import { pool } from "../db/pool.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
-import type { SideEffect } from "./planner-service-types.js";
+import { deleteGoogleScheduleBlock, upsertGoogleScheduleBlock, type GoogleConnection } from "../integration/google-calendar.ts";
+import { deleteGoogleTask, upsertGoogleScheduledTask } from "../integration/google-tasks.ts";
+import { startTogglTimer, startTogglTimerForEvent, stopTogglTimer, type TogglConnection } from "../integration/toggl-track.ts";
+import { pool } from "../db/pool.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
+import type { SideEffect } from "./planner-service-types.ts";
 
 async function upsertGoogleCalendarBlock(
   repository: PlannerRepository,

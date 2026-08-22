@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
-import { env } from "../config/env.js";
+import { env } from "../config/env.ts";
 
 const IV_LENGTH_BYTES = 12;
 const AUTH_TAG_BYTES = 16;

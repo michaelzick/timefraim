@@ -1,9 +1,9 @@
 import type { ScheduleBlock, ScheduleBlockUpdate } from "@timefraim/shared";
-import { detectScheduleConflicts } from "./planner-domain.js";
-import { conflict, notFound } from "./planner-errors.js";
-import { endOfDay, startOfDay } from "../utils/date.js";
-import { isUniqueViolation, type DraftHandlerContext } from "./planner-service-types.js";
-import { queueScheduleBlockSync, resolveScheduleBlockSyncState } from "./planner-google-schedule-sync.js";
+import { detectScheduleConflicts } from "./planner-domain.ts";
+import { conflict, notFound } from "./planner-errors.ts";
+import { endOfDay, startOfDay } from "../utils/date.ts";
+import { isUniqueViolation, type DraftHandlerContext } from "./planner-service-types.ts";
+import { queueScheduleBlockSync, resolveScheduleBlockSyncState } from "./planner-google-schedule-sync.ts";
 
 type ScheduleBlockMutationContext = Pick<DraftHandlerContext, "client" | "googlePlannerSyncTarget" | "repository" | "sideEffects" | "syncPlannerBlocksToCalendar">;
 

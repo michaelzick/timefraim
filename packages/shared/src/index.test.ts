@@ -10,7 +10,7 @@ import {
   taskInputSchema,
   taskSchema,
   taskUpdateSchema,
-} from "./index.js";
+} from "./index.ts";
 
 describe("shared barrel exports", () => {
   it("exposes core schemas through the package root", () => {

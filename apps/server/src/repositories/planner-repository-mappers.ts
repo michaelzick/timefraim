@@ -11,12 +11,12 @@ import {
   type UserPreferences,
 } from "@timefraim/shared";
 import type { QueryResultRow } from "pg";
-import { asIso } from "../utils/date.js";
+import { asIso } from "../utils/date.ts";
 import type {
   CalendarEventRecord,
   CalendarSyncRunRecord,
   UserTogglConnectionRecord,
-} from "./planner-repository-types.js";
+} from "./planner-repository-types.ts";
 
 function toDateOnly(value: unknown): string | null {
   if (!value) return null;

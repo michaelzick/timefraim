@@ -1,9 +1,9 @@
 import type { TaskStatus } from "@timefraim/shared";
-import { pool } from "../db/pool.js";
-import type { GoogleConnection } from "../integration/google-calendar.js";
-import { upsertGoogleScheduledTask } from "../integration/google-tasks.js";
-import { getGoogleScheduledTasksByIds, type GoogleScheduledTaskRecord } from "../integration/google-tasks-sync.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
+import { pool } from "../db/pool.ts";
+import type { GoogleConnection } from "../integration/google-calendar.ts";
+import { upsertGoogleScheduledTask } from "../integration/google-tasks.ts";
+import { getGoogleScheduledTasksByIds, type GoogleScheduledTaskRecord } from "../integration/google-tasks-sync.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
 
 function isAfter(value: string | null, reference: string) {
   return value ? new Date(value).getTime() > new Date(reference).getTime() : false;

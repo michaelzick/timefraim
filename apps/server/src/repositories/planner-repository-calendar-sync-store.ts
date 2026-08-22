@@ -1,6 +1,6 @@
-import type { Queryable } from "../db/pool.js";
-import { mapCalendarSyncRun } from "./planner-repository-mappers.js";
-import { PlannerRepositoryCalendarStore } from "./planner-repository-calendar-store.js";
+import type { Queryable } from "../db/pool.ts";
+import { mapCalendarSyncRun } from "./planner-repository-mappers.ts";
+import { PlannerRepositoryCalendarStore } from "./planner-repository-calendar-store.ts";
 
 type CalendarSyncRunInput = {
   provider: "google";

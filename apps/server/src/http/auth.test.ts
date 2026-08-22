@@ -1,7 +1,7 @@
 import { SignJWT } from "jose";
 import { describe, expect, it } from "vitest";
-import { env } from "../config/env.js";
-import { requireAuthenticatedUser } from "./auth.js";
+import { env } from "../config/env.ts";
+import { requireAuthenticatedUser } from "./auth.ts";
 
 const secret = new TextEncoder().encode(env.SUPABASE_JWT_SECRET);
 

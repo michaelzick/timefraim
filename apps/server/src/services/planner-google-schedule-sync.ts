@@ -2,7 +2,7 @@ import type { ScheduleBlockState } from "@timefraim/shared";
 import {
   resolvePlannerSyncTarget,
   type DraftHandlerContext,
-} from "./planner-service-types.js";
+} from "./planner-service-types.ts";
 
 type ScheduleSyncContext = Pick<
   DraftHandlerContext,

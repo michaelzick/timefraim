@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { calendarSyncSchema } from "./calendar-sync.js";
-import { actorRoleSchema, syncDraftSchema } from "./drafts.js";
-import { integrationStatusSchema } from "./integration.js";
-import { calendarEventViewSchema, timerSessionSchema, scheduleBlockSchema } from "./schedule.js";
-import { taskSchema } from "./task.js";
+import { calendarSyncSchema } from "./calendar-sync.ts";
+import { actorRoleSchema, syncDraftSchema } from "./drafts.ts";
+import { integrationStatusSchema } from "./integration.ts";
+import { calendarEventViewSchema, timerSessionSchema, scheduleBlockSchema } from "./schedule.ts";
+import { taskSchema } from "./task.ts";
 
 export const auditLogSchema = z.object({
   id: z.string().uuid(),

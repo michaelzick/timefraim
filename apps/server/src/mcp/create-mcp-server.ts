@@ -1,8 +1,8 @@
 import { dayQuerySchema } from "@timefraim/shared";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerMcpFullAccessTools } from "./register-mcp-full-access-tools.js";
-import type { PlannerService } from "../services/planner-service.js";
-import { todayIsoDate } from "../utils/date.js";
+import { registerMcpFullAccessTools } from "./register-mcp-full-access-tools.ts";
+import type { PlannerService } from "../services/planner-service.ts";
+import { todayIsoDate } from "../utils/date.ts";
 
 export function createMcpServer(plannerService: PlannerService, profile: "read-only" | "full-access") {
   const server = new McpServer(

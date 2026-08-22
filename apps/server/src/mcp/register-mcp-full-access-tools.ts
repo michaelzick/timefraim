@@ -8,7 +8,7 @@ import {
 } from "@timefraim/shared";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { PlannerService } from "../services/planner-service.js";
+import type { PlannerService } from "../services/planner-service.ts";
 
 export function registerMcpFullAccessTools(server: McpServer, plannerService: PlannerService) {
   server.registerTool(

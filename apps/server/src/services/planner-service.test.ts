@@ -23,32 +23,32 @@ const {
   stopTogglTimer: vi.fn(),
 }));
 
-vi.mock("../db/pool.js", () => ({
+vi.mock("../db/pool.ts", () => ({
   pool: fakeDb,
   withTransaction: async (callback: (client: typeof fakeDb) => Promise<unknown>) => callback(fakeDb),
 }));
 
-vi.mock("../integration/google-calendar.js", () => ({
+vi.mock("../integration/google-calendar.ts", () => ({
   deleteGoogleScheduleBlock,
   syncGoogleCalendarWindow,
   upsertGoogleScheduleBlock,
 }));
 
-vi.mock("../integration/google-tasks.js", () => ({
+vi.mock("../integration/google-tasks.ts", () => ({
   deleteGoogleTask,
   upsertGoogleScheduledTask,
 }));
 
-vi.mock("../integration/google-tasks-sync.js", () => ({
+vi.mock("../integration/google-tasks-sync.ts", () => ({
   getGoogleScheduledTasksByIds,
 }));
 
-vi.mock("../integration/toggl-track.js", () => ({
+vi.mock("../integration/toggl-track.ts", () => ({
   startTogglTimer,
   stopTogglTimer,
 }));
 
-import { PlannerService } from "./planner-service.js";
+import { PlannerService } from "./planner-service.ts";
 
 const baseTask: Task = {
   id: "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1",

@@ -2,16 +2,16 @@ import type {
   TogglDiscoverResult,
   TogglIntegrationSettings,
 } from "@timefraim/shared";
-import { env } from "../config/env.js";
-import { pool } from "../db/pool.js";
-import { decryptSecret, encryptSecret, maskSecret } from "../integration/integration-crypto.js";
+import { env } from "../config/env.ts";
+import { pool } from "../db/pool.ts";
+import { decryptSecret, encryptSecret, maskSecret } from "../integration/integration-crypto.ts";
 import {
   discoverTogglData,
   validateTogglConnection,
   type TogglConnection,
-} from "../integration/toggl-track.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
-import { dependencyUnavailable, invalidInput } from "./planner-errors.js";
+} from "../integration/toggl-track.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
+import { dependencyUnavailable, invalidInput } from "./planner-errors.ts";
 
 export async function getTogglConnection(
   repository: PlannerRepository,

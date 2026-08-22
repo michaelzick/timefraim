@@ -1,5 +1,5 @@
-import { createGoogleTasksClient } from "./google-tasks.js";
-import type { GoogleConnection } from "./google-calendar.js";
+import { createGoogleTasksClient } from "./google-tasks.ts";
+import type { GoogleConnection } from "./google-calendar.ts";
 
 export type GoogleScheduledTaskRecord = {
   id: string;

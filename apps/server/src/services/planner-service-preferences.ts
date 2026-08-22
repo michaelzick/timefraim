@@ -3,8 +3,8 @@ import {
   type UserPreferences,
   type UserPreferencesUpdate,
 } from "@timefraim/shared";
-import { pool } from "../db/pool.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
+import { pool } from "../db/pool.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
 
 const defaultPreferences: UserPreferences = userPreferencesSchema.parse({
   theme: "system",

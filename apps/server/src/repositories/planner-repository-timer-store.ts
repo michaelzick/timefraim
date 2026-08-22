@@ -1,6 +1,6 @@
-import type { Queryable } from "../db/pool.js";
-import { mapTimer } from "./planner-repository-mappers.js";
-import { PlannerRepositoryDraftStore } from "./planner-repository-draft-store.js";
+import type { Queryable } from "../db/pool.ts";
+import { mapTimer } from "./planner-repository-mappers.ts";
+import { PlannerRepositoryDraftStore } from "./planner-repository-draft-store.ts";
 
 export class PlannerRepositoryTimerStore extends PlannerRepositoryDraftStore {
   async createTimerSession(

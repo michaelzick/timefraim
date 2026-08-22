@@ -1,9 +1,9 @@
 import type { FastifyInstance } from "fastify";
-import { registerAuthRoutes } from "./register-auth-routes.js";
-import { registerIntegrationRoutes } from "./register-integration-routes.js";
-import { registerPlannerRoutes } from "./register-planner-routes.js";
-import { registerPreferencesRoutes } from "./register-preferences-routes.js";
-import type { PlannerService } from "../services/planner-service.js";
+import { registerAuthRoutes } from "./register-auth-routes.ts";
+import { registerIntegrationRoutes } from "./register-integration-routes.ts";
+import { registerPlannerRoutes } from "./register-planner-routes.ts";
+import { registerPreferencesRoutes } from "./register-preferences-routes.ts";
+import type { PlannerService } from "../services/planner-service.ts";
 
 export function registerHttpRoutes(app: FastifyInstance, plannerService: PlannerService) {
   registerAuthRoutes(app, plannerService);

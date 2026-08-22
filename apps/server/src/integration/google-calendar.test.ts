@@ -21,7 +21,7 @@ const {
   oauthSetCredentials: vi.fn(),
 }));
 
-vi.mock("../config/env.js", () => ({
+vi.mock("../config/env.ts", () => ({
   env: {
     GOOGLE_CLIENT_ID: "google-client-id",
     GOOGLE_CLIENT_SECRET: "google-client-secret",
@@ -46,7 +46,7 @@ import {
   syncGoogleCalendarWindow,
   upsertGoogleScheduleBlock,
   type GoogleConnection,
-} from "./google-calendar.js";
+} from "./google-calendar.ts";
 
 const connection: GoogleConnection = {
   accessToken: "google-token",

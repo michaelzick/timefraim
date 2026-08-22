@@ -1,5 +1,5 @@
 import { Pool, type PoolClient } from "pg";
-import { env } from "../config/env.js";
+import { env } from "../config/env.ts";
 
 export type Queryable = Pick<Pool, "query"> | PoolClient;
 

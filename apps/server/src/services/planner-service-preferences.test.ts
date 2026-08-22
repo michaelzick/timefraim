@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { UserPreferences } from "@timefraim/shared";
 
-vi.mock("../db/pool.js", () => ({ pool: { query: vi.fn() } }));
+vi.mock("../db/pool.ts", () => ({ pool: { query: vi.fn() } }));
 
-import { getUserPreferences, saveUserPreferences } from "./planner-service-preferences.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
+import { getUserPreferences, saveUserPreferences } from "./planner-service-preferences.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
 
 function makeRepository(overrides: {
   getUserPreferences?: (userId: string, db: unknown) => Promise<UserPreferences | null>;

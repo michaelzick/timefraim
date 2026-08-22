@@ -1,6 +1,6 @@
 import { google } from "googleapis";
-import { env } from "../config/env.js";
-import type { GoogleConnection } from "./google-calendar.js";
+import { env } from "../config/env.ts";
+import type { GoogleConnection } from "./google-calendar.ts";
 
 type GoogleOAuthClient = InstanceType<typeof google.auth.OAuth2>;
 

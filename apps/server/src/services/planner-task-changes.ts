@@ -1,9 +1,9 @@
 import type { TaskInput, TaskUpdate } from "@timefraim/shared";
-import { notFound } from "./planner-errors.js";
-import type { DraftHandlerContext } from "./planner-service-types.js";
-import { updateScheduleBlockWithValidation } from "./planner-schedule-changes.js";
-import type { TaskPatch } from "../repositories/planner-repository-types.js";
-import { todayIsoDate } from "../utils/date.js";
+import { notFound } from "./planner-errors.ts";
+import type { DraftHandlerContext } from "./planner-service-types.ts";
+import { updateScheduleBlockWithValidation } from "./planner-schedule-changes.ts";
+import type { TaskPatch } from "../repositories/planner-repository-types.ts";
+import { todayIsoDate } from "../utils/date.ts";
 
 async function queueGoogleTaskStatusSync(context: DraftHandlerContext, taskId: string, payload: TaskUpdate) {
   if (!context.googleConnected || typeof payload.status === "undefined") {

@@ -10,9 +10,9 @@ import {
   calendarEventIdParamsSchema,
   scheduleBlockIdParamsSchema,
   taskIdParamsSchema,
-} from "./planner-route-schemas.js";
-import { parseWithReply, withAuthenticatedRoute } from "./route-helpers.js";
-import type { PlannerService } from "../services/planner-service.js";
+} from "./planner-route-schemas.ts";
+import { parseWithReply, withAuthenticatedRoute } from "./route-helpers.ts";
+import type { PlannerService } from "../services/planner-service.ts";
 
 export function registerPlannerMutationRoutes(
   app: FastifyInstance,

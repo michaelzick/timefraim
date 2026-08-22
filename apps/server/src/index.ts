@@ -3,11 +3,11 @@ import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import Fastify from "fastify";
 import { randomUUID } from "node:crypto";
-import { env } from "./config/env.js";
-import { registerHttpRoutes } from "./http/routes.js";
-import { requireMcpProfile } from "./http/auth.js";
-import { createMcpServer } from "./mcp/create-mcp-server.js";
-import { PlannerService } from "./services/planner-service.js";
+import { env } from "./config/env.ts";
+import { registerHttpRoutes } from "./http/routes.ts";
+import { requireMcpProfile } from "./http/auth.ts";
+import { createMcpServer } from "./mcp/create-mcp-server.ts";
+import { PlannerService } from "./services/planner-service.ts";
 
 const app = Fastify({
   logger: env.NODE_ENV !== "test",

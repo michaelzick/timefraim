@@ -1,7 +1,7 @@
 import type { Task, TaskPriority } from "@timefraim/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { duplicateTaskInContext } from "./planner-duplicate-changes.js";
-import type { DraftHandlerContext, DraftToApply } from "./planner-service-types.js";
+import { duplicateTaskInContext } from "./planner-duplicate-changes.ts";
+import type { DraftHandlerContext, DraftToApply } from "./planner-service-types.ts";
 
 const baseTask: Task = {
   id: "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1",

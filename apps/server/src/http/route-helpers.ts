@@ -1,9 +1,9 @@
 import { calendarSyncQuerySchema, dayQuerySchema } from "@timefraim/shared";
 import type { FastifyReply, FastifyRequest, RouteHandlerMethod } from "fastify";
 import type { ZodType } from "zod";
-import { requireAuthenticatedUser, type AuthenticatedUser } from "./auth.js";
-import { sendApiError, sendMappedError, setRequestIdHeader } from "./http-errors.js";
-import { todayIsoDate } from "../utils/date.js";
+import { requireAuthenticatedUser, type AuthenticatedUser } from "./auth.ts";
+import { sendApiError, sendMappedError, setRequestIdHeader } from "./http-errors.ts";
+import { todayIsoDate } from "../utils/date.ts";
 
 type AuthenticatedHandler = (
   request: FastifyRequest,

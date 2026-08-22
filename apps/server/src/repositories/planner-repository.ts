@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { Queryable } from "../db/pool.js";
-import { mapAuditLog } from "./planner-repository-mappers.js";
-import { PlannerRepositoryPreferencesStore } from "./planner-repository-preferences-store.js";
-import type { CreateAuditLogInput } from "./planner-repository-types.js";
+import type { Queryable } from "../db/pool.ts";
+import { mapAuditLog } from "./planner-repository-mappers.ts";
+import { PlannerRepositoryPreferencesStore } from "./planner-repository-preferences-store.ts";
+import type { CreateAuditLogInput } from "./planner-repository-types.ts";
 
-export type { CalendarEventRecord, IntegrationTokenRow } from "./planner-repository-types.js";
+export type { CalendarEventRecord, IntegrationTokenRow } from "./planner-repository-types.ts";
 
 export class PlannerRepository extends PlannerRepositoryPreferencesStore {
   async listRecentAuditLogs(db: Queryable) {
