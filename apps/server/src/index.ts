@@ -4,7 +4,7 @@ import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import Fastify from "fastify";
 import { env } from "./config/env.ts";
-import { registerHttpRoutes } from "./http/routes.ts";
+import { registerHttpRoutes } from "./http/fastify-adapter.ts";
 import { requireMcpProfile } from "./http/auth.ts";
 import { createMcpServer } from "./mcp/create-mcp-server.ts";
 import { PlannerService } from "./services/planner-service.ts";
