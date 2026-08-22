@@ -1,4 +1,11 @@
-import type { calendar_v3 } from "googleapis";
+import { GOOGLE_CALENDAR_API, googleUrl, type GoogleClient } from "./google-api-client.ts";
+import type {
+  GoogleCalendarListItem,
+  GoogleCalendarListResponse,
+  GoogleColorDefinition,
+  GoogleColorsResponse,
+  GoogleEventResource,
+} from "./google-api-types.ts";
 
 export type GoogleColorValues = {
   backgroundColor: string | null;
@@ -8,11 +15,6 @@ export type GoogleColorValues = {
 export type GoogleColorPalette = {
   calendar: Record<string, GoogleColorValues>;
   event: Record<string, GoogleColorValues>;
-};
-
-type GoogleColorEntry = {
-  background?: string | null;
-  foreground?: string | null;
 };
 
 const EMPTY_GOOGLE_COLORS: GoogleColorValues = {
@@ -25,6 +27,10 @@ const EMPTY_GOOGLE_COLOR_PALETTE: GoogleColorPalette = {
   event: {},
 };
 
+// One calendar sync resolves ids, colors, and names for several calendars;
+// memoizing the list per client turns N list requests into one.
+const calendarListCache = new WeakMap<GoogleClient, Promise<GoogleCalendarListItem[]>>();
+
 function isNotFoundError(error: unknown) {
   if (typeof error !== "object" || error === null) {
     return false;
@@ -34,55 +40,60 @@ function isNotFoundError(error: unknown) {
   return errorWithStatus.code === 404 || errorWithStatus.status === 404;
 }
 
-export async function resolveCalendarId(calendar: calendar_v3.Calendar, calendarIdOrName: string) {
+async function fetchCalendarListItems(client: GoogleClient) {
+  const items: GoogleCalendarListItem[] = [];
+  let pageToken: string | undefined;
+  do {
+    const response = await client.request<GoogleCalendarListResponse>(
+      "GET",
+      googleUrl(GOOGLE_CALENDAR_API, ["users", "me", "calendarList"], { pageToken }),
+    );
+    items.push(...(response.items ?? []));
+    pageToken = response.nextPageToken ?? undefined;
+  } while (pageToken);
+  return items;
+}
+
+export function getCalendarListItems(client: GoogleClient) {
+  let cached = calendarListCache.get(client);
+  if (!cached) {
+    cached = fetchCalendarListItems(client);
+    calendarListCache.set(client, cached);
+  }
+  return cached;
+}
+
+export async function resolveCalendarId(client: GoogleClient, calendarIdOrName: string) {
   const target = calendarIdOrName.trim();
   if (!target || target === "primary") {
     return "primary";
   }
 
-  let pageToken: string | undefined;
-  do {
-    const response = await calendar.calendarList.list({ pageToken });
-    const match = (response.data.items ?? []).find((item) => item.id === target || item.summary === target);
-    if (match?.id) {
-      return match.id;
-    }
-    pageToken = response.data.nextPageToken ?? undefined;
-  } while (pageToken);
-
-  return target;
+  const items = await getCalendarListItems(client);
+  const match = items.find((item) => item.id === target || item.summary === target);
+  return match?.id ?? target;
 }
 
 async function resolveCalendarListEntry(
-  calendar: calendar_v3.Calendar,
+  client: GoogleClient,
   calendarIdOrName: string,
-): Promise<calendar_v3.Schema$CalendarListEntry | null> {
+): Promise<GoogleCalendarListItem | null> {
   const target = calendarIdOrName.trim();
   const matchPrimary = !target || target === "primary";
-  let pageToken: string | undefined;
-
-  do {
-    const response = await calendar.calendarList.list({ pageToken });
-    const match = (response.data.items ?? []).find((item) => {
-      if (matchPrimary) {
-        return item.primary === true || item.id === "primary";
-      }
-
-      return item.id === target || item.summary === target;
-    });
-
-    if (match) {
-      return match;
+  const items = await getCalendarListItems(client);
+  const match = items.find((item) => {
+    if (matchPrimary) {
+      return item.primary === true || item.id === "primary";
     }
 
-    pageToken = response.data.nextPageToken ?? undefined;
-  } while (pageToken);
+    return item.id === target || item.summary === target;
+  });
 
-  return null;
+  return match ?? null;
 }
 
 function mapGoogleColorEntries(
-  entries: Record<string, GoogleColorEntry> | null | undefined,
+  entries: Record<string, GoogleColorDefinition> | null | undefined,
 ): Record<string, GoogleColorValues> {
   return Object.fromEntries(
     Object.entries(entries ?? {}).map(([key, value]) => [
@@ -95,12 +106,15 @@ function mapGoogleColorEntries(
   );
 }
 
-export async function loadGoogleColorPalette(calendar: calendar_v3.Calendar): Promise<GoogleColorPalette> {
+export async function loadGoogleColorPalette(client: GoogleClient): Promise<GoogleColorPalette> {
   try {
-    const response = await calendar.colors.get();
+    const response = await client.request<GoogleColorsResponse>(
+      "GET",
+      googleUrl(GOOGLE_CALENDAR_API, ["colors"]),
+    );
     return {
-      calendar: mapGoogleColorEntries(response.data.calendar as Record<string, GoogleColorEntry> | null),
-      event: mapGoogleColorEntries(response.data.event as Record<string, GoogleColorEntry> | null),
+      calendar: mapGoogleColorEntries(response.calendar),
+      event: mapGoogleColorEntries(response.event),
     };
   } catch {
     return EMPTY_GOOGLE_COLOR_PALETTE;
@@ -108,7 +122,7 @@ export async function loadGoogleColorPalette(calendar: calendar_v3.Calendar): Pr
 }
 
 function resolveCalendarColorsFromEntry(
-  entry: calendar_v3.Schema$CalendarListEntry | null,
+  entry: GoogleCalendarListItem | null,
   palette: GoogleColorPalette,
 ): GoogleColorValues {
   if (!entry) {
@@ -123,12 +137,12 @@ function resolveCalendarColorsFromEntry(
 }
 
 export async function resolveCalendarColors(
-  calendar: calendar_v3.Calendar,
+  client: GoogleClient,
   calendarIdOrName: string,
   palette: GoogleColorPalette,
 ): Promise<GoogleColorValues> {
   try {
-    const entry = await resolveCalendarListEntry(calendar, calendarIdOrName);
+    const entry = await resolveCalendarListEntry(client, calendarIdOrName);
     return resolveCalendarColorsFromEntry(entry, palette);
   } catch {
     return EMPTY_GOOGLE_COLORS;
@@ -136,7 +150,7 @@ export async function resolveCalendarColors(
 }
 
 export function resolveEventColors(
-  event: calendar_v3.Schema$Event,
+  event: GoogleEventResource,
   calendarColors: GoogleColorValues,
   palette: GoogleColorPalette,
 ): GoogleColorValues {
