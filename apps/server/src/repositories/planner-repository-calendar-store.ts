@@ -1,10 +1,10 @@
-import type { Queryable } from "../db/pool.js";
+import type { Queryable } from "../db/pool.ts";
 import {
   mapCalendarEventRecord,
   mapCalendarEventView,
-} from "./planner-repository-mappers.js";
-import { PlannerRepositoryTaskStore } from "./planner-repository-task-store.js";
-import type { UpsertCalendarEventInput } from "./planner-repository-types.js";
+} from "./planner-repository-mappers.ts";
+import { PlannerRepositoryTaskStore } from "./planner-repository-task-store.ts";
+import type { UpsertCalendarEventInput } from "./planner-repository-types.ts";
 
 export class PlannerRepositoryCalendarStore extends PlannerRepositoryTaskStore {
   async listCalendarEventsForRange(range: { startAt: string; endAt: string }, db: Queryable) {

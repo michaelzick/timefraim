@@ -5,10 +5,10 @@ const { assertGoogleTasksAccess, listGoogleCalendars } = vi.hoisted(() => ({
   listGoogleCalendars: vi.fn(),
 }));
 
-vi.mock("../integration/google-calendar.js", () => ({
+vi.mock("../integration/google-calendar.ts", () => ({
   listGoogleCalendars,
 }));
-vi.mock("../integration/google-tasks.js", () => ({
+vi.mock("../integration/google-tasks.ts", () => ({
   assertGoogleTasksAccess,
   getGoogleTasksAccessErrorMessage: () =>
     "Google Tasks API is not enabled for this Google Cloud project. Enable tasks.googleapis.com, then save this setting again.",
@@ -18,7 +18,7 @@ import {
   getGoogleCalendarSettings,
   saveGoogleCalendarSettings,
   saveGoogleSession,
-} from "./planner-service-google-integrations.js";
+} from "./planner-service-google-integrations.ts";
 
 function createRepository(row: {
   access_token: string | null;

@@ -1,5 +1,5 @@
-import { forbidden, notFound } from "./planner-errors.js";
-import type { DraftHandlerContext } from "./planner-service-types.js";
+import { forbidden, notFound } from "./planner-errors.ts";
+import type { DraftHandlerContext } from "./planner-service-types.ts";
 
 export async function applyCalendarEventDismissDraft(context: DraftHandlerContext) {
   const payload = context.draft.payload as { calendarEventId: string };

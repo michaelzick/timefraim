@@ -1,16 +1,16 @@
 import { formatDraftSummary, type ActorRole, type DraftKind, type GoogleCalendarSettingsUpdate, type ScheduleBlockDuplicatePayload, type TaskDuplicatePayload, type UserPreferencesUpdate } from "@timefraim/shared";
-import { env } from "../config/env.js";
-import { pool, withTransaction } from "../db/pool.js";
-import { PlannerRepository } from "../repositories/planner-repository.js";
-import { todayIsoDate } from "../utils/date.js";
-import { applyPlannerDraft } from "./planner-service-apply.js";
-import { syncPlannerGoogleCalendar } from "./planner-service-calendar.js";
-import { getPlannerDayPlan } from "./planner-service-day-plan.js";
+import { env } from "../config/env.ts";
+import { pool, withTransaction } from "../db/pool.ts";
+import { PlannerRepository } from "../repositories/planner-repository.ts";
+import { todayIsoDate } from "../utils/date.ts";
+import { applyPlannerDraft } from "./planner-service-apply.ts";
+import { syncPlannerGoogleCalendar } from "./planner-service-calendar.ts";
+import { getPlannerDayPlan } from "./planner-service-day-plan.ts";
 import {
   duplicateScheduleBlockForUser,
   duplicateTaskForUser,
-} from "./planner-service-duplicates.js";
-import { forbidden, notFound } from "./planner-errors.js";
+} from "./planner-service-duplicates.ts";
+import { forbidden, notFound } from "./planner-errors.ts";
 import {
   deleteTogglConnection,
   discoverTogglConnection,
@@ -22,10 +22,10 @@ import {
   saveGoogleCalendarSettings,
   saveGoogleSession,
   saveTogglConnection,
-} from "./planner-service-integrations.js";
-import { getUserPreferences, saveUserPreferences } from "./planner-service-preferences.js";
-import { runPlannerSideEffects } from "./planner-side-effects.js";
-import type { SideEffect } from "./planner-service-types.js";
+} from "./planner-service-integrations.ts";
+import { getUserPreferences, saveUserPreferences } from "./planner-service-preferences.ts";
+import { runPlannerSideEffects } from "./planner-side-effects.ts";
+import type { SideEffect } from "./planner-service-types.ts";
 export class PlannerService {
   constructor(private readonly repository = new PlannerRepository()) {}
   async getIntegrationStatus(userId?: string | null) {

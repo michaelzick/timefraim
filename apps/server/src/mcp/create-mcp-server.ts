@@ -1,8 +1,8 @@
 import { dayQuerySchema } from "@timefraim/shared";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerMcpFullAccessTools } from "./register-mcp-full-access-tools.js";
-import type { PlannerService } from "../services/planner-service.js";
-import { todayIsoDate } from "../utils/date.js";
+import { registerMcpFullAccessTools } from "./register-mcp-full-access-tools.ts";
+import type { PlannerService } from "../services/planner-service.ts";
+import { todayIsoDate } from "../utils/date.ts";
 
 export function createMcpServer(plannerService: PlannerService, profile: "read-only" | "full-access") {
   const server = new McpServer(
@@ -42,7 +42,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
         date: dayQuerySchema.shape.date.optional(),
       },
     },
-    async ({ date }) => {
+    async ({ date }: { date?: string }) => {
       const dayPlan = await plannerService.getDayPlan(null, date ?? todayIsoDate());
       return {
         content: [{ type: "text", text: JSON.stringify(dayPlan.calendarEvents, null, 2) }],
@@ -60,7 +60,7 @@ export function createMcpServer(plannerService: PlannerService, profile: "read-o
         date: dayQuerySchema.shape.date.optional(),
       },
     },
-    async ({ date }) => {
+    async ({ date }: { date?: string }) => {
       const dayPlan = await plannerService.getDayPlan(null, date ?? todayIsoDate());
       return {
         content: [{ type: "text", text: JSON.stringify(dayPlan, null, 2) }],

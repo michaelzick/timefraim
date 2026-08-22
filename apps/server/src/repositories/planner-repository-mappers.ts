@@ -10,13 +10,13 @@ import {
   userPreferencesSchema,
   type UserPreferences,
 } from "@timefraim/shared";
-import type { QueryResultRow } from "pg";
-import { asIso } from "../utils/date.js";
+import type { DbRow } from "../db/pool.ts";
+import { asIso } from "../utils/date.ts";
 import type {
   CalendarEventRecord,
   CalendarSyncRunRecord,
   UserTogglConnectionRecord,
-} from "./planner-repository-types.js";
+} from "./planner-repository-types.ts";
 
 function toDateOnly(value: unknown): string | null {
   if (!value) return null;
@@ -25,7 +25,7 @@ function toDateOnly(value: unknown): string | null {
   return null;
 }
 
-export function mapTask(row: QueryResultRow) {
+export function mapTask(row: DbRow) {
   return taskSchema.parse({
     id: row.id,
     title: row.title,
@@ -44,7 +44,7 @@ export function mapTask(row: QueryResultRow) {
   });
 }
 
-export function mapScheduleBlock(row: QueryResultRow) {
+export function mapScheduleBlock(row: DbRow) {
   return scheduleBlockSchema.parse({
     id: row.id,
     taskId: row.task_id,
@@ -59,7 +59,7 @@ export function mapScheduleBlock(row: QueryResultRow) {
   });
 }
 
-export function mapCalendarEventView(row: QueryResultRow) {
+export function mapCalendarEventView(row: DbRow) {
   return calendarEventViewSchema.parse({
     id: row.id,
     externalEventId: row.external_event_id,
@@ -75,7 +75,7 @@ export function mapCalendarEventView(row: QueryResultRow) {
   });
 }
 
-export function mapCalendarEventRecord(row: QueryResultRow): CalendarEventRecord {
+export function mapCalendarEventRecord(row: DbRow): CalendarEventRecord {
   return {
     id: row.id,
     externalEventId: row.external_event_id,
@@ -97,7 +97,7 @@ export function mapCalendarEventRecord(row: QueryResultRow): CalendarEventRecord
   };
 }
 
-export function mapCalendarSyncRun(row: QueryResultRow): CalendarSyncRunRecord {
+export function mapCalendarSyncRun(row: DbRow): CalendarSyncRunRecord {
   return {
     id: row.id,
     provider: "google",
@@ -110,7 +110,7 @@ export function mapCalendarSyncRun(row: QueryResultRow): CalendarSyncRunRecord {
   };
 }
 
-export function mapDraft(row: QueryResultRow) {
+export function mapDraft(row: DbRow) {
   return syncDraftSchema.parse({
     id: row.id,
     ownerUserId: row.owner_user_id,
@@ -126,7 +126,7 @@ export function mapDraft(row: QueryResultRow) {
   });
 }
 
-export function mapTimer(row: QueryResultRow) {
+export function mapTimer(row: DbRow) {
   return timerSessionSchema.parse({
     id: row.id,
     taskId: row.task_id ?? null,
@@ -139,7 +139,7 @@ export function mapTimer(row: QueryResultRow) {
   });
 }
 
-export function mapAuditLog(row: QueryResultRow) {
+export function mapAuditLog(row: DbRow) {
   return auditLogSchema.parse({
     id: row.id,
     actorRole: row.actor_role,
@@ -153,7 +153,7 @@ export function mapAuditLog(row: QueryResultRow) {
   });
 }
 
-export function mapUserPreferences(row: QueryResultRow): UserPreferences {
+export function mapUserPreferences(row: DbRow): UserPreferences {
   return userPreferencesSchema.parse({
     theme: row.theme,
     taskStartNotificationsEnabled: row.task_start_notifications_enabled,
@@ -161,7 +161,7 @@ export function mapUserPreferences(row: QueryResultRow): UserPreferences {
   });
 }
 
-export function mapUserTogglConnection(row: QueryResultRow): UserTogglConnectionRecord {
+export function mapUserTogglConnection(row: DbRow): UserTogglConnectionRecord {
   return {
     userId: row.user_id,
     apiTokenCiphertext: row.api_token_ciphertext,

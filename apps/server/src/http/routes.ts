@@ -1,13 +1,12 @@
-import type { FastifyInstance } from "fastify";
-import { registerAuthRoutes } from "./register-auth-routes.js";
-import { registerIntegrationRoutes } from "./register-integration-routes.js";
-import { registerPlannerRoutes } from "./register-planner-routes.js";
-import { registerPreferencesRoutes } from "./register-preferences-routes.js";
-import type { PlannerService } from "../services/planner-service.js";
+import type { ApiRoute } from "./api-routes.ts";
+import { authRoutes } from "./auth-routes.ts";
+import { integrationRoutes } from "./integration-routes.ts";
+import { plannerRoutes } from "./planner-routes.ts";
+import { preferencesRoutes } from "./preferences-routes.ts";
 
-export function registerHttpRoutes(app: FastifyInstance, plannerService: PlannerService) {
-  registerAuthRoutes(app, plannerService);
-  registerIntegrationRoutes(app, plannerService);
-  registerPreferencesRoutes(app, plannerService);
-  registerPlannerRoutes(app, plannerService);
-}
+export const apiRoutes: ApiRoute[] = [
+  ...authRoutes,
+  ...integrationRoutes,
+  ...preferencesRoutes,
+  ...plannerRoutes,
+];

@@ -1,12 +1,12 @@
 import type { Task } from "@timefraim/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../utils/date.js", () => ({
+vi.mock("../utils/date.ts", () => ({
   todayIsoDate: () => "2026-04-20",
 }));
 
-import { applyTaskUpdateDraft } from "./planner-task-changes.js";
-import type { DraftHandlerContext, DraftToApply } from "./planner-service-types.js";
+import { applyTaskUpdateDraft } from "./planner-task-changes.ts";
+import type { DraftHandlerContext, DraftToApply } from "./planner-service-types.ts";
 
 const baseTask: Task = {
   id: "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1",

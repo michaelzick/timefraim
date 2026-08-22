@@ -1,42 +1,11 @@
 import type { ScheduleBlock, Task } from "@timefraim/shared";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { GoogleConnection } from "./google-calendar.js";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { GoogleConnection } from "./google-calendar.ts";
 
-const {
-  oauthSetCredentials,
-  tasksDelete,
-  tasksFactory,
-  tasksGet,
-  tasksInsert,
-  tasksList,
-  tasklistsGet,
-  tasksPatch,
-} = vi.hoisted(() => ({
-  oauthSetCredentials: vi.fn(),
-  tasksDelete: vi.fn(),
-  tasksFactory: vi.fn(),
-  tasksGet: vi.fn(),
-  tasksInsert: vi.fn(),
-  tasksList: vi.fn(),
-  tasklistsGet: vi.fn(),
-  tasksPatch: vi.fn(),
-}));
-
-vi.mock("../config/env.js", () => ({
+vi.mock("../config/env.ts", () => ({
   env: {
     GOOGLE_CLIENT_ID: "google-client-id",
     GOOGLE_CLIENT_SECRET: "google-client-secret",
-  },
-}));
-
-vi.mock("googleapis", () => ({
-  google: {
-    auth: {
-      OAuth2: class {
-        setCredentials = oauthSetCredentials;
-      },
-    },
-    tasks: tasksFactory,
   },
 }));
 
@@ -45,13 +14,32 @@ import {
   deleteGoogleTask,
   getGoogleTasksAccessErrorMessage,
   upsertGoogleScheduledTask,
-} from "./google-tasks.js";
-import { getGoogleScheduledTasksByIds, listGoogleScheduledTasks } from "./google-tasks-sync.js";
+} from "./google-tasks.ts";
+import { getGoogleScheduledTasksByIds, listGoogleScheduledTasks } from "./google-tasks-sync.ts";
+
+const fetchMock = vi.fn<typeof fetch>();
+const TASKS_PATH = "/tasks/v1/lists/@default/tasks";
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+}
+
+function requestUrl(input: RequestInfo | URL) {
+  return input instanceof URL ? input : new URL(typeof input === "string" ? input : input.url);
+}
+
+function requests() {
+  return fetchMock.mock.calls.map(([input, init]) => ({
+    method: init?.method ?? "GET",
+    url: requestUrl(input),
+    body: typeof init?.body === "string" ? (JSON.parse(init.body) as Record<string, unknown>) : undefined,
+  }));
+}
 
 const connection: GoogleConnection = {
   accessToken: "google-token",
   refreshToken: "refresh-token",
-  expiresAt: "2026-04-11T12:00:00.000Z",
+  expiresAt: "2099-04-11T12:00:00.000Z",
   calendarId: "primary",
   plannerCalendarId: "Free Time Tasks",
   email: "allowed@example.com",
@@ -85,27 +73,38 @@ const block: ScheduleBlock = {
   updatedAt: "2026-04-06T08:00:00.000Z",
 };
 
+let listResponses: unknown[];
+let getResponses: unknown[];
+
 describe("google-tasks integration", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    tasksFactory.mockReturnValue({
-      tasks: {
-        delete: tasksDelete,
-        get: tasksGet,
-        insert: tasksInsert,
-        list: tasksList,
-        patch: tasksPatch,
-      },
-      tasklists: {
-        get: tasklistsGet,
-      },
+    vi.stubGlobal("fetch", fetchMock);
+    listResponses = [{ items: [] }];
+    getResponses = [];
+    fetchMock.mockImplementation((input, init) => {
+      const url = requestUrl(input);
+      const method = init?.method ?? "GET";
+      if (url.pathname === "/tasks/v1/users/@me/lists/@default") return Promise.resolve(jsonResponse({ id: "@default" }));
+      if (url.pathname === TASKS_PATH && method === "GET") return Promise.resolve(jsonResponse(listResponses.shift() ?? { items: [] }));
+      if (url.pathname === TASKS_PATH && method === "POST") return Promise.resolve(jsonResponse({ id: "google-task-123" }));
+      if (url.pathname.startsWith(`${TASKS_PATH}/`) && method === "GET") return Promise.resolve(jsonResponse(getResponses.shift() ?? {}));
+      if (url.pathname.startsWith(`${TASKS_PATH}/`) && method === "PATCH") return Promise.resolve(jsonResponse({ id: "google-task-123" }));
+      if (url.pathname.startsWith(`${TASKS_PATH}/`) && method === "DELETE") return Promise.resolve(new Response(null, { status: 204 }));
+      return Promise.resolve(jsonResponse({ error: { message: "unexpected request" } }, 500));
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    fetchMock.mockReset();
   });
 
   it("checks access to the default task list", async () => {
     await assertGoogleTasksAccess(connection);
 
-    expect(tasklistsGet).toHaveBeenCalledWith({ tasklist: "@default" });
+    expect(requests().map((request) => `${request.method} ${request.url.pathname}`)).toEqual([
+      "GET /tasks/v1/users/@me/lists/@default",
+    ]);
   });
 
   it("maps disabled API errors to a setup-focused message", () => {
@@ -117,53 +116,47 @@ describe("google-tasks integration", () => {
   });
 
   it("creates scheduled timeline blocks in the default Google Tasks list", async () => {
-    tasksInsert.mockResolvedValue({ data: { id: "google-task-123" } });
-
     const googleTaskId = await upsertGoogleScheduledTask({ connection, task, block });
 
-    expect(tasksInsert).toHaveBeenCalledWith({
-      tasklist: "@default",
-      requestBody: {
-        title: "Plan launch week",
-        notes: "Outline the week.",
-        status: "needsAction",
-        due: "2026-04-06T00:00:00.000Z",
-      },
+    const insert = requests().find((request) => request.method === "POST");
+    expect(insert?.url.pathname).toBe(TASKS_PATH);
+    expect(insert?.body).toEqual({
+      title: "Plan launch week",
+      notes: "Outline the week.",
+      status: "needsAction",
+      due: "2026-04-06T00:00:00.000Z",
     });
     expect(googleTaskId).toBe("google-task-123");
   });
 
   it("lists scheduled tasks with completed and hidden entries across pages", async () => {
-    tasksList
-      .mockResolvedValueOnce({
-        data: {
-          nextPageToken: "page-2",
-          items: [
-            {
-              id: "google-task-123",
-              title: "Plan launch week",
-              status: "completed",
-              due: "2026-04-06T00:00:00.000Z",
-              updated: "2026-04-06T19:00:00.000Z",
-              completed: "2026-04-06T18:55:00.000Z",
-              hidden: true,
-            },
-          ],
-        },
-      })
-      .mockResolvedValueOnce({
-        data: {
-          items: [
-            {
-              id: "google-task-456",
-              title: "Send recap",
-              status: "needsAction",
-              due: "2026-04-06T00:00:00.000Z",
-              updated: "2026-04-06T20:00:00.000Z",
-            },
-          ],
-        },
-      });
+    listResponses = [
+      {
+        nextPageToken: "page-2",
+        items: [
+          {
+            id: "google-task-123",
+            title: "Plan launch week",
+            status: "completed",
+            due: "2026-04-06T00:00:00.000Z",
+            updated: "2026-04-06T19:00:00.000Z",
+            completed: "2026-04-06T18:55:00.000Z",
+            hidden: true,
+          },
+        ],
+      },
+      {
+        items: [
+          {
+            id: "google-task-456",
+            title: "Send recap",
+            status: "needsAction",
+            due: "2026-04-06T00:00:00.000Z",
+            updated: "2026-04-06T20:00:00.000Z",
+          },
+        ],
+      },
+    ];
 
     const records = await listGoogleScheduledTasks({
       connection,
@@ -172,18 +165,17 @@ describe("google-tasks integration", () => {
       updatedMin: "2026-04-06T09:00:00.000Z",
     });
 
-    expect(tasksList).toHaveBeenNthCalledWith(1, {
-      tasklist: "@default",
+    const [firstPage, secondPage] = requests();
+    expect(Object.fromEntries(firstPage?.url.searchParams ?? [])).toEqual({
       dueMin: "2026-04-06T00:00:00.000Z",
       dueMax: "2026-04-06T23:59:59.999Z",
-      maxResults: 100,
-      pageToken: undefined,
-      showCompleted: true,
-      showDeleted: false,
-      showHidden: true,
+      maxResults: "100",
+      showCompleted: "true",
+      showDeleted: "false",
+      showHidden: "true",
       updatedMin: "2026-04-06T09:00:00.000Z",
     });
-    expect(tasksList).toHaveBeenNthCalledWith(2, expect.objectContaining({ pageToken: "page-2" }));
+    expect(secondPage?.url.searchParams.get("pageToken")).toBe("page-2");
     expect(records).toEqual([
       {
         id: "google-task-123",
@@ -209,42 +201,7 @@ describe("google-tasks integration", () => {
   });
 
   it("fetches exact mirrored scheduled task ids", async () => {
-    tasksGet
-      .mockResolvedValueOnce({
-        data: {
-          id: "google-task-123",
-          title: "Plan launch week",
-          status: "completed",
-          due: "2026-04-06T00:00:00.000Z",
-          updated: "2026-04-06T19:00:00.000Z",
-          completed: "2026-04-06T18:55:00.000Z",
-          hidden: true,
-        },
-      })
-      .mockResolvedValueOnce({
-        data: {
-          id: "google-task-456",
-          title: "Send recap",
-          status: "needsAction",
-          due: "2026-04-06T00:00:00.000Z",
-          updated: "2026-04-06T20:00:00.000Z",
-        },
-      });
-
-    const records = await getGoogleScheduledTasksByIds({
-      connection,
-      taskIds: ["google-task-123", "google-task-123", "google-task-456"],
-    });
-
-    expect(tasksGet).toHaveBeenNthCalledWith(1, {
-      tasklist: "@default",
-      task: "google-task-123",
-    });
-    expect(tasksGet).toHaveBeenNthCalledWith(2, {
-      tasklist: "@default",
-      task: "google-task-456",
-    });
-    expect(records).toEqual([
+    getResponses = [
       {
         id: "google-task-123",
         title: "Plan launch week",
@@ -252,7 +209,6 @@ describe("google-tasks integration", () => {
         due: "2026-04-06T00:00:00.000Z",
         updated: "2026-04-06T19:00:00.000Z",
         completed: "2026-04-06T18:55:00.000Z",
-        deleted: false,
         hidden: true,
       },
       {
@@ -261,16 +217,33 @@ describe("google-tasks integration", () => {
         status: "needsAction",
         due: "2026-04-06T00:00:00.000Z",
         updated: "2026-04-06T20:00:00.000Z",
-        completed: null,
-        deleted: false,
-        hidden: false,
       },
+    ];
+
+    const records = await getGoogleScheduledTasksByIds({
+      connection,
+      taskIds: ["google-task-123", "google-task-123", "google-task-456"],
+    });
+
+    expect(requests().map((request) => request.url.pathname)).toEqual([
+      `${TASKS_PATH}/google-task-123`,
+      `${TASKS_PATH}/google-task-456`,
+    ]);
+    expect(records).toEqual([
+      expect.objectContaining({ id: "google-task-123", status: "completed", hidden: true }),
+      expect.objectContaining({ id: "google-task-456", status: "needsAction", completed: null }),
     ]);
   });
 
-  it("uses the local planner date and writes the time range into notes", async () => {
-    tasksInsert.mockResolvedValue({ data: { id: "google-task-123" } });
+  it("skips mirrored task ids Google no longer has", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ error: { code: 404, message: "Not Found" } }, 404));
 
+    const records = await getGoogleScheduledTasksByIds({ connection, taskIds: ["gone"] });
+
+    expect(records).toEqual([]);
+  });
+
+  it("uses the local planner date and writes the time range into notes", async () => {
     await upsertGoogleScheduledTask({
       connection,
       task,
@@ -283,13 +256,13 @@ describe("google-tasks integration", () => {
       tzOffsetMinutes: 420,
     });
 
-    expect(tasksInsert).toHaveBeenCalledWith({
-      tasklist: "@default",
-      requestBody: expect.objectContaining({
+    const insert = requests().find((request) => request.method === "POST");
+    expect(insert?.body).toEqual(
+      expect.objectContaining({
         due: "2026-04-06T00:00:00.000Z",
         notes: "Outline the week.\n\nTimeFraim: Mon, Apr 6 5:00 PM to 5:45 PM (45 min)",
       }),
-    });
+    );
   });
 
   it("patches the existing Google Task for timeline updates", async () => {
@@ -299,14 +272,11 @@ describe("google-tasks integration", () => {
       block: { ...block, googleTaskId: "google-task-123" },
     });
 
-    expect(tasksPatch).toHaveBeenCalledWith(
-      expect.objectContaining({
-        tasklist: "@default",
-        task: "google-task-123",
-        requestBody: expect.objectContaining({ title: "Updated plan" }),
-      }),
-    );
-    expect(tasksInsert).not.toHaveBeenCalled();
+    const [patch] = requests();
+    expect(patch?.method).toBe("PATCH");
+    expect(patch?.url.pathname).toBe(`${TASKS_PATH}/google-task-123`);
+    expect(patch?.body).toEqual(expect.objectContaining({ title: "Updated plan" }));
+    expect(requests().some((request) => request.method === "POST")).toBe(false);
   });
 
   it("omits notes on status-only patches so Google keeps the existing footer", async () => {
@@ -316,14 +286,8 @@ describe("google-tasks integration", () => {
       block: { ...block, googleTaskId: "google-task-123" },
     });
 
-    expect(tasksPatch).toHaveBeenCalledWith({
-      tasklist: "@default",
-      task: "google-task-123",
-      requestBody: {
-        title: "Plan launch week",
-        status: "completed",
-      },
-    });
+    const [patch] = requests();
+    expect(patch?.body).toEqual({ title: "Plan launch week", status: "completed" });
   });
 
   it("rebuilds notes on patches that carry the planner date and timezone", async () => {
@@ -335,11 +299,10 @@ describe("google-tasks integration", () => {
       tzOffsetMinutes: 420,
     });
 
-    expect(tasksPatch).toHaveBeenCalledWith(
+    const [patch] = requests();
+    expect(patch?.body).toEqual(
       expect.objectContaining({
-        requestBody: expect.objectContaining({
-          notes: "Outline the week.\n\nTimeFraim: Mon, Apr 6 10:00 AM to 10:45 AM (45 min)",
-        }),
+        notes: "Outline the week.\n\nTimeFraim: Mon, Apr 6 10:00 AM to 10:45 AM (45 min)",
       }),
     );
   });
@@ -347,9 +310,8 @@ describe("google-tasks integration", () => {
   it("deletes Google Task mirrors from the default list", async () => {
     await deleteGoogleTask(connection, "google-task-123");
 
-    expect(tasksDelete).toHaveBeenCalledWith({
-      tasklist: "@default",
-      task: "google-task-123",
-    });
+    expect(requests().map((request) => `${request.method} ${request.url.pathname}`)).toEqual([
+      `DELETE ${TASKS_PATH}/google-task-123`,
+    ]);
   });
 });

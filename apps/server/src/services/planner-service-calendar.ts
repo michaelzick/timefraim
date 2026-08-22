@@ -1,17 +1,17 @@
 import type { CalendarSyncResult } from "@timefraim/shared";
-import { pool } from "../db/pool.js";
-import { syncGoogleCalendarWindow } from "../integration/google-calendar.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
+import { pool } from "../db/pool.ts";
+import { syncGoogleCalendarWindow } from "../integration/google-calendar.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
 import {
   readGoogleConnection,
   readGoogleSyncCalendarIds,
-} from "./planner-service-integrations.js";
+} from "./planner-service-integrations.ts";
 import {
   buildGoogleCalendarSyncScope,
   recordGoogleCalendarSync,
-} from "./planner-service-calendar-sync.js";
-import { resolveDismissedExternalUpdatedAt } from "./planner-domain.js";
-import { syncGoogleTaskCompletionStatuses } from "./planner-service-google-tasks-sync.js";
+} from "./planner-service-calendar-sync.ts";
+import { resolveDismissedExternalUpdatedAt } from "./planner-domain.ts";
+import { syncGoogleTaskCompletionStatuses } from "./planner-service-google-tasks-sync.ts";
 
 export async function syncPlannerGoogleCalendar(
   repository: PlannerRepository,
@@ -20,7 +20,7 @@ export async function syncPlannerGoogleCalendar(
   options: { restoreHidden?: boolean } = {},
 ): Promise<CalendarSyncResult> {
   const row = await repository.getIntegrationToken("google", pool);
-  const connection = readGoogleConnection(row);
+  const connection = await readGoogleConnection(row, repository);
   const syncCalendarIds = readGoogleSyncCalendarIds(row);
   const scope = buildGoogleCalendarSyncScope({ connection, date, syncCalendarIds, tzOffsetMinutes });
   if (!connection) {

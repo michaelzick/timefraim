@@ -1,7 +1,15 @@
 import type { ScheduleBlock, Task } from "@timefraim/shared";
-import { google } from "googleapis";
-import type { GoogleConnection } from "./google-calendar.js";
-import { getGoogleOAuthClient } from "./google-auth.js";
+import {
+  createGoogleClient,
+  GOOGLE_TASKS_API,
+  googleUrl,
+  type GoogleConnection,
+} from "./google-api-client.ts";
+import type { GoogleTaskResource } from "./google-api-types.ts";
+
+export function googleTasksUrl(taskId?: string, query?: Record<string, string | number | boolean | null | undefined>) {
+  return googleUrl(GOOGLE_TASKS_API, ["lists", "@default", "tasks", ...(taskId ? [taskId] : [])], query);
+}
 
 function toGoogleTaskDue(plannerDate: string | null | undefined) {
   return plannerDate ? `${plannerDate}T00:00:00.000Z` : undefined;
@@ -76,12 +84,7 @@ function buildGoogleTaskNotes(params: {
 }
 
 export function createGoogleTasksClient(connection: GoogleConnection | null) {
-  if (!connection) {
-    return null;
-  }
-
-  const auth = getGoogleOAuthClient(connection);
-  return auth ? google.tasks({ version: "v1", auth }) : null;
+  return createGoogleClient(connection);
 }
 
 export async function assertGoogleTasksAccess(connection: GoogleConnection | null): Promise<void> {
@@ -90,9 +93,7 @@ export async function assertGoogleTasksAccess(connection: GoogleConnection | nul
     return;
   }
 
-  await tasks.tasklists.get({
-    tasklist: "@default",
-  });
+  await tasks.request("GET", googleUrl(GOOGLE_TASKS_API, ["users", "@me", "lists", "@default"]));
 }
 
 export function getGoogleTasksAccessErrorMessage(error: unknown) {
@@ -134,20 +135,12 @@ export async function upsertGoogleScheduledTask(params: {
   };
 
   if (params.block.googleTaskId) {
-    await tasks.tasks.patch({
-      tasklist: "@default",
-      task: params.block.googleTaskId,
-      requestBody,
-    });
+    await tasks.request("PATCH", googleTasksUrl(params.block.googleTaskId), requestBody);
     return params.block.googleTaskId;
   }
 
-  const response = await tasks.tasks.insert({
-    tasklist: "@default",
-    requestBody,
-  });
-
-  return response.data.id ?? null;
+  const response = await tasks.request<GoogleTaskResource>("POST", googleTasksUrl(), requestBody);
+  return response.id ?? null;
 }
 
 export async function deleteGoogleTask(
@@ -163,8 +156,5 @@ export async function deleteGoogleTask(
     return;
   }
 
-  await tasks.tasks.delete({
-    tasklist: "@default",
-    task: googleTaskId,
-  });
+  await tasks.request("DELETE", googleTasksUrl(googleTaskId));
 }

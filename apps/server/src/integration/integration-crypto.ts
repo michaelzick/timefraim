@@ -1,32 +1,75 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
-import { env } from "../config/env.js";
+import { env } from "../config/env.ts";
 
 const IV_LENGTH_BYTES = 12;
 const AUTH_TAG_BYTES = 16;
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+const keyCache = new Map<string, Promise<CryptoKey>>();
+
+async function deriveKey(secret: string) {
+  const digest = await crypto.subtle.digest("SHA-256", encoder.encode(secret));
+  return crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+}
 
 function getEncryptionKey() {
-  if (!env.INTEGRATION_ENCRYPTION_KEY) {
+  const secret = env.INTEGRATION_ENCRYPTION_KEY;
+  if (!secret) {
     throw new Error("INTEGRATION_ENCRYPTION_KEY must be set in the environment to use crypto functions.");
   }
-  return createHash("sha256").update(env.INTEGRATION_ENCRYPTION_KEY, "utf8").digest();
+  let key = keyCache.get(secret);
+  if (!key) {
+    key = deriveKey(secret);
+    keyCache.set(secret, key);
+  }
+  return key;
 }
 
-export function encryptSecret(value: string) {
-  const iv = randomBytes(IV_LENGTH_BYTES);
-  const cipher = createCipheriv("aes-256-gcm", getEncryptionKey(), iv);
-  const ciphertext = Buffer.concat([cipher.update(value, "utf8"), cipher.final()]);
-  const authTag = cipher.getAuthTag();
-  return Buffer.concat([iv, authTag, ciphertext]).toString("base64");
+function concatBytes(...parts: Uint8Array[]) {
+  const out = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
 }
 
-export function decryptSecret(payload: string) {
-  const data = Buffer.from(payload, "base64");
+function bytesToBase64(bytes: Uint8Array) {
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(value: string) {
+  return Uint8Array.from(atob(value), (char) => char.charCodeAt(0));
+}
+
+// Stored layout is base64(iv || authTag || ciphertext) — the format the
+// original node:crypto implementation wrote — so existing rows keep decrypting.
+// WebCrypto returns ciphertext || authTag, hence the splice below.
+export async function encryptSecret(value: string) {
+  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH_BYTES));
+  const sealed = new Uint8Array(
+    await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await getEncryptionKey(), encoder.encode(value)),
+  );
+  const ciphertext = sealed.subarray(0, sealed.length - AUTH_TAG_BYTES);
+  const authTag = sealed.subarray(sealed.length - AUTH_TAG_BYTES);
+  return bytesToBase64(concatBytes(iv, authTag, ciphertext));
+}
+
+export async function decryptSecret(payload: string) {
+  const data = base64ToBytes(payload);
   const iv = data.subarray(0, IV_LENGTH_BYTES);
   const authTag = data.subarray(IV_LENGTH_BYTES, IV_LENGTH_BYTES + AUTH_TAG_BYTES);
   const ciphertext = data.subarray(IV_LENGTH_BYTES + AUTH_TAG_BYTES);
-  const decipher = createDecipheriv("aes-256-gcm", getEncryptionKey(), iv);
-  decipher.setAuthTag(authTag);
-  return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+  const plain = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    await getEncryptionKey(),
+    concatBytes(ciphertext, authTag),
+  );
+  return decoder.decode(plain);
 }
 
 export function maskSecret(value: string) {

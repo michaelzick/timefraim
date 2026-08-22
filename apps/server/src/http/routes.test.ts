@@ -13,15 +13,17 @@ const authMock = vi.hoisted(() => {
   };
 });
 
-vi.mock("./auth.js", () => ({
+vi.mock("./auth.ts", () => ({
   ...authMock,
 }));
 
-import { registerAuthRoutes } from "./register-auth-routes.js";
-import { registerIntegrationRoutes } from "./register-integration-routes.js";
-import { registerPlannerRoutes } from "./register-planner-routes.js";
-import { PlannerError } from "../services/planner-errors.js";
-import type { PlannerService } from "../services/planner-service.js";
+import type { ApiRoute } from "./api-routes.ts";
+import { authRoutes } from "./auth-routes.ts";
+import { registerHttpRoutes } from "./fastify-adapter.ts";
+import { integrationRoutes } from "./integration-routes.ts";
+import { plannerRoutes } from "./planner-routes.ts";
+import { PlannerError } from "../services/planner-errors.ts";
+import type { PlannerService } from "../services/planner-service.ts";
 
 const { AuthenticationError, requireAuthenticatedUser } = authMock;
 
@@ -69,12 +71,12 @@ function createPlannerServiceMock(overrides: Partial<PlannerServiceMock> = {}) {
 }
 
 async function createApp(
-  registerRoutes: (app: ReturnType<typeof Fastify>, service: PlannerService) => void,
+  routes: ApiRoute[],
   serviceOverrides: Partial<PlannerServiceMock> = {},
 ) {
   const app = Fastify();
   const plannerService = createPlannerServiceMock(serviceOverrides);
-  registerRoutes(app, plannerService as unknown as PlannerService);
+  registerHttpRoutes(app, plannerService as unknown as PlannerService, routes);
   return { app, plannerService };
 }
 
@@ -84,7 +86,7 @@ afterEach(() => {
 
 describe("HTTP routes", () => {
   it("serves health and rejects unauthenticated auth requests", async () => {
-    const { app, plannerService } = await createApp(registerAuthRoutes);
+    const { app, plannerService } = await createApp(authRoutes);
     requireAuthenticatedUser.mockRejectedValueOnce(new AuthenticationError("Missing bearer token"));
 
     const healthResponse = await app.inject({ method: "GET", url: "/health" });
@@ -104,7 +106,7 @@ describe("HTTP routes", () => {
   });
 
   it("returns the signed-in auth session payload", async () => {
-    const { app, plannerService } = await createApp(registerAuthRoutes);
+    const { app, plannerService } = await createApp(authRoutes);
     requireAuthenticatedUser.mockResolvedValueOnce({
       id: "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
       email: "allowed@example.com",
@@ -129,7 +131,7 @@ describe("HTTP routes", () => {
   });
 
   it("rejects invalid integration payloads and accepts valid Toggl config", async () => {
-    const { app, plannerService } = await createApp(registerIntegrationRoutes);
+    const { app, plannerService } = await createApp(integrationRoutes);
     requireAuthenticatedUser.mockResolvedValue({
       id: "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
       email: "allowed@example.com",
@@ -168,7 +170,7 @@ describe("HTTP routes", () => {
   });
 
   it("rejects invalid planner payloads and accepts task creation", async () => {
-    const { app, plannerService } = await createApp(registerPlannerRoutes);
+    const { app, plannerService } = await createApp(plannerRoutes);
     requireAuthenticatedUser.mockResolvedValue({
       id: "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
       email: "allowed@example.com",
@@ -215,7 +217,7 @@ describe("HTTP routes", () => {
   it("forwards sparse task updates without create defaults", async () => {
     const taskId = "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1";
     const userId = "84a87ef5-f143-4b9b-9f6b-b7c608d72af0";
-    const { app, plannerService } = await createApp(registerPlannerRoutes);
+    const { app, plannerService } = await createApp(plannerRoutes);
     requireAuthenticatedUser.mockResolvedValue({
       id: userId,
       email: "allowed@example.com",
@@ -245,7 +247,7 @@ describe("HTTP routes", () => {
     const applyChange = vi
       .fn()
       .mockRejectedValue(new PlannerError("not_found", `Task ${taskId} not found`));
-    const { app } = await createApp(registerPlannerRoutes, { applyChange });
+    const { app } = await createApp(plannerRoutes, { applyChange });
     requireAuthenticatedUser.mockResolvedValue({
       id: "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
       email: "allowed@example.com",
@@ -272,7 +274,7 @@ describe("HTTP routes", () => {
     const applyChange = vi
       .fn()
       .mockRejectedValue(new Error("database password leaked in stack trace"));
-    const { app } = await createApp(registerPlannerRoutes, { applyChange });
+    const { app } = await createApp(plannerRoutes, { applyChange });
     requireAuthenticatedUser.mockResolvedValue({
       id: "84a87ef5-f143-4b9b-9f6b-b7c608d72af0",
       email: "allowed@example.com",

@@ -4,20 +4,20 @@ import {
   type ScheduleBlockDuplicatePayload,
   type TaskDuplicatePayload,
 } from "@timefraim/shared";
-import { withTransaction } from "../db/pool.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
+import { withTransaction } from "../db/pool.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
 import {
   duplicateScheduleBlockInContext,
   duplicateTaskInContext,
   type DuplicateOutcome,
-} from "./planner-duplicate-changes.js";
+} from "./planner-duplicate-changes.ts";
 import {
   getAllowedPlannerUserId,
   getGoogleCalendarSyncState,
   getTogglConnection,
-} from "./planner-service-integrations.js";
-import { runPlannerSideEffects } from "./planner-side-effects.js";
-import type { SideEffect } from "./planner-service-types.js";
+} from "./planner-service-integrations.ts";
+import { runPlannerSideEffects } from "./planner-side-effects.ts";
+import type { SideEffect } from "./planner-service-types.ts";
 
 type DuplicateContext = {
   repository: PlannerRepository;

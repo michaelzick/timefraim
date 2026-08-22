@@ -1,7 +1,7 @@
 import type { ActorRole, GooglePlannerSyncTarget } from "@timefraim/shared";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
-import { applyDraftChange } from "./planner-draft-application.js";
-import type { DraftToApply, SideEffect } from "./planner-service-types.js";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
+import { applyDraftChange } from "./planner-draft-application.ts";
+import type { DraftToApply, SideEffect } from "./planner-service-types.ts";
 
 export async function applyPlannerDraft(args: {
   draft: DraftToApply;

@@ -1,7 +1,7 @@
 import type { UserPreferences } from "@timefraim/shared";
-import type { Queryable } from "../db/pool.js";
-import { mapUserPreferences } from "./planner-repository-mappers.js";
-import { PlannerRepositoryTimerStore } from "./planner-repository-timer-store.js";
+import type { Queryable } from "../db/pool.ts";
+import { mapUserPreferences } from "./planner-repository-mappers.ts";
+import { PlannerRepositoryTimerStore } from "./planner-repository-timer-store.ts";
 
 export class PlannerRepositoryPreferencesStore extends PlannerRepositoryTimerStore {
   async getUserPreferences(userId: string, db: Queryable): Promise<UserPreferences | null> {

@@ -1,9 +1,9 @@
 import type { CalendarSync } from "@timefraim/shared";
-import { pool } from "../db/pool.js";
-import type { GoogleConnection } from "../integration/google-calendar.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
-import { endOfDay, startOfDay } from "../utils/date.js";
-import { readGoogleConnection, readGoogleSyncCalendarIds } from "./planner-service-integrations.js";
+import { pool } from "../db/pool.ts";
+import type { GoogleConnection } from "../integration/google-calendar.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
+import { endOfDay, startOfDay } from "../utils/date.ts";
+import { readGoogleConnection, readGoogleSyncCalendarIds } from "./planner-service-integrations.ts";
 
 const NOT_SYNCED: CalendarSync = {
   status: "not_synced",
@@ -60,7 +60,7 @@ export async function getGoogleCalendarSyncScope(
 ) {
   const row = await repository.getIntegrationToken("google", pool);
   return buildGoogleCalendarSyncScope({
-    connection: readGoogleConnection(row),
+    connection: await readGoogleConnection(row, repository),
     date,
     syncCalendarIds: readGoogleSyncCalendarIds(row),
     tzOffsetMinutes,

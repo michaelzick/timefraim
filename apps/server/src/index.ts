@@ -1,43 +1,24 @@
+import "./config/load-dotenv.ts";
 import cors from "@fastify/cors";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import Fastify from "fastify";
-import { randomUUID } from "node:crypto";
-import { env } from "./config/env.js";
-import { registerHttpRoutes } from "./http/routes.js";
-import { requireMcpProfile } from "./http/auth.js";
-import { createMcpServer } from "./mcp/create-mcp-server.js";
-import { PlannerService } from "./services/planner-service.js";
+import { env } from "./config/env.ts";
+import { createOriginPolicy } from "./http/cors-policy.ts";
+import { registerHttpRoutes } from "./http/fastify-adapter.ts";
+import { requireMcpProfile } from "./http/auth.ts";
+import { createMcpServer } from "./mcp/create-mcp-server.ts";
+import { PlannerService } from "./services/planner-service.ts";
 
 const app = Fastify({
   logger: env.NODE_ENV !== "test",
 });
 
 const plannerService = new PlannerService();
-const configuredOrigins = new Set(env.APP_ORIGIN);
-
-function isAllowedOrigin(origin: string | undefined) {
-  if (!origin) {
-    return true;
-  }
-
-  if (configuredOrigins.has(origin)) {
-    return true;
-  }
-
-  if (env.NODE_ENV !== "production") {
-    try {
-      const url = new URL(origin);
-      if (url.protocol === "http:" && (url.hostname === "127.0.0.1" || url.hostname === "localhost")) {
-        return true;
-      }
-    } catch {
-      return false;
-    }
-  }
-
-  return false;
-}
+const isAllowedOrigin = createOriginPolicy({
+  allowedOrigins: env.APP_ORIGIN,
+  allowLocalOrigins: env.NODE_ENV !== "production",
+});
 
 const mcpSessions = new Map<
   string,
@@ -83,7 +64,7 @@ app.post("/mcp", async (request, reply) => {
 
     if (!transport) {
       transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
+        sessionIdGenerator: () => crypto.randomUUID(),
         enableJsonResponse: true,
         onsessioninitialized: (nextSessionId) => {
           mcpSessions.set(nextSessionId, { transport: transport! });

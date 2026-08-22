@@ -3,6 +3,7 @@ packages:
   - packages/*
 allowBuilds:
   esbuild: true
+  workerd: true
 overrides:
   hono: ^4.12.25
   js-yaml: ^4.2.0

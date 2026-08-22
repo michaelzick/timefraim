@@ -1,12 +1,12 @@
 import type { ScheduleBlockDuplicatePayload, TaskDuplicatePayload } from "@timefraim/shared";
-import { detectScheduleConflicts } from "./planner-domain.js";
-import { conflict, notFound } from "./planner-errors.js";
-import { endOfDay, startOfDay } from "../utils/date.js";
+import { detectScheduleConflicts } from "./planner-domain.ts";
+import { conflict, notFound } from "./planner-errors.ts";
+import { endOfDay, startOfDay } from "../utils/date.ts";
 import {
   queueScheduleBlockSync,
   resolveScheduleBlockSyncState,
-} from "./planner-google-schedule-sync.js";
-import { isUniqueViolation, type DraftHandlerContext } from "./planner-service-types.js";
+} from "./planner-google-schedule-sync.ts";
+import { isUniqueViolation, type DraftHandlerContext } from "./planner-service-types.ts";
 
 export type DuplicateOutcome = {
   createdTaskId: string | null;

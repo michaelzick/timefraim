@@ -4,9 +4,9 @@ import type {
   TogglProjectOption,
   TogglWorkspaceOption,
 } from "@timefraim/shared";
-import { getStringId, togglRequest } from "./toggl-track-client.js";
+import { getStringId, togglRequest } from "./toggl-track-client.ts";
 
-export { discoverTogglData, getTogglProfile, listTogglProjects, listTogglWorkspaces, validateTogglConnection } from "./toggl-track-catalog.js";
+export { discoverTogglData, getTogglProfile, listTogglProjects, listTogglWorkspaces, validateTogglConnection } from "./toggl-track-catalog.ts";
 
 export type TogglConnection = {
   apiToken: string;

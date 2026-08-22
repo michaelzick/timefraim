@@ -24,14 +24,18 @@
     "dev:linked": "node scripts/dev-linked.mjs",
     "dev:web": "corepack pnpm --filter @timefraim/web dev",
     "dev:server": "corepack pnpm --filter @timefraim/server dev",
+    "dev:functions": "node scripts/dev-functions.mjs",
     "start:server": "corepack pnpm --filter @timefraim/server start",
     "deploy:prod": "bash scripts/deploy-prod.sh",
+    "deploy:functions": "supabase functions deploy api && supabase functions deploy mcp",
+    "deploy:web": "corepack pnpm --filter @timefraim/web run deploy",
     "prod": "corepack pnpm deploy:prod",
     "lint": "corepack pnpm exec eslint eslint.config.mjs && corepack pnpm --filter @timefraim/shared lint && corepack pnpm --filter @timefraim/server lint && corepack pnpm --filter @timefraim/web lint",
     "typecheck": "corepack pnpm --filter @timefraim/shared typecheck && corepack pnpm --filter @timefraim/server typecheck && corepack pnpm --filter @timefraim/web typecheck",
     "build": "corepack pnpm --filter @timefraim/shared build && corepack pnpm --filter @timefraim/server build && corepack pnpm --filter @timefraim/web build",
     "test": "corepack pnpm --filter @timefraim/shared test && corepack pnpm --filter @timefraim/server test && corepack pnpm --filter @timefraim/web test",
-    "check": "corepack pnpm agent-briefs:check && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test && corepack pnpm build"
+    "functions:check": "cmp supabase/functions/api/deno.json supabase/functions/mcp/deno.json && deno check --config supabase/functions/api/deno.json --lock supabase/functions/deno.lock --frozen supabase/functions/api/index.ts supabase/functions/mcp/index.ts && deno lint supabase/functions && deno test --config supabase/functions/api/deno.json --lock supabase/functions/deno.lock --frozen supabase/functions/_shared",
+    "check": "corepack pnpm agent-briefs:check && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test && corepack pnpm build && corepack pnpm functions:check"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.1",

@@ -7,7 +7,7 @@ import {
   isCalendarEventDismissed,
   resolveDismissedExternalUpdatedAt,
   resolveIdleTaskStatus,
-} from "./planner-domain.js";
+} from "./planner-domain.ts";
 
 describe("planner-domain", () => {
   it("detects overlaps against external calendar events", () => {

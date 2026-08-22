@@ -1,19 +1,38 @@
 import type { ScheduleBlock, Task } from "@timefraim/shared";
-import { google, type calendar_v3 } from "googleapis";
-import { buildGoogleEventPayload } from "../services/planner-domain.js";
-import { getGoogleOAuthClient } from "./google-auth.js";
-import { loadGoogleColorPalette, resolveCalendarColors, resolveCalendarId, resolveEventColors, withCalendarFallback, type GoogleColorPalette, type GoogleColorValues } from "./google-calendar-helpers.js";
+import { buildGoogleEventPayload } from "../services/planner-domain.ts";
+import {
+  createGoogleClient,
+  GOOGLE_CALENDAR_API,
+  googleUrl,
+  type GoogleClient,
+  type GoogleConnection,
+} from "./google-api-client.ts";
+import type { GoogleEventResource, GoogleEventsListResponse } from "./google-api-types.ts";
+import {
+  getCalendarListItems,
+  loadGoogleColorPalette,
+  resolveCalendarColors,
+  resolveCalendarId,
+  resolveEventColors,
+  withCalendarFallback,
+  type GoogleColorPalette,
+  type GoogleColorValues,
+} from "./google-calendar-helpers.ts";
 
-export type GoogleConnection = { accessToken: string; refreshToken: string | null; expiresAt: string | null; calendarId: string; plannerCalendarId: string; email: string };
+export type { GoogleConnection } from "./google-api-client.ts";
+
 export type GoogleEventRecord = { externalEventId: string; title: string; startAt: string; endAt: string; isAppManaged: boolean; backgroundColor: string | null; foregroundColor: string | null; rawPayload: Record<string, unknown>; scheduleBlockId: string | null; externalUpdatedAt: string | null; sourceCalendarId: string | null; sourceCalendarName: string | null };
 
-function createGoogleCalendarClient(connection: GoogleConnection) {
-  const auth = getGoogleOAuthClient(connection);
-  return auth ? google.calendar({ version: "v3", auth }) : null;
+export type GoogleCalendarListEntry = { id: string; name: string; primary: boolean; backgroundColor: string | null };
+
+const READABLE_ACCESS_ROLES = new Set(["owner", "reader", "writer", "freeBusyReader"]);
+
+function eventsUrl(calendarId: string, eventId?: string, query?: Record<string, string | boolean | undefined>) {
+  return googleUrl(GOOGLE_CALENDAR_API, ["calendars", calendarId, "events", ...(eventId ? [eventId] : [])], query);
 }
 
 function mapGoogleEventRecord(
-  event: calendar_v3.Schema$Event,
+  event: GoogleEventResource,
   calendarColors: GoogleColorValues,
   colorPalette: GoogleColorPalette,
   sourceCalendarId: string | null,
@@ -32,7 +51,7 @@ function mapGoogleEventRecord(
     isAppManaged: event.extendedProperties?.private?.origin === "timefraim",
     backgroundColor: eventColors.backgroundColor,
     foregroundColor: eventColors.foregroundColor,
-    rawPayload: event as unknown as Record<string, unknown>,
+    rawPayload: event as Record<string, unknown>,
     scheduleBlockId: event.extendedProperties?.private?.scheduleBlockId ?? null,
     externalUpdatedAt: event.updated ?? null,
     sourceCalendarId,
@@ -40,39 +59,46 @@ function mapGoogleEventRecord(
   };
 }
 
-export type GoogleCalendarListEntry = { id: string; name: string; primary: boolean; backgroundColor: string | null };
+async function listEventsInRange(client: GoogleClient, calendarId: string, range: { timeMin: string; timeMax: string }) {
+  const events: GoogleEventResource[] = [];
+  let pageToken: string | undefined;
+  do {
+    const response = await client.request<GoogleEventsListResponse>(
+      "GET",
+      eventsUrl(calendarId, undefined, {
+        singleEvents: true,
+        orderBy: "startTime",
+        timeMin: range.timeMin,
+        timeMax: range.timeMax,
+        pageToken,
+      }),
+    );
+    events.push(...(response.items ?? []));
+    pageToken = response.nextPageToken ?? undefined;
+  } while (pageToken);
+  return events;
+}
 
 export async function listGoogleCalendars(
   connection: GoogleConnection | null,
 ): Promise<GoogleCalendarListEntry[]> {
-  if (!connection) {
+  const client = createGoogleClient(connection);
+  if (!client) {
     return [];
   }
 
-  const calendar = createGoogleCalendarClient(connection);
-  if (!calendar) {
-    return [];
-  }
-
-  const entries: GoogleCalendarListEntry[] = [];
-  let pageToken: string | undefined;
-
-  do {
-    const response = await calendar.calendarList.list({ pageToken });
-    for (const item of response.data.items ?? []) {
-      if (!item.id) continue;
-      if (item.accessRole !== "owner" && item.accessRole !== "reader" && item.accessRole !== "writer" && item.accessRole !== "freeBusyReader") continue;
-      entries.push({
-        id: item.id,
-        name: item.summary ?? item.id,
-        primary: item.primary === true,
-        backgroundColor: item.backgroundColor ?? null,
-      });
+  const items = await getCalendarListItems(client);
+  return items.flatMap((item) => {
+    if (!item.id || !READABLE_ACCESS_ROLES.has(item.accessRole ?? "")) {
+      return [];
     }
-    pageToken = response.data.nextPageToken ?? undefined;
-  } while (pageToken);
-
-  return entries;
+    return [{
+      id: item.id,
+      name: item.summary ?? item.id,
+      primary: item.primary === true,
+      backgroundColor: item.backgroundColor ?? null,
+    }];
+  });
 }
 
 export async function syncGoogleCalendarWindow(
@@ -80,12 +106,8 @@ export async function syncGoogleCalendarWindow(
   range: { timeMin: string; timeMax: string },
   syncCalendarIds?: string[],
 ): Promise<GoogleEventRecord[]> {
-  if (!connection) {
-    return [];
-  }
-
-  const calendar = createGoogleCalendarClient(connection);
-  if (!calendar) {
+  const client = createGoogleClient(connection);
+  if (!connection || !client) {
     return [];
   }
 
@@ -93,30 +115,20 @@ export async function syncGoogleCalendarWindow(
     ? syncCalendarIds
     : [connection.calendarId];
 
-  const colorPalette = await loadGoogleColorPalette(calendar);
+  const colorPalette = await loadGoogleColorPalette(client);
+  const calendarListItems = await getCalendarListItems(client);
   const allRecords: GoogleEventRecord[] = [];
 
   for (const rawCalendarId of calendarIds) {
-    const resolvedId = await resolveCalendarId(calendar, rawCalendarId);
-    const calendarColors = await resolveCalendarColors(calendar, rawCalendarId, colorPalette);
+    const resolvedId = await resolveCalendarId(client, rawCalendarId);
+    const calendarColors = await resolveCalendarColors(client, rawCalendarId, colorPalette);
+    const calendarMeta = calendarListItems.find((item) =>
+      item.id === resolvedId || (resolvedId === "primary" && item.primary === true),
+    );
+    const calendarName = calendarMeta?.summary ?? rawCalendarId;
 
-    let calendarName = rawCalendarId;
-    try {
-      const meta = await calendar.calendarList.get({ calendarId: resolvedId });
-      calendarName = meta.data.summary ?? rawCalendarId;
-    } catch {
-      // keep rawCalendarId as the name
-    }
-
-    const response = await calendar.events.list({
-      calendarId: resolvedId,
-      singleEvents: true,
-      orderBy: "startTime",
-      timeMin: range.timeMin,
-      timeMax: range.timeMax,
-    });
-
-    const records = (response.data.items ?? [])
+    const events = await listEventsInRange(client, resolvedId, range);
+    const records = events
       .map((event) => mapGoogleEventRecord(event, calendarColors, colorPalette, resolvedId, calendarName))
       .filter((event): event is GoogleEventRecord => Boolean(event));
 
@@ -131,57 +143,39 @@ export async function upsertGoogleScheduleBlock(params: {
   task: Task;
   block: ScheduleBlock;
 }): Promise<string | null> {
-  if (!params.connection) {
-    return null;
-  }
-
-  const calendar = createGoogleCalendarClient(params.connection);
-  if (!calendar) {
+  const client = createGoogleClient(params.connection);
+  if (!params.connection || !client) {
     return null;
   }
 
   const payload = buildGoogleEventPayload(params.task, params.block);
-  const plannerCalendarId = await resolveCalendarId(calendar, params.connection.plannerCalendarId);
-  const fallbackCalendarId = await resolveCalendarId(calendar, params.connection.calendarId);
+  const plannerCalendarId = await resolveCalendarId(client, params.connection.plannerCalendarId);
+  const fallbackCalendarId = await resolveCalendarId(client, params.connection.calendarId);
 
   if (params.block.googleEventId) {
+    const eventId = params.block.googleEventId;
     await withCalendarFallback([plannerCalendarId, fallbackCalendarId], (calendarId) =>
-      calendar.events.update({
-        calendarId,
-        eventId: params.block.googleEventId!,
-        requestBody: payload,
-      }),
+      client.request("PUT", eventsUrl(calendarId, eventId), payload),
     );
-    return params.block.googleEventId;
+    return eventId;
   }
 
-  const response = await calendar.events.insert({
-    calendarId: plannerCalendarId,
-    requestBody: payload,
-  });
-
-  return response.data.id ?? null;
+  const response = await client.request<GoogleEventResource>("POST", eventsUrl(plannerCalendarId), payload);
+  return response.id ?? null;
 }
 
 export async function deleteGoogleScheduleBlock(
   connection: GoogleConnection | null,
   googleEventId: string | null | undefined,
 ): Promise<void> {
-  if (!connection || !googleEventId) {
+  const client = createGoogleClient(connection);
+  if (!connection || !client || !googleEventId) {
     return;
   }
 
-  const calendar = createGoogleCalendarClient(connection);
-  if (!calendar) {
-    return;
-  }
-
-  const plannerCalendarId = await resolveCalendarId(calendar, connection.plannerCalendarId);
-  const fallbackCalendarId = await resolveCalendarId(calendar, connection.calendarId);
+  const plannerCalendarId = await resolveCalendarId(client, connection.plannerCalendarId);
+  const fallbackCalendarId = await resolveCalendarId(client, connection.calendarId);
   await withCalendarFallback([plannerCalendarId, fallbackCalendarId], (calendarId) =>
-    calendar.events.delete({
-      calendarId,
-      eventId: googleEventId,
-    }),
+    client.request("DELETE", eventsUrl(calendarId, googleEventId)),
   );
 }

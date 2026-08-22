@@ -1,27 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ScheduleBlock, Task } from "@timefraim/shared";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  calendarFactory,
-  calendarListList,
-  colorsGet,
-  eventsDelete,
-  eventsInsert,
-  eventsList,
-  eventsUpdate,
-  oauthSetCredentials,
-} = vi.hoisted(() => ({
-  calendarFactory: vi.fn(),
-  calendarListList: vi.fn(),
-  colorsGet: vi.fn(),
-  eventsDelete: vi.fn(),
-  eventsInsert: vi.fn(),
-  eventsList: vi.fn(),
-  eventsUpdate: vi.fn(),
-  oauthSetCredentials: vi.fn(),
-}));
-
-vi.mock("../config/env.js", () => ({
+vi.mock("../config/env.ts", () => ({
   env: {
     GOOGLE_CLIENT_ID: "google-client-id",
     GOOGLE_CLIENT_SECRET: "google-client-secret",
@@ -30,28 +10,35 @@ vi.mock("../config/env.js", () => ({
   },
 }));
 
-vi.mock("googleapis", () => ({
-  google: {
-    auth: {
-      OAuth2: class {
-        setCredentials = oauthSetCredentials;
-      },
-    },
-    calendar: calendarFactory,
-  },
-}));
-
 import {
   deleteGoogleScheduleBlock,
   syncGoogleCalendarWindow,
   upsertGoogleScheduleBlock,
   type GoogleConnection,
-} from "./google-calendar.js";
+} from "./google-calendar.ts";
+
+const fetchMock = vi.fn<typeof fetch>();
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+}
+
+function requestUrl(input: RequestInfo | URL) {
+  return input instanceof URL ? input : new URL(typeof input === "string" ? input : input.url);
+}
+
+function requests() {
+  return fetchMock.mock.calls.map(([input, init]) => ({
+    method: init?.method ?? "GET",
+    url: requestUrl(input),
+    body: typeof init?.body === "string" ? (JSON.parse(init.body) as Record<string, unknown>) : undefined,
+  }));
+}
 
 const connection: GoogleConnection = {
   accessToken: "google-token",
   refreshToken: "refresh-token",
-  expiresAt: "2026-04-11T12:00:00.000Z",
+  expiresAt: "2099-04-11T12:00:00.000Z",
   calendarId: "primary",
   plannerCalendarId: "Free Time Tasks",
   email: "allowed@example.com",
@@ -84,108 +71,97 @@ const block: ScheduleBlock = {
   updatedAt: "2026-04-06T08:00:00.000Z",
 };
 
+const FREE_TIME_CALENDAR_PATH = "/calendar/v3/calendars/free-time-tasks-id@group.calendar.google.com/events";
+
+let calendarListItems: unknown[];
+let colorsPayload: unknown;
+let eventsPayload: unknown;
+let deleteResponses: Response[];
+
 describe("google-calendar integration", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    calendarFactory.mockReturnValue({
-      calendarList: { list: calendarListList },
-      colors: { get: colorsGet },
-      events: {
-        list: eventsList,
-        insert: eventsInsert,
-        update: eventsUpdate,
-        delete: eventsDelete,
+    vi.stubGlobal("fetch", fetchMock);
+    calendarListItems = [
+      {
+        id: "allowed@example.com",
+        summary: "Primary",
+        primary: true,
+        backgroundColor: "#9fe1e7",
+        foregroundColor: "#1d1d1d",
+        colorId: "14",
       },
-    });
-    calendarListList.mockResolvedValue({
-      data: {
-        items: [
-          {
-            id: "allowed@example.com",
-            summary: "Primary",
-            primary: true,
-            backgroundColor: "#9fe1e7",
-            foregroundColor: "#1d1d1d",
-            colorId: "14",
-          },
-          {
-            id: "free-time-tasks-id@group.calendar.google.com",
-            summary: "Free Time Tasks",
-          },
-        ],
-        nextPageToken: undefined,
-      },
-    });
-    colorsGet.mockResolvedValue({
-      data: {
-        calendar: {
-          "14": {
-            background: "#9fe1e7",
-            foreground: "#1d1d1d",
-          },
-        },
-        event: {
-          "11": {
-            background: "#d50000",
-            foreground: "#ffffff",
-          },
-        },
-      },
+      { id: "free-time-tasks-id@group.calendar.google.com", summary: "Free Time Tasks" },
+    ];
+    colorsPayload = {
+      calendar: { "14": { background: "#9fe1e7", foreground: "#1d1d1d" } },
+      event: { "11": { background: "#d50000", foreground: "#ffffff" } },
+    };
+    eventsPayload = { items: [] };
+    deleteResponses = [];
+    fetchMock.mockImplementation((input, init) => {
+      const url = requestUrl(input);
+      const method = init?.method ?? "GET";
+      if (url.pathname.endsWith("/users/me/calendarList")) return Promise.resolve(jsonResponse({ items: calendarListItems }));
+      if (url.pathname.endsWith("/colors")) return Promise.resolve(jsonResponse(colorsPayload));
+      if (method === "GET" && url.pathname.endsWith("/events")) return Promise.resolve(jsonResponse(eventsPayload));
+      if (method === "POST") return Promise.resolve(jsonResponse({ id: "google-event-123" }));
+      if (method === "DELETE") return Promise.resolve(deleteResponses.shift() ?? new Response(null, { status: 204 }));
+      return Promise.resolve(jsonResponse({ error: { message: "unexpected request" } }, 500));
     });
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    fetchMock.mockReset();
+  });
+
   it("reads blocker events with explicit Google event colors", async () => {
-    eventsList.mockResolvedValue({
-      data: {
-        items: [
-          {
-            id: "evt-1",
-            summary: "Investor breakfast",
-            colorId: "11",
-            start: { dateTime: "2026-04-06T15:00:00.000Z" },
-            end: { dateTime: "2026-04-06T16:00:00.000Z" },
-            updated: "2026-04-06T07:30:00.000Z",
-          },
-        ],
-      },
-    });
+    eventsPayload = {
+      items: [
+        {
+          id: "evt-1",
+          summary: "Investor breakfast",
+          colorId: "11",
+          start: { dateTime: "2026-04-06T15:00:00.000Z" },
+          end: { dateTime: "2026-04-06T16:00:00.000Z" },
+          updated: "2026-04-06T07:30:00.000Z",
+        },
+      ],
+    };
 
     const records = await syncGoogleCalendarWindow(connection, {
       timeMin: "2026-04-06T00:00:00.000Z",
       timeMax: "2026-04-07T00:00:00.000Z",
     });
 
-    expect(eventsList).toHaveBeenCalledWith(
-      expect.objectContaining({
-        calendarId: "primary",
-        timeMin: "2026-04-06T00:00:00.000Z",
-        timeMax: "2026-04-07T00:00:00.000Z",
-      }),
-    );
+    const eventsRequest = requests().find((request) => request.method === "GET" && request.url.pathname.endsWith("/events"));
+    expect(eventsRequest?.url.pathname).toBe("/calendar/v3/calendars/primary/events");
+    expect(eventsRequest?.url.searchParams.get("timeMin")).toBe("2026-04-06T00:00:00.000Z");
+    expect(eventsRequest?.url.searchParams.get("timeMax")).toBe("2026-04-07T00:00:00.000Z");
+    expect(eventsRequest?.url.searchParams.get("singleEvents")).toBe("true");
     expect(records).toEqual([
       expect.objectContaining({
         externalEventId: "evt-1",
         title: "Investor breakfast",
         backgroundColor: "#d50000",
         foregroundColor: "#ffffff",
+        sourceCalendarName: "Primary",
       }),
     ]);
   });
 
   it("falls back to the synced calendar color when an event has no explicit color", async () => {
-    eventsList.mockResolvedValue({
-      data: {
-        items: [
-          {
-            id: "evt-1",
-            summary: "Investor breakfast",
-            start: { dateTime: "2026-04-06T15:00:00.000Z" },
-            end: { dateTime: "2026-04-06T16:00:00.000Z" },
-            updated: "2026-04-06T07:30:00.000Z",
-          },
-        ],
-      },
-    });
+    eventsPayload = {
+      items: [
+        {
+          id: "evt-1",
+          summary: "Investor breakfast",
+          start: { dateTime: "2026-04-06T15:00:00.000Z" },
+          end: { dateTime: "2026-04-06T16:00:00.000Z" },
+          updated: "2026-04-06T07:30:00.000Z",
+        },
+      ],
+    };
 
     const records = await syncGoogleCalendarWindow(connection, {
       timeMin: "2026-04-06T00:00:00.000Z",
@@ -193,85 +169,54 @@ describe("google-calendar integration", () => {
     });
 
     expect(records).toEqual([
-      expect.objectContaining({
-        backgroundColor: "#9fe1e7",
-        foregroundColor: "#1d1d1d",
-      }),
+      expect.objectContaining({ backgroundColor: "#9fe1e7", foregroundColor: "#1d1d1d" }),
     ]);
   });
 
   it("returns null colors when neither event nor calendar colors can be resolved", async () => {
-    calendarListList.mockResolvedValue({
-      data: {
-        items: [{ id: "allowed@example.com", summary: "Primary", primary: true }],
-        nextPageToken: undefined,
-      },
-    });
-    colorsGet.mockResolvedValue({ data: { calendar: {}, event: {} } });
-    eventsList.mockResolvedValue({
-      data: {
-        items: [
-          {
-            id: "evt-1",
-            summary: "Investor breakfast",
-            start: { dateTime: "2026-04-06T15:00:00.000Z" },
-            end: { dateTime: "2026-04-06T16:00:00.000Z" },
-            updated: "2026-04-06T07:30:00.000Z",
-          },
-        ],
-      },
-    });
+    calendarListItems = [{ id: "allowed@example.com", summary: "Primary", primary: true }];
+    colorsPayload = { calendar: {}, event: {} };
+    eventsPayload = {
+      items: [
+        {
+          id: "evt-1",
+          summary: "Investor breakfast",
+          start: { dateTime: "2026-04-06T15:00:00.000Z" },
+          end: { dateTime: "2026-04-06T16:00:00.000Z" },
+          updated: "2026-04-06T07:30:00.000Z",
+        },
+      ],
+    };
 
     const records = await syncGoogleCalendarWindow(connection, {
       timeMin: "2026-04-06T00:00:00.000Z",
       timeMax: "2026-04-07T00:00:00.000Z",
     });
 
-    expect(records).toEqual([
-      expect.objectContaining({
-        backgroundColor: null,
-        foregroundColor: null,
-      }),
-    ]);
+    expect(records).toEqual([expect.objectContaining({ backgroundColor: null, foregroundColor: null })]);
   });
 
   it("creates planner-managed schedule blocks in the Free Time Tasks calendar with free status", async () => {
-    eventsInsert.mockResolvedValue({ data: { id: "google-event-123" } });
-
     const googleEventId = await upsertGoogleScheduleBlock({ connection, task, block });
 
-    expect(calendarListList).toHaveBeenCalled();
-    expect(eventsInsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        calendarId: "free-time-tasks-id@group.calendar.google.com",
-        requestBody: expect.objectContaining({
-          transparency: "transparent",
-        }),
-      }),
-    );
+    const insert = requests().find((request) => request.method === "POST");
+    expect(insert?.url.pathname).toBe(FREE_TIME_CALENDAR_PATH);
+    expect(insert?.body).toEqual(expect.objectContaining({ transparency: "transparent", summary: "Plan launch week" }));
     expect(googleEventId).toBe("google-event-123");
   });
 
   it("falls back to the synced calendar when deleting an older event outside the planner calendar", async () => {
-    eventsDelete
-      .mockRejectedValueOnce({ code: 404 })
-      .mockResolvedValueOnce({ data: {} });
+    deleteResponses = [
+      jsonResponse({ error: { code: 404, message: "Not Found" } }, 404),
+      new Response(null, { status: 204 }),
+    ];
 
     await deleteGoogleScheduleBlock(connection, "google-event-123");
 
-    expect(eventsDelete).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        calendarId: "free-time-tasks-id@group.calendar.google.com",
-        eventId: "google-event-123",
-      }),
-    );
-    expect(eventsDelete).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        calendarId: "primary",
-        eventId: "google-event-123",
-      }),
-    );
+    const deletes = requests().filter((request) => request.method === "DELETE");
+    expect(deletes.map((request) => request.url.pathname)).toEqual([
+      `${FREE_TIME_CALENDAR_PATH}/google-event-123`,
+      "/calendar/v3/calendars/primary/events/google-event-123",
+    ]);
   });
 });

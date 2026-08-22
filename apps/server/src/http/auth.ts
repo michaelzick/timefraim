@@ -1,6 +1,6 @@
 import { createRemoteJWKSet, decodeProtectedHeader, jwtVerify } from "jose";
 import { z } from "zod";
-import { env } from "../config/env.js";
+import { env } from "../config/env.ts";
 
 const payloadSchema = z.object({
   sub: z.string().uuid(),
@@ -43,7 +43,14 @@ export function isAuthorizationError(error: unknown): error is AuthorizationErro
 }
 
 const JWKS = createRemoteJWKSet(new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
-const JWT_SECRET = new TextEncoder().encode(env.SUPABASE_JWT_SECRET);
+const JWT_SECRET = env.SUPABASE_JWT_SECRET ? new TextEncoder().encode(env.SUPABASE_JWT_SECRET) : null;
+
+function requireJwtSecret() {
+  if (!JWT_SECRET) {
+    throw new AuthenticationError("HS256 tokens require AUTH_JWT_SECRET to be configured");
+  }
+  return JWT_SECRET;
+}
 
 function getBearerToken(header: string | undefined) {
   if (!header) {
@@ -68,7 +75,7 @@ export async function requireAuthenticatedUser(authorizationHeader: string | und
   try {
     const header = decodeProtectedHeader(token);
     const { payload } = header.alg?.startsWith("HS")
-      ? await jwtVerify(token, JWT_SECRET)
+      ? await jwtVerify(token, requireJwtSecret())
       : await jwtVerify(token, JWKS);
     parsed = payloadSchema.parse(payload);
   } catch {
@@ -93,13 +100,29 @@ export function requireMcpProfile(authorizationHeader: string | undefined): "rea
     throw new AuthenticationError("Missing MCP bearer token");
   }
 
-  if (token === env.MCP_BEARER_TOKEN) {
+  // Evaluate both comparisons so the response time does not reveal which token matched.
+  const isFullAccess = secureEquals(token, env.MCP_BEARER_TOKEN);
+  const isReadOnly = secureEquals(token, env.MCP_READ_ONLY_TOKEN);
+  if (isFullAccess) {
     return "full-access";
   }
-
-  if (token === env.MCP_READ_ONLY_TOKEN) {
+  if (isReadOnly) {
     return "read-only";
   }
 
   throw new AuthenticationError("Invalid MCP bearer token");
+}
+
+const textEncoder = new TextEncoder();
+
+/** Constant-time string equality (runtime-neutral; no node:crypto on the edge). */
+export function secureEquals(candidate: string, expected: string): boolean {
+  const a = textEncoder.encode(candidate);
+  const b = textEncoder.encode(expected);
+  // Length is not secret for fixed-length tokens; compare bytes without early exit.
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < b.length; i += 1) {
+    diff |= (a[i] ?? 0) ^ (b[i] ?? 0);
+  }
+  return diff === 0;
 }

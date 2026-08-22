@@ -5,12 +5,12 @@ const { fakeDb } = vi.hoisted(() => ({
   fakeDb: { query: vi.fn() },
 }));
 
-vi.mock("../db/pool.js", () => ({
+vi.mock("../db/pool.ts", () => ({
   pool: fakeDb,
   withTransaction: vi.fn(),
 }));
 
-import { PlannerService } from "./planner-service.js";
+import { PlannerService } from "./planner-service.ts";
 
 const task: Task = {
   id: "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1",
@@ -63,6 +63,7 @@ function createRepositoryMock() {
     getActiveTimer: vi.fn().mockResolvedValue(null),
     getIntegrationStatus: vi.fn().mockReturnValue(integrationStatus),
     getIntegrationToken: vi.fn().mockResolvedValue(null),
+    upsertIntegrationToken: vi.fn().mockResolvedValue(undefined),
     getCalendarSyncRun: vi.fn().mockResolvedValue(null),
     getUserTogglConnection: vi.fn().mockResolvedValue(null),
     countHiddenCalendarEventsForRange: vi.fn().mockResolvedValue(0),

@@ -1,12 +1,14 @@
 export {
-  getGoogleConnection,
-  getGoogleCalendarSyncState,
   getGoogleCalendarSettings,
-  readGoogleSyncCalendarIds,
-  readGoogleConnection,
   saveGoogleCalendarSettings,
   saveGoogleSession,
-} from "./planner-service-google-integrations.js";
+} from "./planner-service-google-integrations.ts";
+export {
+  getGoogleConnection,
+  getGoogleCalendarSyncState,
+  readGoogleConnection,
+  readGoogleSyncCalendarIds,
+} from "./planner-service-google-tokens.ts";
 export {
   deleteTogglConnection,
   discoverTogglConnection,
@@ -14,4 +16,4 @@ export {
   getTogglConnection,
   getTogglSettings,
   saveTogglConnection,
-} from "./planner-service-toggl-integrations.js";
+} from "./planner-service-toggl-integrations.ts";

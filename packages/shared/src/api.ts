@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { calendarSyncSchema } from "./calendar-sync.js";
-import { draftKindSchema } from "./drafts.js";
-import { calendarEventViewSchema } from "./schedule.js";
+import { calendarSyncSchema } from "./calendar-sync.ts";
+import { draftKindSchema } from "./drafts.ts";
+import { calendarEventViewSchema } from "./schedule.ts";
 
 export const apiErrorCodeSchema = z.enum([
   "invalid_input",

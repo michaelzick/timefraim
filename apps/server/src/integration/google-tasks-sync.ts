@@ -1,5 +1,6 @@
-import { createGoogleTasksClient } from "./google-tasks.js";
-import type { GoogleConnection } from "./google-calendar.js";
+import type { GoogleConnection } from "./google-api-client.ts";
+import type { GoogleTaskResource, GoogleTasksListResponse } from "./google-api-types.ts";
+import { createGoogleTasksClient, googleTasksUrl } from "./google-tasks.ts";
 
 export type GoogleScheduledTaskRecord = {
   id: string;
@@ -12,16 +13,7 @@ export type GoogleScheduledTaskRecord = {
   hidden: boolean;
 };
 
-function mapGoogleScheduledTask(item: {
-  id?: string | null;
-  title?: string | null;
-  status?: string | null;
-  due?: string | null;
-  updated?: string | null;
-  completed?: string | null;
-  deleted?: boolean | null;
-  hidden?: boolean | null;
-}): GoogleScheduledTaskRecord | null {
+function mapGoogleScheduledTask(item: GoogleTaskResource): GoogleScheduledTaskRecord | null {
   if (!item.id || (item.status !== "needsAction" && item.status !== "completed")) {
     return null;
   }
@@ -53,24 +45,26 @@ export async function listGoogleScheduledTasks(params: {
   let pageToken: string | undefined;
 
   do {
-    const response = await tasks.tasks.list({
-      tasklist: "@default",
-      dueMin: params.dueMin,
-      dueMax: params.dueMax,
-      maxResults: 100,
-      pageToken,
-      showCompleted: true,
-      showDeleted: false,
-      showHidden: true,
-      updatedMin: params.updatedMin ?? undefined,
-    });
+    const response = await tasks.request<GoogleTasksListResponse>(
+      "GET",
+      googleTasksUrl(undefined, {
+        dueMin: params.dueMin,
+        dueMax: params.dueMax,
+        maxResults: 100,
+        pageToken,
+        showCompleted: true,
+        showDeleted: false,
+        showHidden: true,
+        updatedMin: params.updatedMin ?? undefined,
+      }),
+    );
 
     records.push(
-      ...(response.data.items ?? [])
+      ...(response.items ?? [])
         .map((item) => mapGoogleScheduledTask(item))
         .filter((item): item is GoogleScheduledTaskRecord => Boolean(item)),
     );
-    pageToken = response.data.nextPageToken ?? undefined;
+    pageToken = response.nextPageToken ?? undefined;
   } while (pageToken);
 
   return records;
@@ -97,11 +91,8 @@ export async function getGoogleScheduledTasksByIds(params: {
   const records: GoogleScheduledTaskRecord[] = [];
   for (const taskId of [...new Set(params.taskIds)]) {
     try {
-      const response = await tasks.tasks.get({
-        tasklist: "@default",
-        task: taskId,
-      });
-      const record = mapGoogleScheduledTask(response.data);
+      const response = await tasks.request<GoogleTaskResource>("GET", googleTasksUrl(taskId));
+      const record = mapGoogleScheduledTask(response);
       if (record) {
         records.push(record);
       }

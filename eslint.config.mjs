@@ -16,6 +16,7 @@ export default tseslint.config(
       "**/node_modules/**",
       "**/.pnpm-store/**",
       "**/.turbo/**",
+      "supabase/functions/**",
     ],
   },
   js.configs.recommended,

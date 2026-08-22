@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { PlannerRepository } from "./planner-repository.js";
+import { PlannerRepository } from "./planner-repository.ts";
 
 describe("planner-repository", () => {
   it("filters app-managed rows out of planner calendar ranges", async () => {

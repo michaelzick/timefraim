@@ -5,8 +5,8 @@ import type {
   GooglePlannerSyncTarget,
   SyncDraft,
 } from "@timefraim/shared";
-import type { Queryable } from "../db/pool.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
+import type { Queryable } from "../db/pool.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
 
 export type SideEffect =
   | {

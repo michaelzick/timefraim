@@ -2,16 +2,16 @@ import type {
   TogglDiscoverResult,
   TogglIntegrationSettings,
 } from "@timefraim/shared";
-import { env } from "../config/env.js";
-import { pool } from "../db/pool.js";
-import { decryptSecret, encryptSecret, maskSecret } from "../integration/integration-crypto.js";
+import { env } from "../config/env.ts";
+import { pool } from "../db/pool.ts";
+import { decryptSecret, encryptSecret, maskSecret } from "../integration/integration-crypto.ts";
 import {
   discoverTogglData,
   validateTogglConnection,
   type TogglConnection,
-} from "../integration/toggl-track.js";
-import type { PlannerRepository } from "../repositories/planner-repository.js";
-import { dependencyUnavailable, invalidInput } from "./planner-errors.js";
+} from "../integration/toggl-track.ts";
+import type { PlannerRepository } from "../repositories/planner-repository.ts";
+import { dependencyUnavailable, invalidInput } from "./planner-errors.ts";
 
 export async function getTogglConnection(
   repository: PlannerRepository,
@@ -27,7 +27,7 @@ export async function getTogglConnection(
   }
 
   return {
-    apiToken: decryptSecret(row.apiTokenCiphertext),
+    apiToken: await decryptSecret(row.apiTokenCiphertext),
     apiTokenHint: row.apiTokenHint,
     workspaceId: row.workspaceId,
     workspaceName: row.workspaceName,
@@ -79,7 +79,7 @@ export async function saveTogglConnection(
   const apiToken = providedApiToken
     ? providedApiToken
     : existing
-      ? decryptSecret(existing.apiTokenCiphertext)
+      ? await decryptSecret(existing.apiTokenCiphertext)
       : null;
 
   if (!apiToken) {
@@ -101,7 +101,7 @@ export async function saveTogglConnection(
     userId,
     {
       apiTokenCiphertext: providedApiToken
-        ? encryptSecret(apiToken)
+        ? await encryptSecret(apiToken)
         : existing!.apiTokenCiphertext,
       apiTokenHint: validated.apiTokenHint,
       workspaceId: validated.workspaceId,

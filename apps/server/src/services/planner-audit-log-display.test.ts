@@ -1,6 +1,6 @@
 import type { AuditLog, CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
 import { describe, expect, it } from "vitest";
-import { resolveAuditLogDisplaySummaries } from "./planner-audit-log-display.js";
+import { resolveAuditLogDisplaySummaries } from "./planner-audit-log-display.ts";
 
 const task: Task = {
   id: "84a87ef5-f143-4b9b-9f6b-b7c608d72ac1",

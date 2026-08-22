@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { calendarSyncResultSchema } from "./api.js";
-import { dayPlanSchema } from "./day-plan.js";
+import { calendarSyncResultSchema } from "./api.ts";
+import { dayPlanSchema } from "./day-plan.ts";
 
 const baseCalendarSync = {
   status: "not_synced" as const,

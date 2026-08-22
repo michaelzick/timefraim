@@ -1,6 +1,6 @@
-import { finalizeTimerSession, resolveIdleTaskStatus } from "./planner-domain.js";
-import { notFound } from "./planner-errors.js";
-import type { DraftHandlerContext } from "./planner-service-types.js";
+import { finalizeTimerSession, resolveIdleTaskStatus } from "./planner-domain.ts";
+import { notFound } from "./planner-errors.ts";
+import type { DraftHandlerContext } from "./planner-service-types.ts";
 
 async function stopActiveTimerIfRunning(context: DraftHandlerContext) {
   const active = await context.repository.getActiveTimer(context.client);
