@@ -145,5 +145,19 @@ timeline, confirm it appears in Google → start/stop a timer → hard-refresh
   undecryptable (key changed), null `access_token`/`refresh_token` for
   `provider = 'google'` and sign in with Google again.
 
-Keep the droplet running from `main` until the checklist above passes; it is the
-rollback for the whole cutover window. Tear it down last.
+If you are migrating from another deployment, keep it running from `main` until
+the checklist above passes; it is the rollback for the whole cutover window.
+Tear it down last.
+
+## Troubleshooting
+
+| Symptom | Cause / fix |
+|---|---|
+| `password authentication failed for user "postgres"` from a function | `DATABASE_URL` uses the bare `postgres` user. The pooler needs `postgres.<ref>` (see the secrets table); percent-encode the password if it has URL-reserved characters. |
+| Function returns 500 on every request right after deploy | Env validation failed at boot — usually `APP_ORIGIN` (required, no default) or `DATABASE_URL` missing. `supabase secrets list` shows names only; set the missing one and retry (no redeploy needed). |
+| `supabase db dump` / `functions deploy` fails with "failed to run docker" | The CLI bundles functions and runs `pg_dump` in containers. Start Docker Desktop and rerun. |
+| `pnpm deploy:web` fails with `ERR_PNPM_INVALID_DEPLOY_TARGET` | `pnpm deploy` is a built-in pnpm command; the root script must call `pnpm --filter @timefraim/web run deploy`. |
+| Browser CORS error on the workers.dev origin | The origin is missing from the `APP_ORIGIN` secret, or the SPA was built with a stale `.env.production` (`VITE_*` values are baked at build time — rebuild). |
+| Login redirect lands on localhost | The workers.dev origin is not in the Supabase Auth URL configuration (Site URL / Redirect URLs). |
+| Stored Toggl/Google tokens fail to decrypt | `INTEGRATION_ENCRYPTION_KEY` on the edge differs from the key used when they were saved. |
+| `supabase` CLI reports a missing `supabase-go` binary | A stale standalone shim is earlier on `PATH` than the npm-installed CLI. Remove the shim or reorder `PATH`. |
