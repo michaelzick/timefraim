@@ -117,6 +117,14 @@ Without the build variables the build succeeds and the deployed app fails at
 load with `Missing required Vite env var`, so set them before the first
 production build.
 
+Cloudflare stores build variables per target. The dashboard form writes the
+production target only; builds for non-production branches (preview versions
+under `https://<branch>-timefraim.<account>.workers.dev`) use a separate
+`previews_base_config` that has no dashboard UI. Either accept that previews
+run without the variables, or copy them to the preview target with the same
+`PATCH /accounts/<account>/builds/workers/<script_tag>` call the dashboard
+uses. A build's detail page lists the variables it actually ran with.
+
 ## Local development
 
 ```bash
