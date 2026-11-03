@@ -22,6 +22,10 @@ const KanbanPage = lazy(async () => ({
   default: (await import("@/pages/kanban-page")).KanbanPage,
 }));
 
+const CalendarPage = lazy(async () => ({
+  default: (await import("@/pages/calendar-page")).CalendarPage,
+}));
+
 const SettingsPage = lazy(async () => ({
   default: (await import("@/pages/settings-page")).SettingsPage,
 }));
@@ -132,6 +136,17 @@ export function AppShell({
                   onStopTimer={plannerPageProps.onStopTimer}
                   onUpdateTask={plannerPageProps.onUpdateTask}
                   togglSettings={togglSettings}
+                />
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <CalendarPage
+                  date={date}
+                  tasks={dayPlan.tasks}
+                  isMutating={plannerPageProps.isMutating}
+                  onUpdateScheduleBlock={plannerPageProps.onUpdateScheduleBlock}
                 />
               }
             />
