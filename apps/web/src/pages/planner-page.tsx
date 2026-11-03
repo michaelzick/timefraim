@@ -1,9 +1,12 @@
-import { DndContext, DragOverlay, pointerWithin, type DragStartEvent } from "@dnd-kit/core";
-import { useState, type MouseEvent } from "react";
-import { ActiveDragPreview, type ActiveDragPayload } from "@/features/planner/active-drag-preview";
+import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
+import type { MouseEvent } from "react";
+import { ActiveDragPreview } from "@/features/planner/active-drag-preview";
+import { MoveTaskDialog } from "@/features/planner/move-task-dialog";
 import { PlannerDetailColumn, PlannerQueueColumn, PlannerTimelineColumn } from "@/features/planner/planner-page-columns";
 import { PlannerToolbar } from "@/features/planner/planner-toolbar";
 import type { PlannerPageProps } from "@/features/planner/types";
+import { useMoveTaskDialog } from "@/features/planner/use-move-task-dialog";
+import { usePlannerActiveDrag } from "@/features/planner/use-planner-active-drag";
 import { usePlannerKeyboardShortcuts } from "@/pages/use-planner-keyboard-shortcuts";
 import { usePlannerPageController } from "@/pages/use-planner-page-controller";
 
@@ -75,15 +78,18 @@ export function PlannerPage({
     onStartTimer,
   });
 
-  const [activeDrag, setActiveDrag] = useState<ActiveDragPayload | null>(null);
-  const handleDragStart = (event: DragStartEvent) => {
-    const data = event.active.data.current;
-    if (!data || typeof data.dragType !== "string") {
-      return;
-    }
-    setActiveDrag(data as ActiveDragPayload);
-  };
-  const clearActiveDrag = () => setActiveDrag(null);
+  const moveDialog = useMoveTaskDialog({
+    date,
+    tasks: dayPlan.tasks,
+    onDateChange,
+    onMovedOffDay: (taskId) => {
+      if (selectedTask?.id === taskId) handleClearSelection();
+    },
+    onUpdateScheduleBlock,
+  });
+
+  const { activeDragPayload, clearActiveDrag, copyDragScheduleBlockId, copyDragTaskId, handleDragStart } =
+    usePlannerActiveDrag(isAltPressed);
 
   const handlePlannerSurfaceClick = (event: MouseEvent<HTMLDivElement>) => {
     const target = event.target;
@@ -97,11 +103,6 @@ export function PlannerPage({
     }
     handleClearSelection();
   };
-
-  const activeDragPayload = activeDrag ? applyCopyIntent(activeDrag, isAltPressed) : null;
-  const copyDragTaskId = activeDrag?.dragType === "queue-task" && isAltPressed ? activeDrag.task.id : null;
-  const copyDragScheduleBlockId =
-    activeDrag?.dragType === "schedule-block" && isAltPressed ? activeDrag.scheduleBlock.id : null;
 
   usePlannerKeyboardShortcuts({
     selectedTask,
@@ -161,6 +162,7 @@ export function PlannerPage({
             onDuplicateTask={(task) => mutationHandlers.handleDuplicateTask(task)}
             onStartTaskTimer={(taskId) => mutationHandlers.handleStartTaskTimer(taskId)}
             onMarkTaskDone={(task) => mutationHandlers.handleMarkTaskDone(task)}
+            onMoveTaskToDate={moveDialog.open}
             onResizeTaskDuration={(task, durationMinutes) =>
               mutationHandlers.handleResizeTaskDuration(task, durationMinutes)}
           />
@@ -190,17 +192,9 @@ export function PlannerPage({
       <DragOverlay dropAnimation={null}>
         {activeDragPayload ? <ActiveDragPreview payload={activeDragPayload} /> : null}
       </DragOverlay>
+      {moveDialog.target ? (
+        <MoveTaskDialog target={moveDialog.target} onClose={moveDialog.close} onSubmit={moveDialog.submit} />
+      ) : null}
     </DndContext>
   );
-}
-
-function applyCopyIntent(payload: ActiveDragPayload, isAltPressed: boolean): ActiveDragPayload {
-  if (!isAltPressed) return payload;
-  if (payload.dragType === "queue-task") {
-    return { dragType: "queue-task-copy", task: payload.task };
-  }
-  if (payload.dragType === "schedule-block") {
-    return { dragType: "schedule-block-copy", scheduleBlock: payload.scheduleBlock, task: payload.task };
-  }
-  return payload;
 }

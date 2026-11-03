@@ -107,7 +107,7 @@ export function resolvePlannerTaskStatus(task: Pick<Task, "scheduledBlockId">, l
   return task.scheduledBlockId ? "scheduled" : "planned";
 }
 
-function getActionErrorMessage(message: string, error: unknown) {
+export function getActionErrorMessage(message: string, error: unknown) {
   if (error instanceof ApiRequestError && error.code === "dependency_unavailable") {
     return error.message;
   }

@@ -1,6 +1,6 @@
 import type { CalendarEventView, ScheduleBlock, Task } from "@timefraim/shared";
 import { getTimelineWindow, TIMELINE_INCREMENT_MINUTES } from "@/components/timeline-geometry";
-import { getTimezoneOffsetForDate } from "@/lib/utils";
+import { formatPlannerDateFromIso, getTimezoneOffsetForDate } from "@/lib/utils";
 import { compareKanbanTasks } from "@/features/kanban/kanban-sort";
 import type { KanbanMoveInput, KanbanStatus } from "@/features/kanban/kanban-types";
 
@@ -116,18 +116,6 @@ function resolvePlannerLinkDate(task: Task, fallbackDate: string, scheduleBlocks
   const startAt = task.scheduledStartAt
     ?? scheduleBlocks.find((block) => block.id === task.scheduledBlockId)?.startAt;
   return startAt ? formatPlannerDateFromIso(startAt) ?? fallbackDate : fallbackDate;
-}
-
-function formatPlannerDateFromIso(isoString: string) {
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
 }
 
 function hasTimelineConflict(

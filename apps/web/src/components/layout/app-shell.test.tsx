@@ -26,6 +26,10 @@ vi.mock("@/pages/kanban-page", () => ({
   KanbanPage: () => <div>board route</div>,
 }));
 
+vi.mock("@/pages/calendar-page", () => ({
+  CalendarPage: ({ tasks }: { tasks: unknown[] }) => <div>calendar route with {tasks.length} tasks</div>,
+}));
+
 vi.mock("@/pages/settings-page", () => ({
   SettingsPage: () => <div>settings route</div>,
 }));
@@ -157,6 +161,59 @@ describe("AppShell", () => {
     );
 
     expect(await screen.findByText("board route")).toBeInTheDocument();
+  });
+
+  it("renders the calendar route inside the signed-in shell", async () => {
+    render(
+      <Providers>
+        <MemoryRouter initialEntries={["/calendar"]}>
+          <AppShell
+            authSession={buildAuthSession()}
+            date="2026-04-06"
+            dayPlan={buildDayPlan()}
+            togglSettings={buildTogglSettings()}
+            isDiscoveringToggl={false}
+            isSavingToggl={false}
+            onDateChange={vi.fn()}
+            onDiscoverToggl={noopDiscover}
+            onDeleteToggl={noopTogglSettings}
+            onSaveToggl={noopTogglSettings}
+            onSignOut={vi.fn()}
+            googleCalendarSettings={null}
+            isLoadingGoogleCalendars={false}
+            isSavingGoogleCalendars={false}
+            taskStartNotificationsEnabled={false}
+            taskEndNotificationsEnabled={false}
+            taskNotificationsSupported
+            taskNotificationsMessage={null}
+            onSaveGoogleCalendars={vi.fn().mockResolvedValue(undefined)}
+            onTaskStartNotificationsChange={vi.fn()}
+            onTaskEndNotificationsChange={vi.fn()}
+            plannerPageProps={{
+              isMutating: false,
+              isSyncing: false,
+              onCreateScheduleBlock: noopAsync,
+              onCreateTask: noopAsync,
+              onDeleteScheduleBlock: noopAsync,
+              onDeleteTask: noopAsync,
+              onDismissCalendarEvent: noopAsync,
+              onUpdateCalendarEvent: noopAsync,
+              onDuplicateTask: noopDuplicate,
+              onDuplicateScheduleBlock: noopDuplicate,
+              onStartTimer: noopAsync,
+              onStartEventTimer: noopAsync,
+              onStopTimer: noopAsync,
+              onSyncCalendar: noopAsync,
+              onUpdateScheduleBlock: noopAsync,
+              onUpdateTask: noopAsync,
+              togglSettings: buildTogglSettings(),
+            }}
+          />
+        </MemoryRouter>
+      </Providers>,
+    );
+
+    expect(await screen.findByText("calendar route with 2 tasks")).toBeInTheDocument();
   });
 
   it("replaces planner deep-link date params when the planner date changes", async () => {

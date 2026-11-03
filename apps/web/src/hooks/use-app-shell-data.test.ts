@@ -11,6 +11,7 @@ describe("isGoogleTaskSyncRoute", () => {
     ["/", true],
     ["/board", true],
     ["/settings", false],
+    ["/calendar", false],
     ["/board/other", false],
   ])("returns %s → %s", (pathname, expected) => {
     expect(isGoogleTaskSyncRoute(pathname)).toBe(expected);

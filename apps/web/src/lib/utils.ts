@@ -36,3 +36,15 @@ export function getTodayDate() {
 export function getTimezoneOffsetForDate(date: string) {
   return new Date(`${date}T12:00:00`).getTimezoneOffset();
 }
+
+export function formatPlannerDateFromIso(isoString: string) {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}

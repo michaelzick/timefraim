@@ -1,4 +1,4 @@
-import { Check, Copy, MoreVertical, Play, Trash2, type LucideIcon } from "lucide-react";
+import { CalendarDays, Check, Copy, MoreVertical, Play, Trash2, type LucideIcon } from "lucide-react";
 import type { PointerEvent } from "react";
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ export type TaskPillKebabProps = {
   onDuplicate: () => void;
   onStartTimer?: () => void;
   onMarkDone?: () => void;
+  onMoveToDate?: () => void;
   onDelete?: () => void;
   deleteLabel?: string;
   deleteIcon?: LucideIcon;
@@ -23,6 +24,7 @@ export function TaskPillKebab({
   onDuplicate,
   onStartTimer,
   onMarkDone,
+  onMoveToDate,
   onDelete,
   deleteLabel = "Delete",
   deleteIcon: DeleteIcon = Trash2,
@@ -53,6 +55,11 @@ export function TaskPillKebab({
         {onMarkDone ? (
           <DropdownMenuItem onSelect={onMarkDone}>
             <Check className="h-4 w-4" /> Mark done
+          </DropdownMenuItem>
+        ) : null}
+        {onMoveToDate ? (
+          <DropdownMenuItem onSelect={onMoveToDate}>
+            <CalendarDays className="h-4 w-4" /> Move to date…
           </DropdownMenuItem>
         ) : null}
         {onDelete ? (

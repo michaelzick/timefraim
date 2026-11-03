@@ -73,4 +73,20 @@ describe("AppHeader", () => {
 
     expect(screen.getByRole("link", { name: /board/i })).toHaveClass("text-[var(--accent-foreground)]");
   });
+
+  it("links to the calendar and marks only it active on that route", () => {
+    render(
+      <Providers>
+        <MemoryRouter initialEntries={["/calendar"]}>
+          <AppHeader onSignOut={vi.fn()} />
+        </MemoryRouter>
+      </Providers>,
+    );
+
+    const calendarLink = screen.getByRole("link", { name: /calendar/i });
+    expect(calendarLink).toHaveAttribute("href", "/calendar");
+    expect(calendarLink).toHaveClass("text-[var(--accent-foreground)]");
+    expect(screen.getByRole("link", { name: /planner/i })).not.toHaveClass("text-[var(--accent-foreground)]");
+    expect(screen.getByRole("link", { name: /board/i })).not.toHaveClass("text-[var(--accent-foreground)]");
+  });
 });

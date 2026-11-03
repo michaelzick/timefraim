@@ -32,6 +32,7 @@ type TimelineScheduleBlockProps = {
   onDuplicateTask?: (task: Task) => void;
   onStartTaskTimer?: (taskId: string) => void;
   onMarkTaskDone?: (task: Task) => void;
+  onMoveTaskToDate?: (block: ScheduleBlock, task: Task) => void;
   onResizeTaskDuration?: (task: Task, durationMinutes: number) => void;
   onSelectTask: (taskId: string) => void;
 };
@@ -48,6 +49,7 @@ export function TimelineScheduleBlock({
   onDuplicateTask,
   onStartTaskTimer,
   onMarkTaskDone,
+  onMoveTaskToDate,
   onResizeTaskDuration,
   onSelectTask,
 }: TimelineScheduleBlockProps) {
@@ -180,6 +182,7 @@ export function TimelineScheduleBlock({
               onDuplicate={() => onDuplicateTask(task)}
               onStartTimer={onStartTaskTimer ? () => onStartTaskTimer(task.id) : undefined}
               onMarkDone={onMarkTaskDone ? () => onMarkTaskDone(task) : undefined}
+              onMoveToDate={onMoveTaskToDate ? () => onMoveTaskToDate(block, task) : undefined}
               onDelete={() => onDeleteScheduleBlock(block.id, title)}
               deleteLabel="Remove"
               deleteIcon={Undo2}

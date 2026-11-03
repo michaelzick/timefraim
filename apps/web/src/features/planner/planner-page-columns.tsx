@@ -1,4 +1,4 @@
-import type { DayPlan, Task, TogglIntegrationSettings } from "@timefraim/shared";
+import type { DayPlan, ScheduleBlock, Task, TogglIntegrationSettings } from "@timefraim/shared";
 import type { UseFormReturn } from "react-hook-form";
 import { TimelineBoard } from "@/components/timeline-board";
 import { CreateTaskCard } from "@/features/planner/create-task-card";
@@ -78,6 +78,7 @@ type PlannerTimelineColumnProps = {
   onDuplicateTask: (task: Task) => void;
   onStartTaskTimer: (taskId: string) => void;
   onMarkTaskDone: (task: Task) => void;
+  onMoveTaskToDate: (block: ScheduleBlock, task: Task) => void;
   onResizeTaskDuration: (task: Task, durationMinutes: number) => void;
 };
 
@@ -95,6 +96,7 @@ export function PlannerTimelineColumn({
   onDuplicateTask,
   onStartTaskTimer,
   onMarkTaskDone,
+  onMoveTaskToDate,
   onResizeTaskDuration,
 }: PlannerTimelineColumnProps) {
   const visibleTaskIds = new Set(tasks.map((task) => task.id));
@@ -118,6 +120,7 @@ export function PlannerTimelineColumn({
       onDuplicateTask={onDuplicateTask}
       onStartTaskTimer={onStartTaskTimer}
       onMarkTaskDone={onMarkTaskDone}
+      onMoveTaskToDate={onMoveTaskToDate}
       onResizeTaskDuration={onResizeTaskDuration}
     />
   );

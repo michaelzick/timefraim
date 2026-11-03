@@ -11,8 +11,9 @@ Sibling files [CLAUDE.md](CLAUDE.md) (Claude Code) and [AGENTS.md](AGENTS.md) (C
 **TimeFraim** is a single-user local-first scheduling app — a Sunsama-style planner. Users manage tasks, build time-blocked day plans on a visual timeline, sync with Google Calendar / Tasks, and track time via Toggl. A remote MCP endpoint lets AI agents propose and confirm planner changes.
 
 Primary flows:
-- Planner: three-column layout (task queue / timeline / detail panel) with drag-and-drop scheduling.
+- Planner: three-column layout (task queue / timeline / detail panel) with drag-and-drop scheduling. A timeline task's menu can move it to another date and start time.
 - Board: Jira-style kanban scheduler where task cards move through status columns and can schedule/open work on the day planner timeline.
+- Calendar: Month and Week views of tasks by date at `/calendar`, with drag between days. It keeps its own `?view=&anchor=` params and never sets `?date=`, which would change the app-wide planner date.
 - Settings: connect Google Calendar (multi-calendar, colors, timeline sync as Calendar events or Google Tasks) and Toggl (workspace + per-task project overrides).
 - Draft-first mutations: AI-proposed changes land as `sync_drafts` rows; the user confirms before they apply.
 
@@ -59,10 +60,11 @@ timefraim/
 ### 4.1 apps/web (frontend, port 6173)
 
 - **Entry:** `src/main.tsx` → `src/App.tsx` (theme provider + auth guard + QueryClientProvider + BrowserRouter + toaster).
-- **Pages:** `src/pages/planner-page.tsx`, `src/pages/kanban-page.tsx`, `src/pages/settings-page.tsx`.
+- **Pages:** `src/pages/planner-page.tsx`, `src/pages/kanban-page.tsx`, `src/pages/calendar-page.tsx`, `src/pages/settings-page.tsx`.
 - **Settings integrations:** `src/pages/settings-google-calendars-card.tsx`, `src/pages/settings-toggl-card.tsx`.
-- **Feature code:** `src/features/planner/` — task cards, calendar cards, timeline board, column layout; `src/features/kanban/` — status board columns/cards, planner links, an active-timer banner, per-column date/priority sorting, and timeline scheduling helpers.
+- **Feature code:** `src/features/planner/` — task cards, calendar cards, timeline board, column layout; `src/features/kanban/` — status board columns/cards, planner links, an active-timer banner, per-column date/priority sorting, and timeline scheduling helpers; `src/features/calendar/` — date grids, task-to-date entries, Month and Week views, and drag helpers.
 - **Reusable UI:** `src/components/ui/` (shadcn-style primitives), `src/components/layout/app-shell.tsx`.
+- **Radix versions:** `@radix-ui/react-dialog` is pinned to the release that shares `focus-scope` and `dismissable-layer` with `@radix-ui/react-dropdown-menu`. Upgrade them together: separate copies keep separate focus stacks, so opening a dialog from a menu overflows the call stack.
 - **Theme:** `src/theme/` — local light/dark/system preference, document class management, and resolved theme hook.
 - **Hooks:** `src/hooks/` — `use-planner-mutations.ts` (optimistic updates), `use-app-shell-data.ts`, `use-supabase-session.ts`, `use-planner-page-controller.ts`.
 - **API clients & config:** `src/lib/` — `api-planner.ts`, `api-integrations.ts`, `api-client.ts`, `env.ts`, `supabase.ts`.
@@ -265,7 +267,9 @@ Canonical list lives in [.env.example](.env.example). Highlights:
 | [apps/web/src/theme/theme-provider.tsx](apps/web/src/theme/theme-provider.tsx) | Client theme preference, resolved mode tracking, and `<html>` class sync |
 | [apps/web/src/pages/planner-page.tsx](apps/web/src/pages/planner-page.tsx) | Main scheduling UI |
 | [apps/web/src/pages/kanban-page.tsx](apps/web/src/pages/kanban-page.tsx) | Kanban scheduler UI with board-to-planner task links |
+| [apps/web/src/pages/calendar-page.tsx](apps/web/src/pages/calendar-page.tsx) | Month and Week calendar of tasks by date |
 | [apps/web/src/pages/settings-page.tsx](apps/web/src/pages/settings-page.tsx) | Integration configuration UI |
+| [apps/web/src/features/planner/schedule-block-move.ts](apps/web/src/features/planner/schedule-block-move.ts) | Moving a scheduled task to another date, shared by the move dialog and calendar drag |
 | [apps/web/src/hooks/use-planner-mutations.ts](apps/web/src/hooks/use-planner-mutations.ts) | Task/schedule/timer mutations |
 | [apps/web/src/lib/api-planner.ts](apps/web/src/lib/api-planner.ts) | Planner HTTP client |
 | [apps/web/src/components/timeline-board.tsx](apps/web/src/components/timeline-board.tsx) | Timeline rendering |
