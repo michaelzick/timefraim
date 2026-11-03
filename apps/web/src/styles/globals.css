@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --panel: #0f1527;
   --accent: #ff6f3b;
   font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
 }
 
 html.dark {
   color-scheme: dark;
+  --panel: #0f1527;
+  --accent-text: #ff6f3b;
+  --accent-ring: transparent;
   --bg: #05070d;
   --bg-alt: #0b1223;
   --bg-accent: rgba(73, 95, 176, 0.22);
@@ -67,6 +69,9 @@ html.dark {
 
 html.light {
   color-scheme: light;
+  --panel: #ffffff;
+  --accent-text: #a93a0f;
+  --accent-ring: #a93a0f;
   --bg: #f8f4ec;
   --bg-alt: #eef3fb;
   --bg-accent: rgba(255, 160, 126, 0.24);

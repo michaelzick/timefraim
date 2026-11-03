@@ -9,6 +9,43 @@ function getThemeBlock(theme: "light" | "dark") {
   return match?.[1] ?? "";
 }
 
+type Color = { r: number; g: number; b: number; a: number };
+
+function readColor(theme: "light" | "dark", token: string): Color {
+  const value = getThemeBlock(theme).match(new RegExp(`${token}: ([^;]+);`))?.[1] ?? "";
+  const hex = value.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (hex) {
+    return { r: parseInt(hex[1], 16), g: parseInt(hex[2], 16), b: parseInt(hex[3], 16), a: 1 };
+  }
+  const rgba = value.match(/^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/);
+  if (rgba) {
+    return { r: Number(rgba[1]), g: Number(rgba[2]), b: Number(rgba[3]), a: Number(rgba[4]) };
+  }
+  throw new Error(`Unreadable color for ${token}: "${value}"`);
+}
+
+function composite(color: Color, background: Color): Color {
+  return {
+    r: color.r * color.a + background.r * (1 - color.a),
+    g: color.g * color.a + background.g * (1 - color.a),
+    b: color.b * color.a + background.b * (1 - color.a),
+    a: 1,
+  };
+}
+
+function luminance({ r, g, b }: Color) {
+  const [red, green, blue] = [r, g, b].map((channel) => {
+    const value = channel / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+function contrastRatio(first: Color, second: Color) {
+  const [lighter, darker] = [luminance(first), luminance(second)].sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 describe("globals.css planner tokens", () => {
   it("keeps the light theme priority palette aligned with dark mode", () => {
     const lightThemeBlock = getThemeBlock("light");
@@ -38,6 +75,30 @@ describe("globals.css planner tokens", () => {
     expect(lightThemeBlock).toContain("--calendar-event-title: var(--heading);");
     expect(lightThemeBlock).toContain("--calendar-event-meta: var(--muted-strong);");
     expect(lightThemeBlock).toContain("--accent-foreground: #ffffff;");
+  });
+
+  it("gives each theme its own panel color instead of a shared dark one", () => {
+    expect(getThemeBlock("dark")).toContain("--panel: #0f1527;");
+    expect(getThemeBlock("light")).toContain("--panel: #ffffff;");
+    expect(globalsCss.match(/:root \{([\s\S]*?)\n\}/)?.[1]).not.toContain("--panel:");
+  });
+
+  it.each([
+    ["inactive text", "--muted", "--panel"],
+    ["hovered text", "--text", "--panel-hover"],
+    ["active text", "--accent-text", "--accent-soft"],
+    ["hovered active text", "--accent-text", "--accent-soft-strong"],
+  ])("meets WCAG AA contrast in light mode for segmented control %s", (_label, text, background) => {
+    const panel = readColor("light", "--panel");
+    const surface = composite(readColor("light", background), panel);
+
+    expect(contrastRatio(composite(readColor("light", text), panel), surface)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("keeps the light-mode active indicator visible against the panel", () => {
+    const panel = readColor("light", "--panel");
+
+    expect(contrastRatio(composite(readColor("light", "--accent-ring"), panel), panel)).toBeGreaterThanOrEqual(3);
   });
 
   it("limits the anchor color reset to unclassed links", () => {

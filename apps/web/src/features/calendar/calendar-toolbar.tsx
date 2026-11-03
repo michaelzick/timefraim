@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CategoryFilterControl } from "@/components/category-filter-control";
+import { getSegmentButtonClassName } from "@/components/segment-button-class";
 import { Button } from "@/components/ui/button";
 import { formatCalendarTitle, type CalendarView } from "@/features/calendar/calendar-dates";
 import type { TaskCategoryFilter } from "@/features/planner/planner-page-selection";
@@ -78,12 +79,7 @@ export function CalendarToolbar({
               size="sm"
               variant="ghost"
               aria-pressed={view === option.value}
-              className={cn(
-                "h-8 px-3 text-xs",
-                view === option.value
-                  ? "bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent-soft-strong)] hover:text-[var(--accent)]"
-                  : "text-[var(--muted)] hover:text-[var(--text)]",
-              )}
+              className={cn("h-8 px-3 text-xs", getSegmentButtonClassName(view === option.value))}
               onClick={() => onViewChange(option.value)}
             >
               {option.label}

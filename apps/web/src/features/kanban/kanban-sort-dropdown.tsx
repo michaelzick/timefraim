@@ -32,7 +32,7 @@ export function KanbanSortDropdown({
           className="inline-flex h-7 items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--panel)] px-2 text-[var(--muted-strong)] outline-none transition hover:border-[var(--panel-border-strong)] hover:text-[var(--heading)] focus-visible:ring-2 focus-visible:ring-[var(--timeline-selection-ring)]"
         >
           <ActiveIcon className="pointer-events-none h-3.5 w-3.5" />
-          <ChevronDown className="pointer-events-none h-3 w-3 text-[var(--planner-surface-meta)]" />
+          <ChevronDown className="pointer-events-none h-3 w-3" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[176px] rounded-xl p-1 text-xs">
