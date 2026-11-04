@@ -84,65 +84,69 @@ export function CalendarWeekView({
   }, []);
 
   return (
-    <div className="overflow-x-auto rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-elevated)]">
+    // One scroll container for the header and grid, so a scrollbar narrows them equally and their lines stay aligned.
+    <div
+      ref={scrollRef}
+      className="max-h-[80vh] overflow-auto rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-elevated)]"
+    >
       <div className="min-w-[720px]">
-        <div className={cn("grid border-b border-[var(--timeline-grid)]", GRID_COLUMNS)}>
-          <div />
-          {days.map((date) => (
-            <div key={date} className="flex flex-col items-center gap-1 border-l border-[var(--timeline-grid)] py-2">
-              <span className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
-                {formatWeekdayLabel(date)}
-              </span>
-              <Link
-                to={`/?date=${date}`}
-                aria-label={`Open ${formatFullDate(date)} in the Planner`}
-                aria-current={date === today ? "date" : undefined}
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium text-[var(--heading)] transition hover:bg-[var(--panel-hover)]",
-                  date === today && "bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[var(--accent)]",
-                )}
-              >
-                {getDayOfMonth(date)}
-              </Link>
-            </div>
-          ))}
-        </div>
-        {/* Done tasks with no time, and blocks outside the hour grid, so nothing is hidden. */}
-        <div className={cn("grid border-b border-[var(--timeline-grid)]", GRID_COLUMNS)}>
-          <div />
-          {days.map((date) => (
-            <CalendarDropZone
-              key={date}
-              id={`calendar-week-top-${date}`}
-              date={date}
-              label={`${formatFullDate(date)} tasks without a slot`}
-              className="min-h-7 min-w-0 space-y-1 border-l border-[var(--timeline-grid)] p-1"
-            >
-              {(entriesByDate.get(date) ?? [])
-                .filter((entry) => !getWeekPlacement(entry))
-                .map((entry) => (
-                  <CalendarTaskChip key={entry.task.id} entry={entry} />
-                ))}
-            </CalendarDropZone>
-          ))}
-        </div>
-        <div ref={scrollRef} className="max-h-[70vh] overflow-y-auto">
-          <div className={cn("grid", GRID_COLUMNS)} style={{ height: gridHeight }}>
-            <div className="relative">
-              {HOURS.map((hour, index) => (
-                <span
-                  key={hour}
-                  className="absolute right-2 text-[10px] font-medium text-[var(--muted)]"
-                  style={{ top: index * HOUR_HEIGHT + 2 }}
-                >
-                  {formatHourLabel(hour)}
-                </span>
-              ))}
-            </div>
+        <div className="sticky top-0 z-10 bg-[var(--panel)]">
+          <div className={cn("grid border-b border-[var(--timeline-grid)]", GRID_COLUMNS)}>
+            <div />
             {days.map((date) => (
-              <WeekDayColumn key={date} date={date} entries={entriesByDate.get(date) ?? []} />
+              <div key={date} className="flex flex-col items-center gap-1 border-l border-[var(--timeline-grid)] py-2">
+                <span className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+                  {formatWeekdayLabel(date)}
+                </span>
+                <Link
+                  to={`/?date=${date}`}
+                  aria-label={`Open ${formatFullDate(date)} in the Planner`}
+                  aria-current={date === today ? "date" : undefined}
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium text-[var(--heading)] transition hover:bg-[var(--panel-hover)]",
+                    date === today && "bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[var(--accent)]",
+                  )}
+                >
+                  {getDayOfMonth(date)}
+                </Link>
+              </div>
             ))}
           </div>
+          {/* Done tasks with no time, and blocks outside the hour grid, so nothing is hidden. */}
+          <div className={cn("grid border-b border-[var(--timeline-grid)]", GRID_COLUMNS)}>
+            <div />
+            {days.map((date) => (
+              <CalendarDropZone
+                key={date}
+                id={`calendar-week-top-${date}`}
+                date={date}
+                label={`${formatFullDate(date)} tasks without a slot`}
+                className="min-h-7 min-w-0 space-y-1 border-l border-[var(--timeline-grid)] p-1"
+              >
+                {(entriesByDate.get(date) ?? [])
+                  .filter((entry) => !getWeekPlacement(entry))
+                  .map((entry) => (
+                    <CalendarTaskChip key={entry.task.id} entry={entry} />
+                  ))}
+              </CalendarDropZone>
+            ))}
+          </div>
+        </div>
+        <div className={cn("grid", GRID_COLUMNS)} style={{ height: gridHeight }}>
+          <div className="relative">
+            {HOURS.map((hour, index) => (
+              <span
+                key={hour}
+                className="absolute right-2 text-[10px] font-medium text-[var(--muted)]"
+                style={{ top: index * HOUR_HEIGHT + 2 }}
+              >
+                {formatHourLabel(hour)}
+              </span>
+            ))}
+          </div>
+          {days.map((date) => (
+            <WeekDayColumn key={date} date={date} entries={entriesByDate.get(date) ?? []} />
+          ))}
         </div>
       </div>
     </div>

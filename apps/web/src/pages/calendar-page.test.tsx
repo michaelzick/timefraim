@@ -156,6 +156,18 @@ describe("CalendarPage navigation", () => {
 describe("CalendarPage week view", () => {
   const weekUrl = "/calendar?view=week&anchor=2026-11-03";
 
+  it("keeps the header in the grid's scroll container so a scrollbar can't misalign them", () => {
+    renderCalendar([], weekUrl);
+
+    const scroller = screen.getByRole("group", { name: "Thursday, November 5, 2026 schedule" }).closest(".overflow-auto");
+    const header = screen.getByRole("link", { name: "Open Thursday, November 5, 2026 in the Planner" });
+    const topRow = screen.getByRole("group", { name: "Thursday, November 5, 2026 tasks without a slot" });
+
+    expect(scroller).toContainElement(header);
+    expect(scroller).toContainElement(topRow);
+    expect(header.closest(".sticky")).toContainElement(topRow);
+  });
+
   it("places a task by its time on the hour grid", () => {
     renderCalendar([scheduledTask("a", "Plan launch week", "2026-11-05T09:00:00", "2026-11-05T09:45:00")], weekUrl);
 
